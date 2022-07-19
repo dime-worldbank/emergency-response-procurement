@@ -68,13 +68,15 @@
 # Julia
 !/**/*.jl
 
+# txt files and csv
+!/**/*.txt
+!/**/*.csv
+
 #######################
 # Include some additional file formats in any output folder. You might have
 # to change the name of the Output folder to whatever it is called in your
 # project, but we strongly recommend that you only include these files in
 # a subset of the folders where you are certain no private data is ever stored.
-!/**/Output/**/*.txt
-!/**/Output/**/*.csv
 !/**/Output/**/*.xml
 !/**/Output/**/*.eps
 !/**/Output/**/*.svg
