@@ -9,9 +9,9 @@ Federal public procurement in Brazil has three main source, two of them is publi
 
 ## Public sources
 
-* Portal da transparência, see [this getting started](https://www.portaltransparencia.gov.br/origem-dos-dados): A website that we have access to the 
+* [Portal da transparência](https://www.portaltransparencia.gov.br/origem-dos-dados): A website that we have access to the 
 federal expense composition. It allows to download data of tenders and contracts monthly. 
-* Compras dados,see (http://compras.dados.gov.br/): It is a website that allows to download almost every piece of information in the tender procces. However,
+* [Compras dados](http://compras.dados.gov.br/): It is a website that allows to download almost every piece of information in the tender procces. However,
 it is quite more difficult to download the data.
 
 ## Prite source
