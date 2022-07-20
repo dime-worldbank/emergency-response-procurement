@@ -1,22 +1,32 @@
-# README - This template should be updated
+# 1: Data
+We have a set of indicators to create, each indicatos request a level of data. 
 
-This is DIME Analytics template `README.md`. You should update the information in this README to reflect your project.
+# 2: Indicators
 
-This is an excellent place to document what are the prerequisites to run this code and which files in this repository you should run your code from. 
 
-Here are examples of great READMEs that you can draw inspiration from.
-These READMES as all for public repositories (as we otherwise could not link to them), 
-and private repository might not need as much details describing the project to the public.
-Instead, it is important that they link to project protocols
-and clearly documents how a new project member would start using the content in this repository.
+## 2.1: Competition
+	Number of bidders per tender. It makes sense in a tender level.
+	This data is on partication level, for the simple indicator we can use the portal da transparencia data.
+	
+## 2.2: Rate of new winners
+	It is also in the new data. It use the item data level.
+	We don't have the data since begging, so we have to acumulate tag the new winners. It is a limition, but is not a problem.
+	We can estimate the problem. For instance, since it does not win for one/two/three... years, how is probability to have never win before.
 
-* https://github.com/worldbank/KePSIE-MIS-Web - this README explains all the usages of this code in great detail
-* https://github.com/worldbank/rio-safe-space - this README is shorter but links to pages with more detailed information
-* https://github.com/worldbank/covid-mobile-data - this README links to more detailed installation guides, and instead focus on the indicator this code generates
-* https://github.com/worldbank/ietoolkit - this README explains how to install the toolkit and describes how the public can contribute to this open source tool
-* https://github.com/social-science-data-editors/template_README/blob/releases/README.md - this is a template README for replication packages
+## 2.3: Market concentration (at sector level – number of bidders and winners per sector)
+	It still is related to winners. We can measure according the volume or number of tenders
 
-For a guide on how to format text in `.md` (markdown) files, see [this getting started](https://www.markdownguide.org/getting-started/) guide or [this cheat sheet](https://www.markdownguide.org/cheat-sheet/).
+## 2.4: Extra - process time
 
-### .gitignore
-In addition to this template README, this repo is also created with a DIME Analytic's template `.gitignore` file. Read more about this template and why ignore files are needed [here](https://github.com/worldbank/dime-github-trainings/tree/master/GitHub-resources/DIME-GitHub-Templates).
+## 2.5: Covid products
+	It is harders,  but for Brazil we have description, law, and motivation of a purchase. It is on tender and item/tender levels.
+	It request a carefully eyeball on the string analysis.
+	
+	medical-covid related
+	medical-non covid related
+	non-medical
+ 
+## Data creation summary:
+	For Brasil, let's start using only tender data in 3 levels: participants, item/tender, tender.
+	Using this piece of information we are able to create all indicators.
+	
