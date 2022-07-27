@@ -1,0 +1,101 @@
+---
+title: "Data Construct"
+author: "Victor Gamarra"
+date: "7/27/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+library(data.table)
+library(dplyr)
+library(readxl)
+library(haven)
+library(skimr)
+library(here)
+library(writexl)
+library(lubridate)
+
+```
+
+
+## Loading data
+
+```{r}
+
+awards.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/awards_data.Rda")
+bids.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/bids_data.Rda")
+complaints.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/complaints_data.Rda")
+initiation.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/initiation_data.Rda")
+
+```
+
+
+## Statistics
+
+```{r}
+
+# number of bidders per tender
+table(bids.final$bid_accepted)
+
+bids.final.complete <- bids.final %>% 
+  filter(
+    bidder_cui!="NA")
+
+bids.final.complete <- bids.final.complete %>% 
+  group_by(
+    award_notice_id, lot_number) %>% 
+  mutate(
+    bidders = n())
+
+hist(bids.final.complete$bidders)
+
+
+# New firms vs old firms
+awards.final <- awards.final %>% 
+  mutate(month_yr = format_ISO8601(contract_date, precision = "ym"))
+
+awards.final <- awards.final %>% 
+  group_by(
+    winner_cui_id, month_yr) %>% 
+  mutate(
+    timeswinner = row_number(),
+    new_winner = ifelse(timeswinner == 1 , 1 ,0)) %>% 
+  ungroup()
+  
+winners <- awards.final %>% 
+  distinct(
+    winner_cui_id, month_yr)
+
+winners <- winners[order(winners$winner_cui_id, winners$month_yr),]
+
+awards.final <- awards.final %>% 
+  group_by(
+    winner_cui_id, new_winner) %>% 
+  mutate(
+    year_month_first_win = month_yr)
+
+
+# Market concentration 
+sector.total <- awards.final %>% 
+  group_by(
+    cpv_div_name, contract_year) %>% 
+  summarise(
+    total_sector=sum(value_ron, na.rm = TRUE))
+
+awards.final <- left_join(
+  awards.final, sector.total, by = c('cpv_div_name' = 'cpv_div_name' , 'contract_year' = 'contract_year')) 
+
+awards.final <- awards.final %>% 
+  mutate(firm_share = value_ron / total_sector)
+
+hist(awards.final$firm_share)
+
+```
+
