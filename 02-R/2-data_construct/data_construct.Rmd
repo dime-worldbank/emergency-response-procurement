@@ -114,7 +114,7 @@ awards.final <- awards.final %>%
          month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
          diff_days_init_contract = difftime(contract_date,initiation_notice_date , units = "days"))
 
-
+ 
 
 ```
 
