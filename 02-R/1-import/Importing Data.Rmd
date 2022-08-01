@@ -1,0 +1,85 @@
+---
+title: "Romania Analysis"
+author: "Victor Gamarra"
+date: "7/18/2022"
+output: html_document
+---
+
+C
+
+
+```{r}
+
+
+# List all packages that will be used in this notebook
+packages <- 
+  c(
+  "ggplot2",
+  "tidyverse",
+  "data.table",
+  "readxl",
+  "dplyr",
+  "haven",
+  "skimr",
+  "here",
+  "writexl",
+  "lubridate"
+)
+
+# Install packages that are not installed, then load all of them
+pacman::p_load(packages,
+               character.only = TRUE,
+               install = TRUE)
+
+```
+
+
+## Opening datasets
+
+```{r}
+
+complaints.final = read_excel("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.xlsx")
+
+bids.final = read_excel("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/bids-constructed.xlsx")
+
+awards.final = read_excel("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.xlsx")
+
+initiation.final = read_excel("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.xlsx")
+
+
+```
+
+
+## Saving datasets in R format
+
+```{r}
+
+saveRDS(complaints.final, file="C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/complaints_data.Rda")
+
+saveRDS(bids.final, file="C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/bids_data.Rda")
+
+saveRDS(awards.final, file="C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/awards_data.Rda")
+
+saveRDS(initiation.final, file="C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/initiation_data.Rda")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
