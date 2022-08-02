@@ -19,12 +19,6 @@ if (Sys.info()['user'] == "Victo" ) {
 ```
 
 
-```{r}
-di <- readRDS(file.path("Data", "Intermediate", "1_Directores_Endline.RDS"))
-
-```
-
-
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -95,7 +89,11 @@ hist(bids.final.complete$bidders)
 
 # Indicator: New winners and New Bidders
 
-A *new winner* is defined if the firm has no existing contract or an existing contract older than 12 months. 
+A *new winner* is defined as a winner (awarded) if the firm has no existing contract or an existing contract older than 12 months. 
+
+A *new bidder* is defined as a bidder that has no bids or an existing bid older than 12 months
+
+month and year dates are created according to Serena's recommendation, but at the end I used the day, month and year dates to calculate the days between contracts instead of the months. 
 
 ```{r}
 
@@ -113,7 +111,7 @@ awards.final <- awards.final %>%
          new_winner = case_when(is.na(diff_days_contract) ~ 1 ,
                                 diff_days_contract > 365 ~ 1 ,
                                 TRUE ~ 0 ))
-         
+
 # New Bidders
 bids.final.complete2 <- left_join(bids.final.complete, initiation.final, by = 'initiation_notice_id', keep = FALSE)
 
@@ -124,8 +122,6 @@ bids.final.complete2 <- bids.final.complete2 %>%
          new_bidder = case_when(is.na(diff_days_initiation) ~ 1 ,
                                 diff_days_initiation > 365 ~ 1 ,
                                 TRUE ~ 0 ))
-
-
 ```
 
 # Indicator: Market concentration 
@@ -146,10 +142,21 @@ awards.final <- awards.final %>%
 
 hist(awards.final$firm_share)
 
+```
+
+# Product classification
+
+```{r}
+
+CPV.data <- initiation.final %>% 
+  arrange(cpv_div_name,cpv_group_name) %>%
+  select(cpv_div_name, cpv_group_name, cpv_group, cpv_div) %>% 
+  distinct()
+
+write.csv(CPV.data,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/Data_CPV_Romania.csv", row.names = FALSE)
 
 
 ```
-
 
 
 
