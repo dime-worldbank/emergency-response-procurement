@@ -5,6 +5,26 @@ date: "7/27/2022"
 output: pdf_document
 ---
 
+
+```{r}
+
+# 1) Set working directory
+if (Sys.info()['user'] == "Victo" ) {   
+  setwd("/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/2-data_construct")
+} else {  
+ setwd("C:/Users/wb554125/Documents/GitHub/ie-dr-endline/IE_DR_endline/1. Data cleaning")
+}
+#Maria enter path to data here}
+
+```
+
+
+```{r}
+di <- readRDS(file.path("Data", "Intermediate", "1_Directores_Endline.RDS"))
+
+```
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -79,7 +99,13 @@ A *new winner* is defined if the firm has no existing contract or an existing co
 
 ```{r}
 
+# creating months-year variables
+awards.final <- awards.final %>% 
+  mutate(month_yr_contract = format_ISO8601(contract_date, precision = "ym"),
+         month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
+         diff_days_init_contract = difftime(contract_date,initiation_notice_date , units = "days"))
 
+# New Winners
 awards.final <- awards.final %>% 
   group_by(winner_cui_id) %>% 
   arrange(winner_cui_id,contract_date) %>% 
@@ -88,38 +114,21 @@ awards.final <- awards.final %>%
                                 diff_days_contract > 365 ~ 1 ,
                                 TRUE ~ 0 ))
          
+# New Bidders
+bids.final.complete2 <- left_join(bids.final.complete, initiation.final, by = 'initiation_notice_id', keep = FALSE)
 
+bids.final.complete2 <- bids.final.complete2 %>% 
+  group_by(bidder_cui) %>%
+  arrange(bidder_cui,initiation_notice_date) %>%
+  mutate(diff_days_initiation = difftime(initiation_notice_date, lag(initiation_notice_date) , units = "days"),
+         new_bidder = case_when(is.na(diff_days_initiation) ~ 1 ,
+                                diff_days_initiation > 365 ~ 1 ,
+                                TRUE ~ 0 ))
 
-# old indicators
-
-
-awards.final <- awards.final %>% 
-  group_by(winner_cui_id, month_yr) %>% 
-  mutate(timeswinner = row_number(),
-         new_winner = ifelse(timeswinner == 1 , 1 ,0)) %>% 
-  ungroup()
-
-awards.final <- awards.final %>% 
-  group_by(winner_cui_id, month_yr) %>% 
-  mutate(timeswinner = row_number(),
-         new_winner = ifelse(timeswinner == 1 , 1 ,0)) %>% 
-  ungroup()
-  
-awards.final <- awards.final %>% 
-  group_by(winner_cui_id, new_winner) %>% 
-  mutate(year_month_first_win = month_yr)
-
-awards.final <- awards.final %>% 
-  mutate(month_yr_contract = format_ISO8601(contract_date, precision = "ym"),
-         month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
-         diff_days_init_contract = difftime(contract_date,initiation_notice_date , units = "days"))
-
- 
 
 ```
 
 # Indicator: Market concentration 
-
 
 ```{r}
 
@@ -140,5 +149,17 @@ hist(awards.final$firm_share)
 
 
 ```
+
+
+
+
+
+
+
+
+
+
+
+
 
 
