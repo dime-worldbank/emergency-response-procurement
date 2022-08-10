@@ -23,7 +23,7 @@ if (Sys.info()['user'] == "Victo" ) {
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Setup packages
+# Setup packages
 
 ```{r setup, include=FALSE}
 packages <-
@@ -38,7 +38,11 @@ packages <-
 		"rgdal",
 		"writexl",
 		"lubridate",
-		"skimr"
+		"skimr",
+		"googleLanguageR",
+		"cld2",
+		"writexl",
+		"zoo"
 		)
   
 
@@ -48,8 +52,7 @@ pacman::p_load(packages,
 
 ```
 
-
-## Loading raw data
+# Loading raw data
 
 ```{r}
 
@@ -63,11 +66,10 @@ initiation.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-
 
 ```
 
+# Creating indicators of Task 1
 
-## Creating indicators of Task 1
 
-
-# Indicator: Number of bidders per tender
+## Indicator: Number of bidders per tender
 
 Number of bidders is defined as the number of firms who bid within an award and lot. Missing values at the firm identifier (bidder_cui) are excluded from the count.
 
@@ -75,15 +77,41 @@ Number of bidders is defined as the number of firms who bid within an award and 
 
 table(bids.final$bid_accepted)
 
+# deleting missing values
 bids.final.complete <- bids.final %>% 
   filter(bidder_cui!="NA")
 
+# calculating number of bidders
 bids.final.complete <- bids.final.complete %>% 
   group_by(award_notice_id, lot_number) %>% 
-  mutate(bidders = n())
+  mutate(bidders = n(),
+         bid_accepted_n = if_else(bid_accepted==TRUE,1,0))
 
-hist(bids.final.complete$bidders)
+# obtaining initiation date
+dates.initiation <- initiation.final %>% 
+  select(initiation_notice_id , initiation_notice_date)
 
+bids.final.complete <- left_join(bids.final.complete , dates.initiation , by  = 'initiation_notice_id')
+
+# creating monthly bidders and plots
+bids.final.complete <- bids.final.complete %>% 
+  mutate(month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"))
+
+bids.final.month <- bids.final.complete %>% 
+  group_by(month_yr_init) %>% 
+  summarise(N_bidders_month = sum(bidders),
+            percent_accepted = mean(bid_accepted_n, na.rm = TRUE))
+
+bids.final.month <- bids.final.month %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
+      
+ggplot(bids.final.month, aes(x=date, y=N_bidders_month)) +
+  geom_line() + 
+  xlab("")
+
+ggplot(bids.final.month, aes(x=date, y=percent_accepted)) +
+  geom_line() + 
+  xlab("")
 
 ```
 
@@ -113,15 +141,23 @@ awards.final <- awards.final %>%
                                 TRUE ~ 0 ))
 
 # New Bidders
-bids.final.complete2 <- left_join(bids.final.complete, initiation.final, by = 'initiation_notice_id', keep = FALSE)
-
-bids.final.complete2 <- bids.final.complete2 %>% 
+bids.final.complete <- bids.final.complete %>% 
   group_by(bidder_cui) %>%
   arrange(bidder_cui,initiation_notice_date) %>%
   mutate(diff_days_initiation = difftime(initiation_notice_date, lag(initiation_notice_date) , units = "days"),
          new_bidder = case_when(is.na(diff_days_initiation) ~ 1 ,
                                 diff_days_initiation > 365 ~ 1 ,
                                 TRUE ~ 0 ))
+
+# Plots
+ggplot(awards.final, aes(x=contract_date, y=new_winner)) +
+  geom_line() + 
+  xlab("")
+
+ggplot(bids.final.complete, aes(x=initiation_notice_date, y=new_bidder)) +
+  geom_line() + 
+  xlab("")
+
 ```
 
 # Indicator: Market concentration 
@@ -158,15 +194,50 @@ write.csv(CPV.data,"C:/Users/Victo/Documents/GitHub/emergency-response-procureme
 
 ```
 
+# Variables for complaint data and translation
+
+```{r}
+
+# Obtaining exporting data andto translate in google translate
+appeals <- complaints.final %>% 
+  select(appeal_object, appeal_id) %>% 
+  distinct()
+
+procedures <- complaints.final %>% 
+  select(procedure_name, appeal_id) %>% 
+  distinct()
+
+write_xlsx(appeals,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/appeals.xlsx")
+
+write_xlsx(procedures,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/procedures.xlsx")
 
 
+# translating variables that are translated in R
+complaints.final <- complaints.final %>% 
+  mutate(
+    contested_en = case_when(
+      contested == "Documentatie" ~ "Documentation", 
+      contested == "Rezultat" ~ "Result"),
+    outcome_en = case_when(
+      outcome == "Admite" ~ "Admited",
+      outcome == "Altele" ~ "Other",
+      outcome == "Respinge" ~ "Rejected"),
+    outcome_method_en = case_when(
+      outcome_method == "Pe exceptii" ~ "On exceptions", 
+      outcome_method == "Pe fond" ~ "Based on")
+    )
+    
+# Importing translated Data
+appeals.en <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/appeals_en.xlsx")
+
+procedures.en <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/procedures_en.xlsx")
+
+# Joining translated data
+complaints.final <- left_join(complaints.final, appeals.en , by = 'appeal_id')
+complaints.final <- left_join(complaints.final, procedures.en , by = 'appeal_id')
 
 
-
-
-
-
-
+```
 
 
 
