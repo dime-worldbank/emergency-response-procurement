@@ -6,20 +6,16 @@
 #
 #                                   Master 
 #
-#       Author: Hao Lyu                           Update: 08/08/2022
+#       Author: Hao Lyu                           Update: 08/10/2022
 #
 # ---------------------------------------------------------------------------- #
 
 
-# ================================= Task 1 =================================== #
+# ============================== Introduction ================================ #
 # 
-#         1 - Indicator for Winners and Bidders 
+#       This project aims to create statistical analysis using Croatia pubic 
 #
-#         2 - Indicator for Market Concentration 
-#
-#         3 - Indicator for Covid Periods 
-#
-#         4 - Product Classification
+#       procurement for the COVID19 Project. 
 #                                                                                 
 # ---------------------------------------------------------------------------- #
 
@@ -31,10 +27,11 @@
       rm(list=ls()) 
   
       # Setting paths
-      if (Sys.info()["user"] == "wb595473"){    
-    
-      projectFolder   <- "/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/06-Croatia/1_data"
-      scriptFolder    <- "/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/03_Croatia"
+      if (Sys.info()["user"] == "wb595473"){ 
+        
+        rawFolder       <- "/Users/wb595473/WBG/DIME3 Files - Data/Intermediate/"
+        projectFolder   <- "/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/06-Croatia/1_data"
+        scriptFolder    <- "/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/03_Croatia"
     
       } else if (Sys.info()["user"] == "") {
     
@@ -44,8 +41,8 @@
       }   # Maria - please enter your path here
   
   
-      scripts         <- file.path(scriptFolder, "Scripts//" )
-      raw             <- file.path(projectFolder, "1_Raw//")
+      scripts         <- file.path(scriptFolder, "Scripts//" )    
+      raw             <- file.path(rawFolder, "07242020//")            # data obtained by Sushimita
       intermediate    <- file.path(projectFolder, "2_Intermediate//")
       cleaned         <- file.path(projectFolder, "3_Cleaned//")
       output          <- file.path(projectFolder, "4_Output//")
@@ -73,8 +70,7 @@
          "purrr"                ,
          "Knitr"                ,   
          "kableExtra"           , 
-         "parallel"             ,
-         "xlsx"
+         "parallel"             
     
         )
   
@@ -100,7 +96,7 @@
       # RUNNING SCRIPTS 
         
              # 1) IMPORT DATA 
-             #    source(file.path(scripts, "Import.R"))
+                 source(file.path(scripts, "Import.R"))
        
              # 2) Create Indicators 
              #    source(file.path(scripts, "GenIndicators.R"))
