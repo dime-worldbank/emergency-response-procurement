@@ -15,11 +15,9 @@
 	* defying path
 	* 1: Leandro Justino
 	if "`c(username)'" == "leand" {	
-		global path_data    	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK-DIME-Vincenzo\03-projetos\4-KCP\01-KCP-Brazil"
-		global path_firm   		"C:\Users\leand\Dropbox\3-Profissional\13-rotinas de limpeza de base\06-socios\6_clean"	
-		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK-DIME-Vincenzo\03-projetos\4-KCP\02-Covid_Brazil"
-		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\13-rotinas de limpeza de base\02-Rais-estabelecimento\5-clean_data\1-rais-estabelecimento\1-stata"	
- 	}
+		global path_data    	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-KCP-Brazil"
+ 		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
+  	}
 	.
  
 	* graphs configuration
@@ -123,7 +121,7 @@
 	}
 	.
 	
-	* 3: Avearage new winners by item
+	* 3: Average new winners by item
 	{
 		* reading
 		use "${path_project}/1_data/1_participants_data" if D_winner==1 ,clear
@@ -172,6 +170,88 @@
 			ylabel( ,angle(0))
 		graph export "${path_project}/4_outputs/3-Figures/P1_indicator_2-first_winner_SME.pdf", replace as(pdf)	
 	}
+	.
 }
 .
 
+* 3: Market concentration
+{
+	* By all
+	{
+		global sector_measure " "
+		use "${path_project}/1_data/1_participants_data" if D_winner==1 ,clear
+		*drop if ${sector_measure}==.
+		
+		gen year  = year(dofq(year_quarter))
+		bys id_bidder  ${sector_measure} year: gen byte N_winner_unique = _n==1
+		
+		gcollapse (sum) N_winner_unique   , by( ${sector_measure} year) freq(N_winners)
+		
+		gen rate = N_winner_unique/N_winners
+		
+		* Graph 01: 1/N_bidders
+		keep if year<= 2020
+		
+		format %4.3fc rate
+		tw 	(scatter  rate year) , ${graph_option} ///
+			ytitle("Unique winners proportion") xtitle("quater/year") ///
+			xlabel(2013(1)2020 , angle(90)) ///
+			ylabel(0.017(0.001)0.025,angle(0))
+	}
+	.
+	
+	* By sector
+	{
+		
+		global sector_measure "great_sectors"
+		use "${path_project}/1_data/1_participants_data" if D_winner==1 ,clear
+		drop if ${sector_measure}==.		
+		
+		gen year  = year(dofq(year_quarter))
+		bys id_bidder  ${sector_measure} year: gen byte N_winner_unique = _n==1
+		
+		gcollapse (sum) N_winner_unique   , by( ${sector_measure} year) freq(N_winners)
+		
+		gen rate = N_winner_unique/N_winners
+		gcollapse (mean) rate   , by( year)
+
+		* Graph 01: 1/N_bidders
+		keep if year<= 2020
+		
+		format %4.3fc rate
+		tw 	(scatter  rate year) , ${graph_option} ///
+			ytitle("Unique winners proportion") xtitle("quater/year") ///
+			xlabel(2013(1)2020 , angle(90)) ///
+			ylabel(,angle(0))
+	}
+	.
+	
+	* By sector
+	{
+		global sector_measure "great_sectors"
+		use "${path_project}/1_data/1_participants_data" if D_winner==1 ,clear
+		drop if ${sector_measure}==.		
+		
+		gen year  = year(dofq(year_quarter))
+		bys id_bidder  ${sector_measure} year: gen byte N_winner_unique = _n==1
+		
+		gcollapse (sum) N_winner_unique   , by( ${sector_measure} year) freq(N_winners)
+		
+		gen rate = N_winner_unique/N_winners
+		gcollapse (mean) avg=rate   , by( ${sector_measure} year) freq(N_winners)
+
+		* Graph 01: 1/N_bidders
+		keep if year<= 2020
+		
+		format %3.2fc rate
+		tw 	(scatter  rate year if  ${sector_measure}==1) || ///
+			(scatter  rate year if  ${sector_measure}==2) || 	///
+			(scatter  rate year if  ${sector_measure}==3) || ///
+			(scatter  rate year if  ${sector_measure}==4) || ///
+			(scatter  rate year if  ${sector_measure}==5) , ${graph_option} ///
+			ytitle("Unique winners proportion") xtitle("quater/year") ///
+			xlabel(2013(1)2020 , angle(90)) ///
+			ylabel(0(0.01)0.08,angle(0)) ///
+			legend(order( 1 "manufactor" 2 "construction" 3 "commerce" 4 "service" 5 "others"))
+	}
+}
