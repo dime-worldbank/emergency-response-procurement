@@ -100,6 +100,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
                                 no = yearweek))%>%
       select(-yearweek)%>%
       rename(yearweek = yearweek2)
+      
 
      # calculate weekly sum of number of death, number of cases
      
@@ -108,11 +109,13 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      death_week <- covid%>%
        group_by(location, yearweek)%>%
        summarise(death_week = sum(new_deaths))%>%
+       mutate(week = 1:n())%>%
        ungroup()
     
      cases_week <- covid%>%
        group_by(location, yearweek)%>%
        summarise(cases_week = sum(new_cases))%>%
+       mutate(week = 1:n())%>%
        ungroup()
      
 
@@ -124,18 +127,18 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
   
 # Plot for the number of death 
      
-     death_week_brazil <- filter(death_week, location == "Brazil")
-     
-     brazil_death <- 
-       ggplot(death_week_brazil, aes(x = yearweek, y = death_week))+
-       geom_line(size = 1)+
-       labs(x = "Week", y = "Number of New Death")+
-       theme_classic()
-     
+      death_week_brazil <- filter(death_week, location == "Brazil")
+
+      brazil_death <- 
+        ggplot(death_week_brazil, aes(x = week, y = death_week))+
+        geom_line(size = 1)+
+        labs(x = "Week", y = "Number of New Death")+
+        theme_classic()
+
      death_week_honduras <- filter(death_week, location == "Honduras")
      
      honduras_death <- 
-       ggplot(death_week_honduras, aes(x = yearweek, y = death_week))+
+       ggplot(death_week_honduras, aes(x = week, y = death_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Death")+
        theme_classic()
@@ -143,7 +146,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      death_week_chile <- filter(death_week, location == "Chile")
      
      chile_death <- 
-       ggplot(death_week_chile, aes(x = yearweek, y = death_week))+
+       ggplot(death_week_chile, aes(x = week, y = death_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Death")+
        theme_classic()
@@ -151,23 +154,26 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      death_week_romania <- filter(death_week, location == "Romania")
      
      romania_death <- 
-       ggplot(death_week_romania, aes(x = yearweek, y = death_week))+
+       ggplot(death_week_romania, aes(x = week, y = death_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Death")+
        theme_classic()
 
-     ggarrange(brazil_death, romania_death, chile_death, honduras_death, 
-               labels = c("Brazil","Romania","Chile", "Honduras"),
-               font.label = list(size = 11, face = "plain", color ="black"),
-               ncol = 2, nrow = 2,
-               hjust = -0.5,
-               vjust = 0.8,
-               common.legend = TRUE)
+     death_week <- ggarrange(brazil_death, romania_death, chile_death, honduras_death, 
+                             labels = c("Brazil","Romania","Chile", "Honduras"),
+                             font.label = list(size = 10, face = "plain", color ="black"),
+                             ncol = 2, nrow = 2,
+                             hjust = -0.5,
+                             vjust = 0.8,
+                             common.legend = TRUE)
+     
+     annotate_figure(death_week, top = text_grob("The Number of New Deaths Per Week (2020-02-24 to 2022-08-31)", 
+                                           color = "Black", face = "plain", size = 12))
+     
 
 ```     
 
-### According to the number of death per week, we propose the definition of 'co-
-### vid waves' as below:
+### According to the number of death per week, we propose the definition of 'covid waves' as below:
 * Brazil:
     + 1st wave: 202023 - 202032 (exceeded  7,000 deaths per week)
     + 2nd wave: 202109 - 202126 (exceeded 10,000 deaths per week)
@@ -181,7 +187,6 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
     + 1st wave: 202024 - 202026 (exceeded  1,000 deaths per week)
     + 2nd wave: 202104 - 202130 (exceeded    500 deaths per week)
     + 3rd wave: 202206 - 202211 (exceeded    500 deaths per week)
-
 * Honduras:
     + 1st wave: 202026 - 202040 (exceeded 100 deaths per week)
     + 2nd wave: 202104 - 202141 (exceeded 100 deaths per week)
@@ -191,13 +196,12 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 ```{r plot for the number of new cases, fig.keep='last', eval=FALSE}
 # Plot the number of cases    
 
-
      cases_week$location <- as.factor(cases_week$location)
     
      cases_week_brazil <- filter(cases_week, location == "Brazil")
      
      brazil_cases <- 
-       ggplot(cases_week_brazil, aes(x = yearweek, y = cases_week))+
+       ggplot(cases_week_brazil, aes(x = week, y = cases_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Cases")+
        theme_classic()
@@ -205,7 +209,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      cases_week_romania <- filter(cases_week, location == "Romania")
      
      romania_cases <- 
-       ggplot(cases_week_romania, aes(x = yearweek, y = cases_week))+
+       ggplot(cases_week_romania, aes(x = week, y = cases_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Cases")+
        theme_classic()
@@ -213,7 +217,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      cases_week_chile <- filter(cases_week, location == "Chile")
      
      chile_cases <- 
-       ggplot(cases_week_chile, aes(x = yearweek, y = cases_week))+
+       ggplot(cases_week_chile, aes(x = week, y = cases_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Cases")+
        theme_classic()
@@ -221,38 +225,48 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
      cases_week_honduras <- filter(cases_week, location == "Honduras")
      
      honduras_cases <- 
-       ggplot(cases_week_honduras, aes(x = yearweek, y = cases_week))+
+       ggplot(cases_week_honduras, aes(x = week, y = cases_week))+
        geom_line(size = 1)+
        labs(x = "Week", y = "Number of New Cases")+
        theme_classic()
      
-     ggarrange(brazil_cases, romania_cases, chile_cases, honduras_cases, 
-               labels = c("Brazil","Romania","Chile", "Honduras"),
-               font.label = list(size = 11, face = "plain", color ="black"),
-               ncol = 2, nrow = 2,
-               hjust = -0.5,
-               vjust = 0.8,
-               common.legend = TRUE)
+     cases_week <- ggarrange(brazil_cases, romania_cases, chile_cases, honduras_cases, 
+                             labels = c("Brazil","Romania","Chile", "Honduras"),
+                             font.label = list(size = 10, face = "plain", color ="black"),
+                             ncol = 2, nrow = 2,
+                             hjust = -0.5,
+                             vjust = 0.8,
+                             common.legend = TRUE)
+     
+     annotate_figure(cases_week, top = text_grob("The Number of New Cases Per Week (2020-02-24 to 2022-08-31)", 
+                                                 color = "Black", face = "plain", size = 12))
+     
+
      
 ```
 
-### According to the number of new cases per week, we propose the definition of 
-### 'covid waves' as below:
+### According to the number of new cases per week, we propose the definition of 'covid waves' as below:
 * Brazil:
-    + 1st wave: 202030 - 2020 (exceeded  300,000 new cases per week)
-    + 2nd wave: 202109 - 202126 (exceeded 10,000 deaths per week)
-    + 3rd wave: 202205 - 202207 (exceeded  5,000 deaths per week)
-    + 4th wave: 202225 - 202230 (exceeded  1,500 deaths per week)
+    + 1st wave: 202026 - 202036 (peaked to over 200,000 new cases per week)
+    + 2nd wave: 202109 - 202126 (peaked to over  400,000 new cases per week)
+    + 3rd wave: 202203 - 202205 (peaked to over 1000,000 new cases per week)
+    + 4th wave: 202225 - 202228 (peaked to over  400,000 new cases per week)
 * Romania: 
-    + 1st wave: 202046 - 202051 (exceeded  1,000 deaths per week)
-    + 2nd wave: 202114 - 202123 (exceeded  1,000 deaths per week)
-    + 3rd wave: 202139 - 202147 (exceeded  1,000 deaths per week)
+    + 1st wave: 202044 - 202051 (peaked to over   30,000 new cases per week)
+    + 2nd wave: 202110 - 202114 (peaked to over   30,000 new cases per week)
+    + 3rd wave: 202139 - 202144 (peaked to over   50,000 new cases per week)
+    + 4th wave: 202228 - 202232 (peaked to over   30,000 new cases per week)
 * Chile: 
-    + 1st wave: 202024 - 202026 (exceeded  1,000 deaths per week)
-    + 2nd wave: 202104 - 202130 (exceeded    500 deaths per week)
-    + 3rd wave: 202206 - 202211 (exceeded    500 deaths per week)
-
+    + 1st wave: 202021 - 202025 (peaked to over   30,000 new cases per week)
+    + 2nd wave: 202109 - 202125 (peaked to over   30,000 new cases per week)
+    + 3rd wave: 202204 - 202211 (peaked to over  100,000 new cases per week)
+    + 4th wave: 202220 - 202234 (peaked to over   30,000 new cases per week)
 * Honduras:
-    + 1st wave: 202026 - 202040 (exceeded 100 deaths per week)
-    + 2nd wave: 202104 - 202141 (exceeded 100 deaths per week)
-    + 3rd wave: 202207 - 202209 (exceeded  50 deaths per week)
+    + 1st wave: 202026 - 202040 (peaked to over    5,000 new cases per week)
+    + 2nd wave: 202102 - 202138 (peaked to over    5,000 new cases per week)
+    + 3rd wave: 202203 - 202208 (peaked to over    5,000 new cases per week)
+    + 4th wave: 202229 - 202233 (peaked to over    5,000 new cases per week)
+    
+### I would recommend using the number of new cases per week as the indicator for 'covid waves'. We can observe clearer pattern from the data. At the same time, this number won't be affected by other endogenous variables, for instance the improvement of medical treatment. The number of death won't be a good indicator as it is said when coronavirus mutated, the likelihood of causing death became lower. Also, the lower number of death in later time period might be the result of better medical treatment as healthcare providers produced more advanced medicines, lowering the likelihood of death. The improvement of medical treatment might be correlated with our variable of interest, public procurement. As government expenditure could have boosted the invention of new drugs and expanded the distribution of medical equipment. Therefore, I would propose to use the number of new cases per week as the indicator for 'covid waves'. 
+
+

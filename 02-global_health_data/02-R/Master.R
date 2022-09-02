@@ -4,7 +4,7 @@
 
 #                                  MASTER 
 
-#       Author: Hao Lyu                           Update: 09/01/2022
+#       Author: Hao Lyu                           Update: 09/02/2022
 #
 # ---------------------------------------------------------------------------- #
 
@@ -69,7 +69,8 @@
     "ggplot2"              ,
     "purrr"                ,
     "kableExtra"           , 
-    "parallel"             
+    "parallel"             ,
+    "ggpubr"
    
      )
 
