@@ -1,0 +1,258 @@
+---
+title: "Covid_Waves"
+author: "Hao Lyu"
+date: '2022-09-01'
+output:
+  word_document: default
+  html_document: default
+---
+<!--Global Chunk Settings-->
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+<!--path and packages loaded in from Master.R-->
+```{r paths and packages, include=FALSE}
+
+# Cleaning the environment 
+  rm(list=ls()) 
+
+
+# Setting paths
+  if (Sys.info()["user"] == "wb595473"){ 
+    
+    projectFolder     <- "/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/01-global_health_data/1_data"
+    scriptFolder      <- "/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/02-global_health_data"
+
+    } else if (Sys.info()["user"] == "") {
+      
+      projectFolder    <- "" 
+      scriptFolder     <- ""
+      
+      }   # Maria - please enter your path here
+
+
+    scripts         <- file.path(scriptFolder,  "02-R/" )    
+    raw             <- file.path(projectFolder, "1_Raw//")                                             
+    intermediate    <- file.path(projectFolder, "2_Intermediate//")
+    cleaned         <- file.path(projectFolder, "3_Cleaned//")
+    output          <- file.path(projectFolder, "4_Output//")
+
+
+# Loading packages
+  packages <- c(
+    
+    "here"                 ,
+    "readxl"               ,
+    "haven"                ,
+    "tidyverse"            ,
+    "dplyr"                ,
+    "tidyr"                , 
+    "data.table"           ,
+    "tidyfast"             ,
+    "stringi"              ,
+    "pacman"               ,
+    "janitor"              ,
+    "devtools"             ,
+    "lubridate"            ,
+    "stringr"              ,
+    "stargazer"            ,
+    "ggplot2"              ,
+    "purrr"                ,
+    "kableExtra"           , 
+    "parallel"             
+   
+     )
+
+
+  load_package <- function(pkg){
+    
+    new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+    
+    if (length(new.pkg))
+      
+      install.packages(new.pkg, dependencies = TRUE)
+    
+    sapply(pkg, require, character.only = TRUE)
+    
+    }
+
+```
+
+
+<!-- Load and Construct Data-->
+```{r load data, include = FALSE, eval=FALSE}
+
+# Import Data
+  covid <- fread(paste0(raw, "owid-covid-data.csv"), stringsAsFactors = FALSE)
+
+# Calculate Week sum 
+  
+    # generate a year_week variable 
+    
+    covid <- as.data.frame(covid)
+    
+    covid <- covid %>%
+      mutate(date = as.Date(date, format = "%Y-%m-%d")) %>%
+      mutate(yearweek = as.integer(strftime(date, format = "%Y%V")))%>%
+      mutate(yearweek2 = ifelse(test = day(date) < 7 & as.integer(substr(yearweek, 5, 6)) > 51,
+                                yes =  yearweek - 100,
+                                no = yearweek))%>%
+      select(-yearweek)%>%
+      rename(yearweek = yearweek2)
+
+     # calculate weekly sum of number of death, number of cases
+     
+     covid$location <- as.character(covid$location)
+   
+     death_week <- covid%>%
+       group_by(location, yearweek)%>%
+       summarise(death_week = sum(new_deaths))%>%
+       ungroup()
+    
+     cases_week <- covid%>%
+       group_by(location, yearweek)%>%
+       summarise(cases_week = sum(new_cases))%>%
+       ungroup()
+     
+
+
+```
+
+<!--Draw Plots-->
+```{r plot for the number of death, fig.keep='last', eval=FALSE}
+  
+# Plot for the number of death 
+     
+     death_week_brazil <- filter(death_week, location == "Brazil")
+     
+     brazil_death <- 
+       ggplot(death_week_brazil, aes(x = yearweek, y = death_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Death")+
+       theme_classic()
+     
+     death_week_honduras <- filter(death_week, location == "Honduras")
+     
+     honduras_death <- 
+       ggplot(death_week_honduras, aes(x = yearweek, y = death_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Death")+
+       theme_classic()
+     
+     death_week_chile <- filter(death_week, location == "Chile")
+     
+     chile_death <- 
+       ggplot(death_week_chile, aes(x = yearweek, y = death_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Death")+
+       theme_classic()
+     
+     death_week_romania <- filter(death_week, location == "Romania")
+     
+     romania_death <- 
+       ggplot(death_week_romania, aes(x = yearweek, y = death_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Death")+
+       theme_classic()
+
+     ggarrange(brazil_death, romania_death, chile_death, honduras_death, 
+               labels = c("Brazil","Romania","Chile", "Honduras"),
+               font.label = list(size = 11, face = "plain", color ="black"),
+               ncol = 2, nrow = 2,
+               hjust = -0.5,
+               vjust = 0.8,
+               common.legend = TRUE)
+
+```     
+
+### According to the number of death per week, we propose the definition of 'co-
+### vid waves' as below:
+* Brazil:
+    + 1st wave: 202023 - 202032 (exceeded  7,000 deaths per week)
+    + 2nd wave: 202109 - 202126 (exceeded 10,000 deaths per week)
+    + 3rd wave: 202205 - 202207 (exceeded  5,000 deaths per week)
+    + 4th wave: 202225 - 202230 (exceeded  1,500 deaths per week)
+* Romania: 
+    + 1st wave: 202046 - 202051 (exceeded  1,000 deaths per week)
+    + 2nd wave: 202114 - 202123 (exceeded  1,000 deaths per week)
+    + 3rd wave: 202139 - 202147 (exceeded  1,000 deaths per week)
+* Chile: 
+    + 1st wave: 202024 - 202026 (exceeded  1,000 deaths per week)
+    + 2nd wave: 202104 - 202130 (exceeded    500 deaths per week)
+    + 3rd wave: 202206 - 202211 (exceeded    500 deaths per week)
+
+* Honduras:
+    + 1st wave: 202026 - 202040 (exceeded 100 deaths per week)
+    + 2nd wave: 202104 - 202141 (exceeded 100 deaths per week)
+    + 3rd wave: 202207 - 202209 (exceeded  50 deaths per week)
+
+
+```{r plot for the number of new cases, fig.keep='last', eval=FALSE}
+# Plot the number of cases    
+
+
+     cases_week$location <- as.factor(cases_week$location)
+    
+     cases_week_brazil <- filter(cases_week, location == "Brazil")
+     
+     brazil_cases <- 
+       ggplot(cases_week_brazil, aes(x = yearweek, y = cases_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Cases")+
+       theme_classic()
+     
+     cases_week_romania <- filter(cases_week, location == "Romania")
+     
+     romania_cases <- 
+       ggplot(cases_week_romania, aes(x = yearweek, y = cases_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Cases")+
+       theme_classic()
+     
+     cases_week_chile <- filter(cases_week, location == "Chile")
+     
+     chile_cases <- 
+       ggplot(cases_week_chile, aes(x = yearweek, y = cases_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Cases")+
+       theme_classic()
+     
+     cases_week_honduras <- filter(cases_week, location == "Honduras")
+     
+     honduras_cases <- 
+       ggplot(cases_week_honduras, aes(x = yearweek, y = cases_week))+
+       geom_line(size = 1)+
+       labs(x = "Week", y = "Number of New Cases")+
+       theme_classic()
+     
+     ggarrange(brazil_cases, romania_cases, chile_cases, honduras_cases, 
+               labels = c("Brazil","Romania","Chile", "Honduras"),
+               font.label = list(size = 11, face = "plain", color ="black"),
+               ncol = 2, nrow = 2,
+               hjust = -0.5,
+               vjust = 0.8,
+               common.legend = TRUE)
+     
+```
+
+### According to the number of new cases per week, we propose the definition of 
+### 'covid waves' as below:
+* Brazil:
+    + 1st wave: 202030 - 2020 (exceeded  300,000 new cases per week)
+    + 2nd wave: 202109 - 202126 (exceeded 10,000 deaths per week)
+    + 3rd wave: 202205 - 202207 (exceeded  5,000 deaths per week)
+    + 4th wave: 202225 - 202230 (exceeded  1,500 deaths per week)
+* Romania: 
+    + 1st wave: 202046 - 202051 (exceeded  1,000 deaths per week)
+    + 2nd wave: 202114 - 202123 (exceeded  1,000 deaths per week)
+    + 3rd wave: 202139 - 202147 (exceeded  1,000 deaths per week)
+* Chile: 
+    + 1st wave: 202024 - 202026 (exceeded  1,000 deaths per week)
+    + 2nd wave: 202104 - 202130 (exceeded    500 deaths per week)
+    + 3rd wave: 202206 - 202211 (exceeded    500 deaths per week)
+
+* Honduras:
+    + 1st wave: 202026 - 202040 (exceeded 100 deaths per week)
+    + 2nd wave: 202104 - 202141 (exceeded 100 deaths per week)
+    + 3rd wave: 202207 - 202209 (exceeded  50 deaths per week)
