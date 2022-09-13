@@ -1,31 +1,5 @@
 * Made by Leandro Veloso
-* Main: Estimating indicators
-
-* 0: Setting stata
-{
-	* Clean stata console
-	clear all
-	cls
-
-	* Set options
-	set varabbrev on, perm
-	set more off, perm
-	set matsize 11000, perm
-
-	* defying path
-	* 1: Leandro Justino
-	if "`c(username)'" == "leand" {	
-		global path_data    	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK-DIME-Vincenzo\03-projetos\4-KCP\01-KCP-Brazil"
-		global path_firm   		"C:\Users\leand\Dropbox\3-Profissional\13-rotinas de limpeza de base\06-socios\6_clean"	
-		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK-DIME-Vincenzo\03-projetos\4-KCP\02-Covid_Brazil"
-		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\13-rotinas de limpeza de base\02-Rais-estabelecimento\5-clean_data\1-rais-estabelecimento\1-stata"	
- 	}
-	.
- 
-	* graphs configuration
-	global graph_option graphregion(color(white)) xsize(10) ysize(5)
-}
-.
+* Main: Competitions - based on partipants data
 
 * 1: Competition - Restricting to autions
 {
