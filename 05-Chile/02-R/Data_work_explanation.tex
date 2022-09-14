@@ -1,0 +1,141 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{booktabs}
+\usepackage{rotating, graphicx}
+\usepackage{dcolumn}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Report Chile: data work COVID-19},
+  pdfauthor={Ruggero Doino},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Report Chile: data work COVID-19}
+\author{Ruggero Doino}
+\date{13 September, 2022}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\hypertarget{data-exploring}{%
+\section{Data Exploring}\label{data-exploring}}
+
+First, I download COVID-19 data from
+\href{https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9}{here}.
+The repository contains two files: ``OC\_COVID19.csv'' (tenders related
+to COVID-19 emergency) and ``OCItem\_COVID19.csv'' (list of items
+related to COVID-19 emergency). From now on, I will call these datasets
+tender-level and item-level emergency datasets, while the full sample of
+tenders prepared by Leandro will be called chile\_compra datasets.
+
+As I merge the chile\_compra datasets with the tender-level emergency
+data, I find that only 14.38 \% of covid emergency tenders can be
+identified in the chile\_compra datasets. However, the covid emergency
+dataset contains
+
+\begin{longtable}[t]{llll}
+\caption{\label{tab:freq table for tag}Frequency table: Tender type and matching with covid-19}\\
+\toprule
+Tender Type & Matched & Unmatched & Total\\
+\midrule
+\cellcolor{gray!6}{COMPRA AGIL} & \cellcolor{gray!6}{0  (0\%)} & \cellcolor{gray!6}{38096 (17\%)} & \cellcolor{gray!6}{38096  (17\%)}\\
+CONVENIO MARCO & 1403  (1\%) & 55764 (25\%) & 57167  (26\%)\\
+\cellcolor{gray!6}{LICITACION PRIVADA} & \cellcolor{gray!6}{49  (0\%)} & \cellcolor{gray!6}{246  (0\%)} & \cellcolor{gray!6}{295   (0\%)}\\
+LICITACION PUBLICA & 30261 (14\%) & 14281  (6\%) & 44542  (20\%)\\
+\cellcolor{gray!6}{MICROCOMPRA} & \cellcolor{gray!6}{0  (0\%)} & \cellcolor{gray!6}{4  (0\%)} & \cellcolor{gray!6}{4   (0\%)}\\
+\addlinespace
+PARA INFORMAR & 0  (0\%) & 953  (0\%) & 953   (0\%)\\
+\cellcolor{gray!6}{TRATO DIRECTO} & \cellcolor{gray!6}{1  (0\%)} & \cellcolor{gray!6}{79526 (36\%)} & \cellcolor{gray!6}{79527  (36\%)}\\
+Total & 31714 (14\%) & 188870 (86\%) & 220584 (100\%)\\
+\bottomrule
+\end{longtable}
+
+Therefore, if for example we will focus only on ``LICITACION PUBLICA'',
+the matching rate would be around 67.94
+
+\hypertarget{task-1}{%
+\section{Task 1}\label{task-1}}
+
+\hypertarget{task-2}{%
+\section{Task 2}\label{task-2}}
+
+\hypertarget{task-3}{%
+\section{Task 3}\label{task-3}}
+
+\end{document}

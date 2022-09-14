@@ -9,7 +9,8 @@
   # 2: Loading package
   {
     packages <- 
-      c( "archive",
+      c( 
+         "archive",
          "cli",
          "stringr",
          "lubridate",
@@ -21,7 +22,9 @@
          "huxtable",
          "data.table",
          "rebus", 
-         "R.utils"
+         "R.utils",
+         "janitor",
+         "kableExtra"
       )
     
     # Leitura dos pacotes e dependencias
@@ -91,13 +94,16 @@
 }
 
 # 1: Downloading and unzip file
-source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
+# source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
 
 # 2: Splitting the data in four modules
-source(file.path(github_dir,"02-Data_split-bid.R"))
+# source(file.path(github_dir,"02-Data_split-bid.R"))
 
 # 3: Appending the month level data of the four modules and architecture
-source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
+# source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
 
 # 4: Deleting raw files used in the previous codes
-source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
+# source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
+
+# 5: Labelling Treatment (emergency COVID-19 purchases) vs Control
+source(file.path(github_dir,"05-treatment_and_control.R"))

@@ -1,0 +1,57 @@
+---
+title: "Report Chile: data work COVID-19"
+author: "Ruggero Doino"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
+output: 
+  pdf_document: 
+    keep_tex: yes
+    toc: yes
+    number_sections: yes
+header-includes:
+   - \usepackage{booktabs}
+   - \usepackage{rotating, graphicx}
+   - \usepackage{dcolumn}
+   - \usepackage{float}
+   - \usepackage{enumitem}
+   
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(inputFile, encoding = encoding, output_dir = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R") }) 
+---
+
+# Data Exploring
+
+```{r Master, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+
+# Run the Master script
+source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
+
+format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, digits = 2)
+
+```
+
+First, I download COVID-19 data from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the full sample of tenders prepared by Leandro will be called chile_compra datasets.
+
+As I merge the chile_compra datasets with the tender-level emergency data, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, digits = 4)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, the covid emergency dataset contains  
+
+```{r freq table for tag, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+ 
+names(tab_1)[1] <-"Tender Type"
+
+tab_1 %>%
+  kable(format = "latex",
+        booktabs = T, 
+        longtable = T, 
+        caption = "Frequency table: Tender type and matching with covid-19", 
+        digits = 2, format.args = list(big.mark = ",")) %>%
+  kable_styling(latex_options = c("striped", "HOLD_position"))
+
+```
+
+Therefore, if for example we will focus only on "LICITACION PUBLICA", the matching rate would be around `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched" & ClaseDeCompra == "LICITACION PUBLICA"))/nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA")))*100, digits = 4)`\%. 
+
+# Task 1 
+
+# Task 2
+
+# Task 3
