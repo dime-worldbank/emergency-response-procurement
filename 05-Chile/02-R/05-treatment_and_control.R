@@ -1,35 +1,48 @@
-{
+# Load data ---------------------------------------------------------------
   
-  # Read all the procurement data
-  data_2020 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2020.rds"))
-  data_2021 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2021.rds"))
-  data_2022 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2022.rds"))
+  { # PREPARE ORDINARY PROCUREMENT DATA (2020 - 2022)
+    
+    # Read all the procurement data
+    data_2020 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2020.rds"))
+    data_2021 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2021.rds"))
+    data_2022 <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/tender-2022.rds"))
+    
+    # Join all the previous datasets together  
+    data_tenders <- rbind(data_2020, data_2021)
+    data_tenders <- rbind(data_tenders, data_2022)
+    
+    # Delete old datasets
+    rm(data_2020, data_2021, data_2022)
+    
+  }
   
-  # Join all the previous datasets together  
-  data_tenders <- rbind(data_2020, data_2021)
-  data_tenders <- rbind(data_tenders, data_2022)
+  { # COVID-19 DATA
+    
+    # Download the covid-19 procurement list
+    download.file("https://transparenciachc.blob.core.windows.net/covid/OC_COVID.zip", destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/COVID19.zip"))
+    
+    # Unzip 
+    unzip(paste0(dropbox_dir, "2 - data_construct/1-data_temp/COVID19.zip"), exdir = paste0(dropbox_dir, "2 - data_construct/1-data_temp"))
+    
+    # Load COVID-19 data
+    tender_covid <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/OC_COVID19.csv"    ))
+    item_covid   <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/OCItem_COVID19.csv"))
+    
+    # Change name of columns for ID
+    colnames(tender_covid)[3] <- "ID"
+    colnames(item_covid)[3]   <- "ITEM_ID"
   
-  # Delete old datasets
-  rm(data_2020, data_2021, data_2022)
+  }
   
-  # Download the covid-19 procurement list
-  download.file("https://transparenciachc.blob.core.windows.net/covid/OC_COVID.zip", destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/COVID19.zip"))
-  
-  # Unzip 
-  unzip(paste0(dropbox_dir, "2 - data_construct/1-data_temp/COVID19.zip"), exdir = paste0(dropbox_dir, "2 - data_construct/1-data_temp"))
-  
-  # Load COVID-19 data
-  tender_covid <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/OC_COVID19.csv"    ))
-  item_covid   <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/OCItem_COVID19.csv"))
-  
-  colnames(tender_covid)[3] <- "ID"
-  colnames(item_covid)[3] <- "ITEM_ID"
-  
-  tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data_tenders$tender_code, "Matched", "Unmatched")
-  
-  # Compute the distribution of matched and unmatched 
+
+# Explanatory Data Analysis -----------------------------------------------
+
   {
     
+    # Merge covid data and ordinary data to see which tenders match 
+    tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data_tenders$tender_code, "Matched", "Unmatched")
+    
+    # Create two way freq tab to see how the unmatched tenders are distributed
     tab_1 <- tender_covid %>%                     # set the dataset to work on
       tabyl(ClaseDeCompra,tender_covid_bin)  %>%  # select the variables of interest and compute a two-way frequency table
       adorn_totals( where = c("row", "col")) %>%  # compute totals by row and cols
@@ -39,32 +52,37 @@
     
   }
   
-  # Add a variable to identify which tenders are covid-emergency related 
-  for (year in seq(2015, 2022)) {
+
+# Label treatment vs control ----------------------------------------------
+
+  {
     
-    for (level in c("tender","lot","offer")) {
+    # Add a variable to identify which tenders are covid-emergency related 
+    for (year in seq(2015, 2022)) {
       
-      # load the data
-      data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
-      
-      # add the variable based on the ID from teh covid-19 dataset
-      data %>%  
-        mutate(
-          tender_covid_19 = ifelse(data$tender_code %in% tender_covid$ID, 1, 0)
-        )
-      
-      # Save the new data
-      saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
-      
-      # Clean the data from the workspace  
-      rm(data)
+      for (level in c("tender","lot","offer")) {
+        
+        # load the data
+        data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
+        
+        # add the variable based on the ID from the covid-19 dataset
+        data %>%  
+          mutate(
+            tender_covid_19 = ifelse(data$tender_code %in% tender_covid$ID, 1, 0)
+          )
+        
+        # Save the new data
+        saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
+        
+        # Clean the data from the workspace  
+        rm(data)
+        
+      }
       
     }
     
-  }
-  
-  # Add a variable to identify which products are covid-related
-  for (year in seq(2015, 2022)) {
+    # Add a variable to identify which products are covid-related
+    for (year in seq(2015, 2022)) {
       
       # load the data
       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
@@ -72,15 +90,16 @@
       # add the variable based on the ID from teh covid-19 dataset
       data %>%  
         mutate(
-          tender_covid_19 = ifelse(data$tender_code %in% item_covid$ITEM_ID, 1, 0)
+          tender_covid_19   = ifelse(data$tender_code %in% item_covid$ITEM_ID, 1, 0),
+          medical_equipment = ifelse(substr(data$lot_code_onu, 0, 2) == 42, 1, 0)
         )
       
       # Save the new data
-      saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
+      saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
       
       # Clean the data from the workspace  
       rm(data)
+      
+    }
     
   }
-  
-}

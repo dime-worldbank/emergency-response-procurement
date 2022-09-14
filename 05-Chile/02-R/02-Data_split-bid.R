@@ -348,8 +348,6 @@ for (k in seq_along(sequence_dates)) {
         NA
     }
     
-    # Tabulating dates 
-    count(bid_data_rename$tender_date_format)
     
     # Adjusting duration variable
     bid_data_rename<- bid_data_rename %>%
@@ -360,8 +358,6 @@ for (k in seq_along(sequence_dates)) {
                           str_detect(tender_date_format,pattern=or("week","WEEk")) ~ dweeks(x = tender_date_evaluation)
                 )
       )  
-    
-    count(bid_data_rename$tender_time_unit)
     
     # Adjusting duration variable
     bid_data_rename<- bid_data_rename %>%
@@ -487,8 +483,6 @@ for (k in seq_along(sequence_dates)) {
                  participant_rut,lot_code_onu, year,month) %>%
         arrange(tender_id,lot_id,participant_estab_id)
       
-      # counting wrong seller rut
-      count(offer_data) 
       
       # Checking file size
       print(object.size(offer_data), units = "Mb")
@@ -509,9 +503,7 @@ for (k in seq_along(sequence_dates)) {
         # removing duplicates
         distinct(lot_id, .keep_all = TRUE) %>%
         relocate(buyer_id,tender_code,lot_id,lot_code_onu,buyer_id,buyer_rut)  
-      
-      # counting wrong seller rut
-      count(lot_data )
+    
       
       # Checking file size
       print(object.size(lot_data), units = "Mb")
@@ -526,9 +518,7 @@ for (k in seq_along(sequence_dates)) {
         distinct(tender_id, .keep_all = TRUE) %>%
         relocate(tender_id,tender_code,year,month) %>%
         arrange(tender_id)
-      
-      # Counting
-      count(tender_data$year)
+    
       
       # Checking size 
       print(object.size(tender_data), units = "Mb")
@@ -544,9 +534,7 @@ for (k in seq_along(sequence_dates)) {
         distinct(buyer_id, .keep_all = TRUE) %>%
         relocate(buyer_id,buyer_rut ) %>%
         arrange(buyer_id)
-      
-      # Counting
-      count(buyer_data$D_rut_buyer_ok)
+    
       
       # Checking size 
       print(object.size(buyer_data), units = "Mb")
@@ -562,9 +550,7 @@ for (k in seq_along(sequence_dates)) {
         distinct(participant_estab_id, .keep_all = TRUE) %>%
         relocate(participant_estab_id,participant_rut) %>%
         arrange(participant_estab_id)
-      
-      # Counting
-      count(seller_data$D_rut_participant_ok)
+
       
       # Checking file size
       print(object.size(seller_data), units = "Mb")
