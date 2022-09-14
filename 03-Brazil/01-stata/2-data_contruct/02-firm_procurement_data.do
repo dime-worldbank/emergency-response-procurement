@@ -64,7 +64,7 @@
 		
 	* Saving
 	compress
-	save "${path_project}/1_data/01-firm_caracteristcs",replace
+	save "${path_project}/1_data/02-firm_caracteristcs",replace
 }
 .
 

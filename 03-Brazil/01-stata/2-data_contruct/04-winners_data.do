@@ -29,7 +29,7 @@
 
 * 3: Data winner:
 {
-	use "${path_project}/1_data/01-participants_data" if D_winner==1,clear
+	use "${path_project}/1_data/03-participants_data" if D_winner==1,clear
 	
 	gduplicates drop id_item, force 
 	 
@@ -116,7 +116,7 @@
 	drop _merge
 	
 	label data "Data to calculate competition"		
-	save "${path_project}/1_data/03-winners_data",replace
+	save "${path_project}/1_data/04-winners_data",replace
 }
 . 
 

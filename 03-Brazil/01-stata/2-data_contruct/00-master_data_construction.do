@@ -47,18 +47,22 @@
 	cap mkdir "${path_project}/4_outputs/1_datatemp"
 	
 	* graphs configuration
-	global graph_option graphregion(color(white)) xsize(10) ysize(5)
+	global graph_option graphregion(color(white)) xsize(10) ysize(5) /*
+		*/ xtitle("quater/year") xlabel(`=ym(2015,2)'(2)`=ym(2022,6)', angle(90))
 }
 .
 
-* 1: Firm data - select main information for study
-do "${path_code}/01-firm_procurement_data.do"
+* 1: Tender data - tender data
+do "${path_code}/01-tender_data.do"
+
+* 2: Firm data - select main information for study
+do "${path_code}/02-firm_procurement_data.do"
  
-* 2: Data participants: Data offer X item level
-do "${path_code}/02-participants_data.do"
+* 3: Data participants: Data offer X item level
+do "${path_code}/03-participants_data.do"
  
-* 3: Winners: Item level data restricted to products that has a winner.
-do "${path_code}/03-winners_data.do" 
+* 4: Winners: Item level data restricted to products that has a winner.
+do "${path_code}/04-winners_data.do" 
 
 
 * Notes:
