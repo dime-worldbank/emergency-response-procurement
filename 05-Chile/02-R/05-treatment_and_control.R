@@ -16,6 +16,9 @@
        
       }
       
+      # Remove 2022 data to free memory
+      rm(data_offer_2022, data_lot_2022)
+      
       # Download supplementary data
       download.file("https://transparenciachc.blob.core.windows.net/oc-da/hist_moneda_H_vs_I.csv", destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/currency.csv"))
       download.file("https://transparenciachc.blob.core.windows.net/oc-da/hist_OC_erroneas.csv"  , destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/amount.csv"))
@@ -42,11 +45,11 @@
   }
 
 
-# Adjusting datasets ------------------------------------------------------
+# Pooling datasets ------------------------------------------------------
 
   {
     
-    # Create a pooled tender-level dataset from 2015 to 2021 
+    # Create pooled data frames at tender/item/offer level from 2015 to 2021 
     
     for (level in c("tender","lot","offer")) {
       
@@ -63,6 +66,9 @@
         # Append the data frame to the old one
         data <- rbind(data, data_to_append)
         
+        # Remove data to append
+        rm(data_to_append)
+        
       }
       
       # Assign new name to the final data frame 
@@ -76,65 +82,92 @@
     
   }
  
+
+# Data cleaning: e-procurement portal -------------------------------------
+
+  {
+    
+    # First, I clean rename the columns for compatibility reasons
+    currency_conversion <- currency_conversion %>% 
+      rename(
+        year           = YEAR   ,
+        month          = MONTH  ,
+        offer_currency = MONEDA 
+      ) %>% 
+      select(
+        year           , 
+        month          , 
+        offer_currency ,
+        VMUSD
+      ) %>% 
+      mutate(
+        year  = as.integer(year)                 ,
+        month = as.integer(month)                ,
+        VMUSD = as.numeric(gsub(",",".", VMUSD))
+      )
+      
+    # I merge the currency conversion rate matrix with the list of offers
+    data_offer <- left_join(data_offer, currency_conversion, by = c("year","month","offer_currency"))
+    
+    # I convert the values in USD 
+    data_offer_usd <- data_offer %>% 
+      mutate(
+        offer_award_value        = offer_award_value       * VMUSD       , 
+        offer_unit_price         = offer_unit_price        * VMUSD       , 
+        offer_total_price        = offer_total_price       * VMUSD       ,  
+        offer_total_price_award  = offer_total_price_award * VMUSD
+      )
+    
+  }
+
+
  
 # Label the tenders from 2022
-tender_covid$year_2022  <- ifelse(tender_covid$ID %in% data_2022$tender_code, 1, 0)
+tender_covid$year_2022  <- ifelse(tender_covid$ID %in% data_tender_2022$tender_code, 1, 0)
 
 # Change name of columns for ID
 colnames(tender_covid)[3] <- "ID"
 colnames(item_covid)[3]   <- "ITEM_ID"
 
- # Label treatment vs control ----------------------------------------------
+# TREATMENT VS CONTROL ----------------------------------------------
  
    {
 
      # Add a variable to identify which tenders are covid-emergency related
-     for (year in seq(2015, 2022)) {
-
-       for (level in c("tender","lot","offer")) {
-
+     for (level in c("tender","lot","offer")) {
+       
+       if (level == "tender" | level == "offer") {
+         
          # load the data
-         data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
-
+         assign("data", get(paste0("data_", level)))
+         
          # add the variable based on the ID from the covid-19 dataset
          data <- data %>%
            mutate(
              tender_covid_19 = ifelse(tender_code %in% tender_covid$ID, 1, 0)
            )
-
-         # Save the new data
-         saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/", level, "-", year,".rds"))
-
-         # Clean the data from the workspace
-         rm(data)
-
+         
+         assign(paste0("data_", level), data)
+         
+       } else {
+         
+         # load the data
+         assign("data", data_lot)
+         
+         # add the variable based on the ID from the covid-19 dataset
+         data <- data %>%
+           mutate(
+             item_covid_19   = ifelse(data$tender_code %in% item_covid$ITEM_ID, 1, 0),
+             medical_equipment = ifelse(substr(data$lot_code_onu, 0, 2) == 42, 1, 0)
+           )
+         
+         assign("data_lot", data)
+         
        }
-
+         
      }
-
-     # Add a variable to identify which products are covid-related
-     for (year in seq(2015, 2022)) {
-
-       # load the data
-       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
-
-       # add the variable based on the ID from teh covid-19 dataset
-       data <- data %>%
-         mutate(
-           tender_covid_19   = ifelse(data$tender_code %in% item_covid$ITEM_ID, 1, 0),
-           medical_equipment = ifelse(substr(data$lot_code_onu, 0, 2) == 42, 1, 0)
-         )
-
-       # Save the new data
-       saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
-
-       # Clean the data from the workspace
-       rm(data)
-
-     }
-
-   }
-
-
+     
+   }   
+     
 
 

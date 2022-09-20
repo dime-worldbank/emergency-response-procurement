@@ -50,7 +50,7 @@
   {
     # first month/year - MM/01/YYYY
     year_month_start = mdy("01/01/2015")
-    year_month_end   = mdy("01/08/2022")
+    year_month_end   = mdy("01/06/2022")
     
     # To use in the loop
     sequence_dates <- seq.Date( from = year_month_start,
