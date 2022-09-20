@@ -84,7 +84,7 @@
 
 \title{Report Chile: data work COVID-19}
 \author{Ruggero Doino}
-\date{13 September, 2022}
+\date{19 September, 2022}
 
 \begin{document}
 \maketitle
@@ -96,18 +96,56 @@
 \hypertarget{data-exploring}{%
 \section{Data Exploring}\label{data-exploring}}
 
+\textbf{E-procurement}
+
+The e-procurement portal gathers information about 1,061,341 tenders
+such as ``Licitation Publica'' and ``Licitation Privada'', from 2015 to
+2021. The analysis will focus only on successful tenders
+(``Adjudicada''), and thus tenders that went ``Cerrada''(1.7 \%),
+``Desierta'' (12 \%), ``Revocada'' (1.3 \%), ``Suspendida'' (0.011 \%)
+will be excluded. As such, the final sample will account for 901,968 (85
+\% of the original sample).
+
+This dataset contains a wide set of variables summarized in the
+following list:
+
+\begin{itemize}
+  \item Tender-level: description, title, date of publication/query/award/payment, type, buyer characteristics.
+  \item Item-level: quantity, price, description, title, UNSPSC codes.
+  \item Participant-level: bid details such as price and volumes, firms' name.
+\end{itemize}
+
+\textbf{Covid portal}
+
 First, I download COVID-19 data from
 \href{https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9}{here}.
 The repository contains two files: ``OC\_COVID19.csv'' (tenders related
 to COVID-19 emergency) and ``OCItem\_COVID19.csv'' (list of items
 related to COVID-19 emergency). From now on, I will call these datasets
-tender-level and item-level emergency datasets, while the full sample of
-tenders prepared by Leandro will be called chile\_compra datasets.
+tender-level and item-level emergency datasets, while the ordinary full
+sample of tenders prepared by Leandro will be called chile\_compra
+datasets. This dataset gathers information about 220,584 tenders with
+the following set of variables:
+
+\begin{itemize}
+  \item Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
+  \item Item-level: quantity, price, only date of delivery, UNSPSC code, description. 
+  \item Participant-level: no bid information.
+\end{itemize}
+
+\textbf{Merging two datasets}
 
 As I merge the chile\_compra datasets with the tender-level emergency
-data, I find that only 14.38 \% of covid emergency tenders can be
-identified in the chile\_compra datasets. However, the covid emergency
-dataset contains
+data, I find that only 42 \% of covid emergency tenders can be
+identified in the chile\_compra datasets. However, discrapencies could
+be explained by several reasons:
+
+\begin{itemize}
+  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, 0 (0.00 \%) are from 2022. 
+  \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes 44837 (20.3 \%).
+  \item Since we focus only on successful tenders from the ordinary e-procurement portal, 220584 (20 \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
+  \item 122546 (55.6 \%) emergency tenders do not show any tender ID. 
+\end{itemize}
 
 \begin{longtable}[t]{llll}
 \caption{\label{tab:freq table for tag}Frequency table: Tender type and matching with covid-19}\\
@@ -115,22 +153,43 @@ dataset contains
 Tender Type & Matched & Unmatched & Total\\
 \midrule
 \cellcolor{gray!6}{COMPRA AGIL} & \cellcolor{gray!6}{0  (0\%)} & \cellcolor{gray!6}{38096 (17\%)} & \cellcolor{gray!6}{38096  (17\%)}\\
-CONVENIO MARCO & 1403  (1\%) & 55764 (25\%) & 57167  (26\%)\\
+CONVENIO MARCO & 51552 (23\%) & 5615  (3\%) & 57167  (26\%)\\
 \cellcolor{gray!6}{LICITACION PRIVADA} & \cellcolor{gray!6}{49  (0\%)} & \cellcolor{gray!6}{246  (0\%)} & \cellcolor{gray!6}{295   (0\%)}\\
-LICITACION PUBLICA & 30261 (14\%) & 14281  (6\%) & 44542  (20\%)\\
+LICITACION PUBLICA & 40228 (18\%) & 4314  (2\%) & 44542  (20\%)\\
 \cellcolor{gray!6}{MICROCOMPRA} & \cellcolor{gray!6}{0  (0\%)} & \cellcolor{gray!6}{4  (0\%)} & \cellcolor{gray!6}{4   (0\%)}\\
 \addlinespace
 PARA INFORMAR & 0  (0\%) & 953  (0\%) & 953   (0\%)\\
-\cellcolor{gray!6}{TRATO DIRECTO} & \cellcolor{gray!6}{1  (0\%)} & \cellcolor{gray!6}{79526 (36\%)} & \cellcolor{gray!6}{79527  (36\%)}\\
-Total & 31714 (14\%) & 188870 (86\%) & 220584 (100\%)\\
+\cellcolor{gray!6}{TRATO DIRECTO} & \cellcolor{gray!6}{2  (0\%)} & \cellcolor{gray!6}{79525 (36\%)} & \cellcolor{gray!6}{79527  (36\%)}\\
+Total & 91831 (42\%) & 128753 (58\%) & 220584 (100\%)\\
 \bottomrule
 \end{longtable}
 
-Therefore, if for example we will focus only on ``LICITACION PUBLICA'',
-the matching rate would be around 67.94
+The emergency portal can only partially help us to identify which
+tenders are covid-related since the merging rate with the main sample is
+only 42 \%. Therefore, I will also define tenders based on the
+description of the tender.
+
+\emph{Definition of covid-related tender} Covid-related tender is
+defined as any tender that meet one of the two following conditions:
+
+\begin{itemize}
+  \item The tender has been registered in the covid emergency e-procurement portal. However, we need to keep in mind that 46 \% of tenders do not have a string such as "COVID-19", "COVID" and/or "CORONAVIRUS" in its description.  
+  \item The tender has in its description a string such as "COVID-19", "COVID" and/or "CORONAVIRUS".  
+\end{itemize}
+
+data\$
 
 \hypertarget{task-1}{%
 \section{Task 1}\label{task-1}}
+
+\begin{itemize}
+  \item Product classification: We define three different categories: 
+  \begin{enumerate}
+    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data).
+    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is noy part of the covid emergency data)
+    \item non medical products (UNSPSC code does not start with 42)
+  \end{enumerate}
+\end{itemize}
 
 \hypertarget{task-2}{%
 \section{Task 2}\label{task-2}}

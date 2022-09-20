@@ -105,7 +105,7 @@ for (k in seq_along(sequence_dates)) {
   run_correct=TRUE
   tryCatch(
     {
-      data_temp_check <- data.table::fread(file_csv_path, encoding = "Latin-1")
+      data_temp_check <- data.table::fread(file_csv_path, encoding = 'UTF-8')
     },
     error=function(cond) {
       print("Error:",quote=FALSE)

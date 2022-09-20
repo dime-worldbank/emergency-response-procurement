@@ -26,16 +26,54 @@ knit: (function(inputFile, encoding) {
 # Run the Master script
 source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
 
-format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, digits = 2)
-
 ```
 
-First, I download COVID-19 data from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the full sample of tenders prepared by Leandro will be called chile_compra datasets.
+**E-procurement**
 
-As I merge the chile_compra datasets with the tender-level emergency data, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, digits = 4)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, the covid emergency dataset contains  
+The e-procurement portal gathers information about `r format(nrow(data), nsmall = 0, digits = 2, big.mark = ",")` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada"(`r format((nrow(data %>% filter(tender_status == "Cerrada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Desierta" (`r format((nrow(data %>% filter(tender_status == "Desierta (o art. 3 ó 9 Ley 19.886)"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Revocada" (`r format((nrow(data %>% filter(tender_status == "Revocada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Suspendida" (`r format((nrow(data %>% filter(tender_status == "Suspendida"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%) will be excluded. As such, the final sample will account for `r format(nrow(data %>% filter(tender_status == "Adjudicada")), nsmall = 0, digits = 2, big.mark = ",")` (`r format((nrow(data %>% filter(tender_status == "Adjudicada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \% of the original sample). 
+
+This dataset contains a wide set of variables summarized in the following list: 
+
+\begin{itemize}
+  \item Tender-level: description, title, date of publication/query/award/payment, type, buyer characteristics.
+  \item Item-level: quantity, price, description, title, UNSPSC codes.
+  \item Participant-level: bid details such as price and volumes, firms' name.
+\end{itemize}
+
+**Covid portal**
+
+First, I download COVID-19 data from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r format(nrow(tender_covid), nsmall = 0, digits = 2, big.mark = ",")` tenders with the following set of variables:
+
+\begin{itemize}
+  \item Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
+  \item Item-level: quantity, price, only date of delivery, UNSPSC code, description. 
+  \item Participant-level: no bid information.
+\end{itemize}
+
+**Merging two datasets** 
+
+As I merge the chile_compra datasets with the tender-level emergency data, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
+
+\begin{itemize}
+  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, `r format(nrow(tender_covid %>% filter(year_2022 == 1)), nsmall = 0, digits = 2)` (`r format((nrow(tender_covid %>% filter(year_2022 == 1))/nrow(tender_covid))*100, nsmall = 2, digits = 2)` \%) are from 2022. 
+  \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes `r format(nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA")), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA"))/nrow(tender_covid))*100, nsmall = 1, digits = 2)` \%).
+  \item Since we focus only on successful tenders from the ordinary e-procurement portal, `r format(nrow(tender_covid %>% filter(ClaseDeCompra != "Enviada al Proveedor" | ClaseDeCompra != "Aceptada")), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
+  \item `r format(nrow(tender_covid %>% filter(is.na(ID))), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(is.na(ID)))/nrow(tender_covid))*100, nsmall = 1, digits = 2)` \%) emergency tenders do not show any tender ID. 
+\end{itemize}
 
 ```{r freq table for tag, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
  
+    # Merge covid data and ordinary data to see which tenders match 
+    tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data$tender_code, "Matched", "Unmatched")
+    
+    # Create two way freq tab to see how the unmatched tenders are distributed
+    tab_1 <- tender_covid %>%                     # set the dataset to work on
+      tabyl(ClaseDeCompra, tender_covid_bin)  %>%  # select the variables of interest and compute a two-way frequency table
+      adorn_totals( where = c("row", "col")) %>%  # compute totals by row and cols
+      adorn_percentages("all")               %>%  # add percentages to the table
+      adorn_pct_formatting(digits = 0)       %>%  # format with 0 digits
+      adorn_ns( position = "front" )  
+
 names(tab_1)[1] <-"Tender Type"
 
 tab_1 %>%
@@ -48,9 +86,90 @@ tab_1 %>%
 
 ```
 
-Therefore, if for example we will focus only on "LICITACION PUBLICA", the matching rate would be around `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched" & ClaseDeCompra == "LICITACION PUBLICA"))/nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA")))*100, digits = 4)`\%. 
+The emergency portal can only partially help us to identify which tenders are covid-related since the merging rate with the main sample is only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \%. Therefore, I will also define tenders based on the description of the tender.
+
+*Definition of covid-related tender* Covid-related tender is defined  as any tender that meet one of the two following conditions:
+\begin{itemize}
+  \item The tender has been registered in the covid emergency e-procurement portal. However, we need to keep in mind that `r format(((nrow(tender_covid %>% filter(!grepl("COVID|covid|Covid|CORONAVIRUS|covid-19", get("Descripcion OC")) & !grepl("COVID|covid|Covid|CORONAVIRUS|covid-19", get("Nombre OC")))))/(nrow(tender_covid)))*100, nsmall = 0, digits = 2)` \% of tenders do not have a string such as "COVID-19", "COVID" and/or "CORONAVIRUS" in its description.  
+  \item The tender has in its description a string such as "COVID-19", "COVID" and/or "CORONAVIRUS".  
+\end{itemize}
 
 # Task 1 
+
+\begin{itemize}
+  \item Product classification: We define three different categories: 
+  \begin{enumerate}
+    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data).
+    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is noy part of the covid emergency data)
+    \item non medical products (UNSPSC code does not start with 42)
+  \end{enumerate}
+\end{itemize}
+
+   {
+     
+     # List of 
+     list_matched <- (tender_covid[tender_covid$tender_covid_bin == "Matched",])
+     
+     # Extract the list of item purchased within covid emergency tenders
+     item_covid_list <- item_covid[!duplicated(item_covid$poiGoodAndService),c("ITEM_ID", "poiGoodAndService")] %>% 
+       filter(ITEM_ID %in% list_matched$ID) %>% 
+       filter(nchar(poiGoodAndService) > 2)
+     
+     # Add a tag for each item if they items were sold throguh covid emergeny tenders
+     for (year in seq(2020, 2021)) {
+       
+       # load the data
+       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
+       
+       # add the variable based on the ID from teh covid-19 dataset
+       data <- data %>%
+         mutate(
+           covid_tag   = ifelse(lot_code_onu %in% item_covid_list$poiGoodAndService, 1, 0)
+         )
+       
+       # Save the new data
+       saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
+       
+       # Clean the data from the workspace
+       rm(data)
+       
+     }
+     
+     # Add a variable to identify the total value of items purchased for each tender
+     for (year in seq(2015, 2022)) {
+       
+       # load the data
+       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/offer-", year,".rds"))
+       
+       # add the variable based on the ID from teh covid-19 dataset
+       data <- data %>%
+         filter(offer_select == "TRUE") %>% 
+         dplyr::group_by() %>% 
+         dplyr::summarise(offer_total_price_award)
+       
+       # Save the new data
+       saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
+       
+       # Clean the data from the workspace
+       rm(data)
+       
+     }
+     
+     # Load the two new datasets
+     item_2020 <- readRDS("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/2 - data_construct/2-data_compiled/lot-2020.rds")
+     item_2021 <- readRDS("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/2 - data_construct/2-data_compiled/lot-2021.rds")
+     
+     # Create a tab for 2021 2022 purchased items
+     item_covid_tab <- rbind(item_2020, item_2021)
+     
+     item_covid_tab <- item_covid_tab %>% 
+       mutate(
+         
+       )
+     
+     
+     
+   }
 
 # Task 2
 

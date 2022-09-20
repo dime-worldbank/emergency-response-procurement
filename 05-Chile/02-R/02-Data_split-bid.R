@@ -10,7 +10,6 @@ for (k in seq_along(sequence_dates)) {
     month <- month(sequence_dates[k])
     
     # Filling left zero
-    month_str<- str_pad(month, 2, pad = "0")
     
     # displaying
     print(paste0("Running ",month_str,"/",year )) 
@@ -37,7 +36,7 @@ for (k in seq_along(sequence_dates)) {
     
     # %>% slice_sample(prop=0.05) # Making faster
   } 
-  
+
   # 2: Renaming and labeling  ----
   {
     # Checking file size
@@ -299,7 +298,6 @@ for (k in seq_along(sequence_dates)) {
         "tender_TipoAprobacion",                
         "tender_NumeroAprobacion",              
         "tender_NumeroOferentes",               
-        "tender_Correlativo",                   
         "tender_CodigoEstadoLicitacion",        
         "lot_qtd",                              
         "participant_firm_id",                  
