@@ -24,7 +24,7 @@ knit: (function(inputFile, encoding) {
 ```{r Master, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 # Run the Master script
-source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
+load("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/data.RData")
 
 ```
 
@@ -62,10 +62,7 @@ As I merge the chile_compra datasets with the tender-level emergency data, I fin
 \end{itemize}
 
 ```{r freq table for tag, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
- 
-    # Merge covid data and ordinary data to see which tenders match 
-    tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data$tender_code, "Matched", "Unmatched")
-    
+
     # Create two way freq tab to see how the unmatched tenders are distributed
     tab_1 <- tender_covid %>%                     # set the dataset to work on
       tabyl(ClaseDeCompra, tender_covid_bin)  %>%  # select the variables of interest and compute a two-way frequency table
@@ -105,71 +102,6 @@ The emergency portal can only partially help us to identify which tenders are co
   \end{enumerate}
 \end{itemize}
 
-   {
-     
-     # List of 
-     list_matched <- (tender_covid[tender_covid$tender_covid_bin == "Matched",])
-     
-     # Extract the list of item purchased within covid emergency tenders
-     item_covid_list <- item_covid[!duplicated(item_covid$poiGoodAndService),c("ITEM_ID", "poiGoodAndService")] %>% 
-       filter(ITEM_ID %in% list_matched$ID) %>% 
-       filter(nchar(poiGoodAndService) > 2)
-     
-     # Add a tag for each item if they items were sold throguh covid emergeny tenders
-     for (year in seq(2020, 2021)) {
-       
-       # load the data
-       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
-       
-       # add the variable based on the ID from teh covid-19 dataset
-       data <- data %>%
-         mutate(
-           covid_tag   = ifelse(lot_code_onu %in% item_covid_list$poiGoodAndService, 1, 0)
-         )
-       
-       # Save the new data
-       saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
-       
-       # Clean the data from the workspace
-       rm(data)
-       
-     }
-     
-     # Add a variable to identify the total value of items purchased for each tender
-     for (year in seq(2015, 2022)) {
-       
-       # load the data
-       data <- readRDS(paste0(dropbox_dir, "2 - data_construct/2-data_compiled/offer-", year,".rds"))
-       
-       # add the variable based on the ID from teh covid-19 dataset
-       data <- data %>%
-         filter(offer_select == "TRUE") %>% 
-         dplyr::group_by() %>% 
-         dplyr::summarise(offer_total_price_award)
-       
-       # Save the new data
-       saveRDS(data, paste0(dropbox_dir, "2 - data_construct/2-data_compiled/lot-", year,".rds"))
-       
-       # Clean the data from the workspace
-       rm(data)
-       
-     }
-     
-     # Load the two new datasets
-     item_2020 <- readRDS("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/2 - data_construct/2-data_compiled/lot-2020.rds")
-     item_2021 <- readRDS("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/2 - data_construct/2-data_compiled/lot-2021.rds")
-     
-     # Create a tab for 2021 2022 purchased items
-     item_covid_tab <- rbind(item_2020, item_2021)
-     
-     item_covid_tab <- item_covid_tab %>% 
-       mutate(
-         
-       )
-     
-     
-     
-   }
 
 # Task 2
 

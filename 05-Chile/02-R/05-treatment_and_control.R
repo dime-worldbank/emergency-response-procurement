@@ -20,12 +20,10 @@
       rm(data_offer_2022, data_lot_2022)
       
       # Download supplementary data
-      download.file("https://transparenciachc.blob.core.windows.net/oc-da/hist_moneda_H_vs_I.csv", destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/currency.csv"))
       download.file("https://transparenciachc.blob.core.windows.net/oc-da/hist_OC_erroneas.csv"  , destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/amount.csv"))
       download.file("https://transparenciachc.blob.core.windows.net/oc-da/ParidadMoneda.csv"     , destfile = paste0(dropbox_dir, "2 - data_construct/1-data_temp/currency_conversion.csv"))
       
       # Load data
-      currency_issues     <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/currency.csv"    ), encoding = "Latin-1", colClasses = "character")
       amount_issues       <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/amount.csv"), encoding = "Latin-1", colClasses = "character")
       currency_conversion <- fread(paste0(dropbox_dir, "2 - data_construct/1-data_temp/currency_conversion.csv"), encoding = "Latin-1", colClasses = "character")
       
@@ -82,12 +80,11 @@
     
   }
  
-
 # Data cleaning: e-procurement portal -------------------------------------
 
   {
     
-    # First, I clean rename the columns for compatibility reasons
+    # I clean rename the columns for compatibility reasons
     currency_conversion <- currency_conversion %>% 
       rename(
         year           = YEAR   ,
@@ -109,31 +106,42 @@
     # I merge the currency conversion rate matrix with the list of offers
     data_offer <- left_join(data_offer, currency_conversion, by = c("year","month","offer_currency"))
     
-    # I convert the values in USD 
+    # I convert the values in USD (and exclude data that are inconsistent following the list provided by Chile Compra)
     data_offer_usd <- data_offer %>% 
       mutate(
-        offer_award_value        = offer_award_value       * VMUSD       , 
-        offer_unit_price         = offer_unit_price        * VMUSD       , 
-        offer_total_price        = offer_total_price       * VMUSD       ,  
-        offer_total_price_award  = offer_total_price_award * VMUSD
-      )
+        offer_award_value        = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_award_value       * VMUSD), 
+        offer_unit_price         = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_unit_price        * VMUSD), 
+        offer_total_price        = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_total_price       * VMUSD),  
+        offer_total_price_award  = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_total_price_award * VMUSD),
+        offer_currency           = "USD"
+      ) %>% 
+    select(-c(VMUSD))
     
   }
-
-
- 
-# Label the tenders from 2022
-tender_covid$year_2022  <- ifelse(tender_covid$ID %in% data_tender_2022$tender_code, 1, 0)
-
-# Change name of columns for ID
-colnames(tender_covid)[3] <- "ID"
-colnames(item_covid)[3]   <- "ITEM_ID"
 
 # TREATMENT VS CONTROL ----------------------------------------------
  
    {
+     
+     # Change name of columns for ID
+     colnames(tender_covid)[3] <- "ID"
+     colnames(item_covid)[3]   <- "ITEM_ID"
+     
+     # Label the tenders from 2022
+     tender_covid$year_2022       <- ifelse(tender_covid$ID %in% data_tender_2022$tender_code, 1, 0)
+     
+     # Label the tenders that can be matched with the e-procurement data
+     tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data_tender$tender_code, "Matched", "Unmatched")
+     
+     # List of matched data
+     list_matched <- (tender_covid[tender_covid$tender_covid_bin == "Matched",])
+     
+     # Extract the list of item purchased within COVID emergency tenders
+     item_covid_list <- item_covid[!duplicated(item_covid$poiGoodAndService),c("ITEM_ID", "poiGoodAndService")] %>% 
+       filter(ITEM_ID %in% list_matched$ID) %>% 
+       filter(nchar(poiGoodAndService) > 2)
 
-     # Add a variable to identify which tenders are covid-emergency related
+     # Add a variable to identify which tenders are COVID-emergency related
      for (level in c("tender","lot","offer")) {
        
        if (level == "tender" | level == "offer") {
@@ -141,7 +149,7 @@ colnames(item_covid)[3]   <- "ITEM_ID"
          # load the data
          assign("data", get(paste0("data_", level)))
          
-         # add the variable based on the ID from the covid-19 dataset
+         # add the variable based on the ID from the COVID-19 data set
          data <- data %>%
            mutate(
              tender_covid_19 = ifelse(tender_code %in% tender_covid$ID, 1, 0)
@@ -154,20 +162,25 @@ colnames(item_covid)[3]   <- "ITEM_ID"
          # load the data
          assign("data", data_lot)
          
-         # add the variable based on the ID from the covid-19 dataset
+         # add the variable based on the ID from the COVID-19 data set
          data <- data %>%
            mutate(
-             item_covid_19   = ifelse(data$tender_code %in% item_covid$ITEM_ID, 1, 0),
-             medical_equipment = ifelse(substr(data$lot_code_onu, 0, 2) == 42, 1, 0)
+             tender_covid_19   = ifelse(tender_code %in% tender_covid$ID                   , 1, 0) ,
+             item_covid_19     = ifelse(lot_code_onu %in% item_covid_list$poiGoodAndService, 1, 0) ,
+             medical_equipment = ifelse(substr(data$lot_code_onu, 0, 2) == 42              , 1, 0)
            )
          
          assign("data_lot", data)
+         
+         rm(data)
          
        }
          
      }
      
-   }   
+     # Remove covid-related data frame
+     rm(tender_covid, item_covid)
      
+   }   
 
-
+save.image("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
