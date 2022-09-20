@@ -12,7 +12,7 @@ for (k in seq_along(sequence_dates)) {
     # Filling left zero
     
     # displaying
-    print(paste0("Running ",month_str,"/",year )) 
+    print(paste0("Running ", month_str, "/",year )) 
     
     # month leading zero
     month_str<- str_pad(month, 2, pad = "0")

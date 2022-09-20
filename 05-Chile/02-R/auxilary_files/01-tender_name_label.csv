@@ -6,7 +6,7 @@
 1_tender,CodigoExterno                 ,tender_code,tender id code,Licitacion id
 1_tender,Nombre                        ,tender_name,tender name,nombre de la licitacion
 1_tender,Descripcion                   ,tender_description,tender description,description de la licitacion
-1_tender,Tipo.de.Adquisicion           ,tender_type_acquire,tender type,tipo de licitacion
+1_tender,Tipo de Adquisicion,tender_type_acquire,tender type,tipo de licitacion
 1_tender,CodigoEstado                  ,tender_status_code,tender status code,Estado
 1_tender,Estado                        ,tender_status_name,tender status name,Estado
 2_buyer,CodigoOrganismo               ,buyer_organ_code,Responsible organ for tender - code,Responsable de esta licitación
@@ -23,7 +23,7 @@
 1_tender,Tipo                          ,tender_type,,
 1_tender,TipoConvocatoria              ,tender_type_call,,
 1_tender,CodigoMoneda                  ,tender_currency_code,,
-1_tender,Moneda.Adquisicion            ,tender_currency,,
+1_tender,Moneda Adquisicion            ,tender_currency,,
 1_tender,Etapas                        ,tender_stage,,
 1_tender,EstadoEtapas                  ,tender_status_stage,,
 1_tender,TomaRazon                     ,tender_justification,,Toma de razón por Contraloría
@@ -84,9 +84,9 @@
 3_lot,Rubro1                        ,lot_RubroN1,,
 3_lot,Rubro2                        ,lot_RubroN2,,
 3_lot,Rubro3                        ,lot_RubroN3,,
-3_lot,Nombre.producto.genrico       ,lot_generic_name,,
-3_lot,Nombre.linea.Adquisicion      ,lot_name,,
-3_lot,Descripcion.linea.Adquisicion ,lot_description,,
+3_lot,Nombre producto genrico       ,lot_generic_name,,
+3_lot,Nombre linea Adquisicion      ,lot_name,,
+3_lot,Descripcion linea Adquisicion ,lot_description,,
 3_lot,UnidadMedida                  ,lot_measure,unit of measurement,unidad de medida
 3_lot,Cantidad                      ,lot_qtd,item quantity,Cantidad/unidad
 4_participant,CodigoProveedor               ,participant_firm_id,participant code,Código provedor
@@ -95,14 +95,14 @@
 4_participant,NombreProveedor               ,participant_name,participant name,
 4_participant,RazonSocialProveedor          ,participant_formal_name,participant formal name,
 4_participant,DescripcionProveedor          ,participant_descrition,participant_description,
-5_offer,Monto.Estimado.Adjudicado     ,offer_award_value,pode ser item,
-5_offer,Nombre.de.la.Oferta           ,offer_name,,
-5_offer,Estado.Oferta                 ,offer_status,offer accepted or decline,
-5_offer,Cantidad.Ofertada             ,offer_quantity,,
-5_offer,Moneda.de.la.Oferta           ,offer_currency,offer currency,
+5_offer,Monto Estimado Adjudicado     ,offer_award_value,pode ser item,
+5_offer,Nombre de la Oferta           ,offer_name,,
+5_offer,Estado Oferta                 ,offer_status,offer accepted or decline,
+5_offer,Cantidad Ofertada             ,offer_quantity,,
+5_offer,Moneda de la Oferta           ,offer_currency,offer currency,
 5_offer,MontoUnitarioOferta           ,offer_unit_price,unit price offer,
-5_offer,Valor.Total.Ofertado          ,offer_total_price,volume of the offer,
+5_offer,Valor Total Ofertado          ,offer_total_price,volume of the offer,
 5_offer,CantidadAdjudicada            ,offer_qtd_award,,
 5_offer,MontoLineaAdjudica            ,offer_total_price_award,,
 5_offer,FechaEnvioOferta              ,offer_date_send,Date that the offer was send,
-5_offer,Oferta.seleccionada           ,offer_select,tag if the offer win,
+5_offer,Oferta seleccionada           ,offer_select,tag if the offer win,
