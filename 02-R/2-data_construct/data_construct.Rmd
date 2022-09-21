@@ -19,10 +19,6 @@ if (Sys.info()['user'] == "Victo" ) {
 ```
 
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Setup packages
 
 ```{r setup, include=FALSE}
@@ -42,7 +38,9 @@ packages <-
 		"googleLanguageR",
 		"cld2",
 		"writexl",
-		"zoo"
+		"zoo",
+		"rvest",
+		"fuzzyjoin"
 		)
   
 
@@ -56,25 +54,114 @@ pacman::p_load(packages,
 
 ```{r}
 
-awards.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/awards_data.Rda")
+awards.final <- readRDS("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.rds")
 
-bids.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/bids_data.Rda")
+bids.final <- readRDS("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/bids-constructed.rds")
 
-complaints.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/complaints_data.Rda")
+complaints.final <- readRDS("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.rds")
 
-initiation.final <- readRDS("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/initiation_data.Rda")
-
-table(awards.final$award_year)
-table(awards.final$contract_year)
-table(awards.final$initiation_year)
-
-table(bids.final$award_year)
-table(bids.final$initiation_year)
+initiation.final <- readRDS("C:/Users/Victo/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.rds")
 
 ```
 
-# Creating indicators of Task 1
+The first step is to drop observations that will not be included in the the final data: this step includes dropping all the observations that cannot be classified in the three CPV group categories or do not have other information such contract dates or other. 
 
+# Product classification
+
+## Scrapping of the TED codes and merging with the dataset
+
+```{r}
+
+# Extracting the table from the TED dataset
+link <- paste0("https://simap.ted.europa.eu/web/simap/covid-related-tenders/")
+webpage <- read_html(link)
+data <- html_nodes(webpage,"table")
+covid.TED.codes<- html_table(data[[1]],header = TRUE)
+
+# formating the name of the CVP
+covid.TED.codes <- covid.TED.codes %>% 
+  separate(Description,c("Country","Description"), sep = ":") %>% 
+  mutate(type_TED = "Covid related") %>% 
+  distinct(Description,.keep_all = TRUE) %>% 
+  select(Description, type_TED)
+
+# importing and cleaning CPV data
+CPV.data <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/cpv_codes.xlsx")
+
+CPV.data.classified <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/1-raw/cpv-product classification.xlsx")
+
+CPV.data <- CPV.data %>% 
+  mutate(Description = gsub("\\.", "", Description))
+
+CPV.data.classified <- left_join(CPV.data, CPV.data.classified, by = "cpv_code")
+
+# merge with the covid-19 related tenders data
+covid.TED.codes <- stringdist_join(covid.TED.codes, CPV.data, by = 'Description')
+covid.TED.codes <- covid.TED.codes %>% 
+  select(-Description.y)
+
+CPV.data.classified <- left_join(CPV.data.classified, covid.TED.codes, by = "cpv_code")
+CPV.data.classified <- CPV.data.classified %>% 
+  select(-Description.x)
+
+# merge with the initiation data
+initiation.final <- left_join(initiation.final, CPV.data.classified, by = 'cpv_code', all.x=TRUE)
+
+# Exporting the dataset to excel
+CPV.data.export <- CPV.data.classified %>% 
+  mutate(type_TED = replace(type_TED,is.na(type_TED),"non_medical"),
+         type_TED = replace(type_TED, type_TED=="Covid related","medical_covid"),
+         type_final = type_wb,
+         type_final = case_when(type_TED=="medical_covid" ~ type_TED, TRUE ~ type_final),
+         type_final = ifelse(type_final=="Covid related", "medical_covid",type_final)) %>% 
+  select(-c(level, D_most_disaggregated_level, description))
+
+write_xlsx(CPV.data.export,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/cpv_codes_classified.xlsx")
+
+# Codes for future merge with the other datasets
+codes.initiation <- initiation.final %>% 
+  select(initiation_notice_id, type_wb, cpv_4d)
+
+```
+
+# Merging the datasets to have a unique set of bids, initiations, etc. 
+
+```{r}
+
+# cleaning initiation dataset
+initiation.final.complete <- initiation.final %>% 
+  filter(cpv_code!="NA") %>% 
+  mutate(type_wb = case_when(type_TED=="Covid related" ~ type_TED, TRUE ~ type_wb),
+         type_wb = ifelse(type_wb=="Covid related", "medical_covid",type_wb),
+         month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
+         year=as.numeric(initiation_year)) %>% 
+  filter(year>7)
+
+# cleaning bids dataset
+bids.final.complete <- bids.final %>% 
+  filter(bidder_cui!="NA")
+bids.final.complete <- left_join(bids.final.complete , codes.initiation , by  = 'initiation_notice_id')
+bids.final.complete <- bids.final.complete %>% 
+  filter(type_wb!="NA" | cpv_code!="NA")
+
+# cleaning awards dataset
+awards.final.complete <- left_join(awards.final , codes.initiation , by  = 'initiation_notice_id')
+awards.final.complete <- awards.final.complete %>% 
+  filter(type_wb!="NA")
+awards.final.complete <- awards.final.complete %>% 
+  filter(cpv_code!="NA")
+
+# Filtering mount of tenders and keeping only 
+awards.final.complete <- awards.final.complete %>% 
+  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
+
+initiation.final.complete <- initiation.final.complete %>% 
+  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
+
+```
+
+
+# Creating indicators of Task 1
 
 ## Indicator: Number of bidders per tender
 
@@ -82,15 +169,9 @@ Number of bidders is defined as the number of firms who bid within an award and 
 
 ```{r}
 
-table(bids.final$bid_accepted)
-
-# deleting missing values
-bids.final.complete <- bids.final %>% 
-  filter(bidder_cui!="NA")
-
 # calculating number of bidders
 bids.final.complete <- bids.final.complete %>% 
-  group_by(award_notice_id, lot_number) %>% 
+  group_by(initiation_notice_id, lot_number) %>% 
   mutate(bidders = n(),
          bid_accepted_n = if_else(bid_accepted==TRUE,1,0))
 
@@ -111,14 +192,20 @@ bids.monthly <- bids.final.complete %>%
   mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
 
 ggplot(bids.monthly, aes(x=date, y=N_bidders_month)) +
-  geom_line() + 
-  xlab("")
+  geom_line() + ylab("") + xlab("Year") + ylim(0, 250000)+ labs(title = "Number of bidders", caption = "Number of bidders is defined as the number of firms who bid within an award and lot.")
 ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/number_bidders.png")
 
-ggplot(bids.monthly, aes(x=date, y=percent_accepted)) +
-  geom_line() + 
-  xlab("")
-ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/percent_bids_accepted.png")
+## Number of bidders by sector 
+bids.monthly <- bids.final.complete %>% 
+  group_by(month_yr_init, type_wb) %>% 
+  summarise(N_bidders_month = sum(bidders),
+            percent_accepted = mean(bid_accepted_n, na.rm = TRUE)) %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) %>% 
+  filter(type_wb!="NA")
+
+ggplot(bids.monthly, aes(x=date, y=N_bidders_month, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of bidders", caption = "Number of bidders is defined as the number of firms who bid within an award and lot.")
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/number_bidders_type.png")
 
 ```
 
@@ -133,13 +220,14 @@ The data then is aggregated at the monthly level to produce graphical representa
 ```{r}
 
 # New Winners
-awards.final <- awards.final %>% 
+awards.final.complete <- awards.final.complete %>% 
   mutate(month_yr_contract = format_ISO8601(contract_date, precision = "ym"),
          month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
-         diff_days_init_contract = difftime(contract_date,initiation_notice_date , units = "days"))%>% 
-  filter(month_yr_contract!="NA")
+         contract_year_number=as.numeric(contract_year),
+         init_year_number=as.numeric(initiation_year)) %>% 
+  filter(month_yr_contract!="NA" | month_yr_init!="NA") 
 
-awards.final <- awards.final %>% 
+awards.final.complete <- awards.final.complete %>% 
   group_by(winner_cui_id) %>% 
   arrange(winner_cui_id,contract_date) %>% 
   mutate(diff_days_contract = difftime(contract_date, lag(contract_date) , units = "days"),
@@ -147,7 +235,8 @@ awards.final <- awards.final %>%
                                 diff_days_contract > 365 ~ 1 ,
                                 TRUE ~ 0 )) 
 
-awards.monthly <- awards.final %>% 
+awards.monthly <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
   group_by(month_yr_contract) %>% 
   summarise(new_winner_month = sum(new_winner)) %>% 
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) 
@@ -160,86 +249,180 @@ bids.final.complete <- bids.final.complete %>%
   mutate(diff_days_initiation = difftime(initiation_notice_date, lag(initiation_notice_date) , units = "days"),
          new_bidder = case_when(is.na(diff_days_initiation) ~ 1 ,
                                 diff_days_initiation > 365 ~ 1 ,
-                                TRUE ~ 0 ))
+                                TRUE ~ 0 ),
+         init_year_number=as.numeric(initiation_year))
 
 bids.monthly <- bids.final.complete %>% 
+  filter(init_year_number>8) %>% 
   group_by(month_yr_init) %>% 
   summarise(new_bidder_month = sum(new_bidder)) %>% 
   mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) 
  
 # Plots
 ggplot(awards.monthly, aes(x=date, y=new_winner_month)) +
-  geom_line() + 
-  xlab("")
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new winners", caption = "A new winner is defined as a winner (awarded) if the firm has no existing contract or an existing contract older than 12 months.") 
 ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/new_winners.png")
 
 ggplot(bids.monthly, aes(x=date, y=new_bidder_month)) +
-  geom_line() + 
-  xlab("")
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new bidders", caption = "A new bidder is defined as a bidder that has no bids or an existing bid older than 12 months.") 
 ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/new_bidders.png")
+
+
+# New Bidders
+bids.monthly <- bids.final.complete %>% 
+  filter(init_year_number>8) %>% 
+  group_by(month_yr_init, type_wb) %>% 
+  summarise(N_bidders_month = sum(bidders),
+            percent_accepted = mean(bid_accepted_n, na.rm = TRUE),
+            new_bidder_month = sum(new_bidder)) %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
+
+bids.monthly <- bids.monthly %>%
+  filter(type_wb!="non_medical")
+
+# New Winners
+awards.monthly <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
+  group_by(month_yr_contract, type_wb) %>% 
+  summarise(new_winner_month = sum(new_winner)) %>% 
+  mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) 
+ 
+awards.monthly <- awards.monthly %>%
+  filter(type_wb!="non_medical")
+
+ggplot(awards.monthly, aes(x=date, y=new_winner_month, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new winners", caption = "A new winner is defined as a winner (awarded) if the firm has no existing contract or an existing contract older than 12 months.") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/new_winners_type.png")
+
+ggplot(bids.monthly, aes(x=date, y=new_bidder_month, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new bidders", caption = "A new bidder is defined as a bidder if the firm has no existing bid older than 12 months.") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/new_bidders_type.png")
 
 ```
 
 # Indicator: Market concentration 
 
-Two measures of market concentration: number of bidders and winners per sector, and total value of firms' bids per sector
+Two measures of market concentration: number of bidders and winners per sector, and total value of firms' contracts per sector
 
-total value of the bids per sector.
+Number of bidders and winners per sector.
 
-The *total value of firms' bids per sector* is calculated by obtaining the total value from all contracts at the sector level (three digits of CPV code), and the total value of the firm's contract. These variables are calculated at the yearly level. Then, the market share of the firm is defined as the ratio between the total value of the firm's contract divided by the total value of the sector.
+The *number of bidders* is defined as the sum of bidders (number of firms) within a sector and year. The *number of winners* is defined as the sum of winners (number of firms) within a sector and year.
+
+
+Total value of the bids per sector.
+
+The *total value of firms' contracts per sector* is calculated by obtaining the total value from all contracts at the sector level (three digits of CPV code), and the total value of the firm's contract at the sector level. These variables are calculated at the yearly level. Then, the market share of the firm is defined as the ratio between the total value of the firm's contract divided by the total value of the sector.
 
 Then the data is aggregated at the monthly level to produce graphical representations. As some of the firms participate in more than one sector, there are extreme values. Those outliers are dropped in a second graph to allow a better visualization of the data.
 
 ```{r}
 
-# number of bidders and winners per sector
+# number of bidders and winners per sector (4 digits of CPV codes)
+number.winners <- awards.final.complete %>% 
+  filter(cpv_4d!="NA") %>% 
+  group_by(cpv_4d, contract_year) %>% 
+  summarise(number_winners = n()) %>% 
+  arrange(-number_winners)
 
+number.winners.table <- number.winners[1:20,]
+write_xlsx(number.winners.table,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Tables/winners_sector.xlsx")
+
+number.bidders <- bids.final.complete %>% 
+  filter(cpv_4d!="NA") %>% 
+  group_by(cpv_4d, initiation_year) %>% 
+  summarise(number_bidders = n()) %>% 
+  arrange(-number_bidders)
+
+number.bidders.table <- number.bidders[1:20,]
+write_xlsx(number.bidders.table,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Tables/bidders_sector.xlsx")
 
 # Total value of firms' bids per sector 
-sector.total <- awards.final %>% 
-  group_by(cpv_group_name, contract_year) %>% 
-  summarise(total_sector=sum(value_ron, na.rm = TRUE))
+sector.total <- awards.final.complete %>% 
+  group_by(cpv_4d, contract_year) %>% 
+  summarise(total_sector=sum(value_ron, na.rm = TRUE),
+            bids_sector = n())
 
-firms.total <- awards.final %>% 
-  group_by(winner_cui_id, contract_year) %>% 
-  summarise(total_firm=sum(value_ron, na.rm = TRUE))
+firms.total <- awards.final.complete %>% 
+  group_by(winner_cui_id, cpv_4d, contract_year) %>% 
+  summarise(total_firm=sum(value_ron, na.rm = TRUE),
+            bids_firm = n())
 
-awards.final <- left_join(awards.final, sector.total, by = c('cpv_group_name','contract_year')) 
-awards.final <- left_join(awards.final, firms.total, by = c('winner_cui_id','contract_year')) 
+awards.final.complete <- left_join(awards.final.complete, sector.total, by = c('cpv_4d','contract_year')) 
+awards.final.complete <- left_join(awards.final.complete, firms.total, by = c('winner_cui_id','cpv_4d','contract_year')) 
 
-awards.final.firms <- awards.final %>% 
+awards.final.firms <- awards.final.complete %>% 
   mutate(firm_share = (total_firm / total_sector)*100) %>% 
   distinct(winner_cui_id, contract_year, .keep_all = TRUE) %>% 
   group_by(month_yr_contract, winner_cui_id) %>% 
-  summarise(share_monthly = sum(total_firm)/sum(total_sector)) %>% 
+  summarise(share_monthly = sum(total_firm)/sum(total_sector),
+            bids.sector.monthly = mean(bids_sector),
+            bids.firm.monthly = mean(bids_firm)) %>% 
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep="")))
 
-ggplot(awards.final.firms, aes(x = date, y = share_monthly)) + geom_point() + xlab("Month-year")
+
+# collapsing and plots
+awards.final.month <- awards.final.firms %>% 
+  group_by(date) %>% 
+  summarise(total_share = mean(share_monthly, na.rm = TRUE),
+            bids_sector = mean(bids.sector.monthly, na.rm = TRUE),
+            bids_firm = mean(bids.firm.monthly, na.rm = TRUE)) %>% 
+  arrange(date) %>% 
+  mutate(growth_bids_sector = (bids_sector -lag(bids_sector,12))/lag(bids_sector,12),
+         growth_firm_sector = (bids_firm -lag(bids_firm,12))/lag(bids_firm,12))
+
+ggplot(awards.final.month, aes(x=date, y=total_share)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly market share per firm per sector", caption = "The total value of firms' contracts per sector is calculated by obtaining the total value of the firm's contract at the sector level (four digits of CPV code), divided by the total value from all contracts at the sector level") 
 ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Firms_share_monthly.png")
 
-awards.final.firms.nooutliers <- awards.final.firms %>% 
-  filter(share_monthly<100)
+ggplot(awards.final.month, aes(x=date, y=bids_sector)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly bids per firm per sector", caption = "Number of bids per sector is calculated by obtaining the number of bids per firm, at the sector level (four digits of CPV code)") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Firms_bids_monthly.png")
 
-ggplot(awards.final.firms.nooutliers, aes(x = date, y = share_monthly)) + geom_point() + xlab("Month-year")
-ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Firms_share_monthly_noout.png")
+ggplot(awards.final.month, aes(x=date, y=growth_bids_sector)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average month to month growth rate of average monthly bids per firm per sector", caption = "Number of bids per sector is calculated by obtaining the number of bids per firm, at the sector level (four digits of CPV code)") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Firms_bids_monthly_rate.png")
+
+
+ggplot(awards.final.month, aes(x=date, y=bids_firm)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly bids per firm per sector", caption = "Number of bids per sector is calculated by obtaining the number of bids per firm, at the sector level (four digits of CPV code)") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Sector_bids_monthly.png")
+
+ggplot(awards.final.month, aes(x=date, y=growth_firm_sector)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average month to month growth rate of average monthly bids per firm per sector", caption = "Number of bids per sector is calculated by obtaining the number of bids per firm, at the sector level (four digits of CPV code)") 
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/Sector_bids_monthly_rate.png")
+
 
 ```
 
-# Product classification
-
-(pending)
+Graphs based on product classification - Initiation
 
 ```{r}
 
-CPV.data <- initiation.final %>% 
-  arrange(cpv_div_name,cpv_group_name) %>%
-  select(cpv_div_name, cpv_group_name, cpv_group, cpv_div) %>% 
-  distinct()
+# filtering and plots
+initiation.final.cpv.month <- initiation.final.complete %>% 
+  group_by(month_yr_init, type_wb) %>% 
+  summarise(total = sum(value_est_ron, na.rm = TRUE),
+            avg = mean(value_est_ron, na.rm = TRUE)) %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) %>% 
+  filter(type_wb!="NA")
 
-write.csv(CPV.data,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/Data_CPV_Romania.csv", row.names = FALSE)
+initiation.final.cpv.month2 <- initiation.final.cpv.month %>% 
+  filter(type_wb!="non_medical")
 
+# Graph
+ggplot(initiation.final.cpv.month2, aes(x = date, y = total, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Total value of tenders", caption = "Total amount is calculated by adding individual tender values per type of sector")
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/total_tenders.png")
+
+ggplot(initiation.final.cpv.month, aes(x = date, y = avg, col = type_wb)) +
+  geom_line()+ ylab("") + xlab("Year") + labs(title = "Average value of tenders", caption = "Average amount is calculated by averaging individual tender values per type of sector.")
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/average_tenders_type.png")
+
+# Standardize each plot by month, both starting at the same point
+# Plot average monthly growth rates
 
 ```
+
 
 # Variables for complaint data and translation
 
@@ -258,7 +441,6 @@ write_xlsx(appeals,"C:/Users/Victo/Documents/GitHub/emergency-response-procureme
 
 write_xlsx(procedures,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/procedures.xlsx")
 
-
 # translating variables that are translated in R
 complaints.final <- complaints.final %>% 
   mutate(
@@ -271,20 +453,174 @@ complaints.final <- complaints.final %>%
       outcome == "Respinge" ~ "Rejected"),
     outcome_method_en = case_when(
       outcome_method == "Pe exceptii" ~ "On exceptions", 
-      outcome_method == "Pe fond" ~ "Based on")
-    )
-    
+      outcome_method == "Pe fond" ~ "Based on"))
+
+awards.final.complete <- awards.final.complete %>% 
+  mutate(
+    contract_type_en = case_when (
+      contract_type == "Furnizare" ~ "Supply",
+      contract_type == "Lucrari" ~ "Work",
+      contract_type == "Servicii" ~ "Services"),
+    procedure_type_en = case_when(
+      procedure_type == "Licitatie deschisa" ~ "Open auction",
+      procedure_type == "Procedura simplificata" ~ "Simplified procedure"))
+  
+
 # Importing translated Data
 appeals.en <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/appeals_en.xlsx")
 
 procedures.en <- read_excel("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/procedures_en.xlsx")
 
-# Joining translated data
+# Joining translated data and exporting
 complaints.final <- left_join(complaints.final, appeals.en , by = 'appeal_id')
 complaints.final <- left_join(complaints.final, procedures.en , by = 'appeal_id')
 
+complaints.final.export <- complaints.final %>% 
+  select(procedure_name, procedure_name_en, appellant_name, contested_en, outcome_en, outcome_method_en, appeal_id, appeal_object,  appeal_object_en)
+    
+write_xlsx(complaints.final.export,"C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/4-datasets/2-clean/complaints_translated.xlsx")
+
 
 ```
+
+
+# Tasks 2
+
+## Processing time indicators
+
+Total processing time: contract signature - tender initiation
+Submission time: submission deadline – tender initiation
+Decision time: award date – submission deadline
+Contracting time: contract signature - award date
+Delivery time: delivery date – contract signature
+
+```{r}
+
+awards.final.complete <- awards.final.complete %>% 
+  mutate(total_processing_time = difftime(contract_date,initiation_notice_date , units = "days"), contracting_time = difftime(contract_date,award_notice_date, units = "days"))
+
+
+```
+
+## Finalize the firm product classification
+
+Besides the shares, explore the number of products sold by the firm before, during and after COVID
+Number of different product items (and sectors) sold in one year by the firm
+Number of different product items (and sectors) for which the firm bid in one year
+
+
+preguntar por submission date
+
+
+Number of different product items es en base a los tenders que
+tiene cada empresa (para Romania)
+
+```{r}
+
+# Average mount of tenders
+awards.monthly <- awards.final.complete %>% 
+  filter(init_year_number>8) %>% 
+  group_by(month_yr_init, procedure_type_en) %>% 
+  summarise(total = sum(value_est_ron),
+            avg = mean(value_est_ron)) %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) 
+
+ggplot(awards.monthly, aes(x=date, y=avg, col=procedure_type_en)) + geom_line() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) + labs(title = "Average value of tenders", caption = "Average amount is calculated by averaging individual tender values per type of sector.")
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/average_tenders_contract.png")
+
+
+awards.monthly2 <- awards.monthly %>% 
+  filter(procedure_type_en=="Simplified procedure")
+
+ggplot(awards.monthly2, aes(x=date, y=avg)) + geom_line() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) + labs(title = "Average value of tenders - simplified procedure only", caption = "Average amount is calculated by averaging individual tender values per type of sector.")
+ggsave("C:/Users/Victo/Documents/GitHub/emergency-response-procurement/02-R/3-analysis/Figures/average_tenders_simplified.png")
+
+
+# Scatterplot graphs of values of tenders
+graph <- awards.final.complete %>% 
+  filter(init_year_number > 8) %>%
+  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = procedure_type_en)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Value of individual tenders")
+graph
+
+# only simplified procedures
+awards.final.complete.simp <- awards.final.complete %>% 
+  filter(procedure_type=="Procedura simplificata")
+
+graph <- awards.final.complete.simp %>% 
+  filter(init_year_number > 8) %>%
+  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = type_wb)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Value of individual tenders, simplified procedure only by type of product")
+graph
+
+graph <- awards.final.complete.simp %>% 
+  filter(init_year_number > 8 & type_wb!="non_medical" ) %>%
+  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = type_wb)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Value of individual tenders, simplified procedure only by type of product")
+graph
+
+graph <- awards.final.complete.simp %>% 
+  filter(init_year_number > 8 & type_wb!="non_medical" ) %>%
+  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = ca_central)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Value of individual tenders, simplified procedure only by type of purchase")
+graph
+
+
+# calculate number of different entities that purchase a given product code (CPV) in a month, plot number, group by type_wb 
+awards.final.complete2 <- awards.final.complete %>% 
+  filter(init_year_number > 8) %>%
+  group_by(cpv_code, month_yr_init,type_wb) %>% 
+  mutate(number_purchases_month = n()) %>% 
+  summarise(purchases_month=sum(number_purchases_month))
+awards.final.complete2 <- awards.final.complete2 %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
+
+graph <- awards.final.complete2 %>% 
+  ggplot(aes(x = date, y = purchases_month,col=type_wb)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of entities that purchase a given product (CPV code), by type of product")
+graph
+
+# Number of purchases by entity
+awards.final.complete2 <- awards.final.complete %>% 
+  filter(init_year_number > 8) %>%
+  group_by(ca_name, month_yr_init) %>% 
+  mutate(number_purchases_month = n()) %>% 
+  summarise(purchases_month=sum(number_purchases_month))
+
+awards.final.complete2 <- awards.final.complete2 %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
+
+graph <- awards.final.complete2 %>% 
+  ggplot(aes(x = date, y = purchases_month)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of purchases by entity")
+graph
+
+# Number of purchases by entity and type of purchase
+awards.final.complete2 <- awards.final.complete %>% 
+  filter(init_year_number > 8) %>%
+  group_by(ca_name, month_yr_init, ca_central) %>% 
+  mutate(number_purchases_month = n()) %>% 
+  summarise(purchases_month=sum(number_purchases_month))
+
+awards.final.complete2 <- awards.final.complete2 %>% 
+  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
+
+graph <- awards.final.complete2 %>% 
+  ggplot(aes(x = date, y = purchases_month,col=ca_central)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of purchases by entity, by type of purchase")
+graph
+
+
+# calculate for a month and CPV code the share of contract value by central entity relative to the total contract value in that month (share of central (plot this) vs non-central entities)
+# show the three categories 
+
+
+# plot the outcomes and check the trends
+# dummy for open procedure 
+
+
+# Check if the name of the tender description is included in the raw data 
+
+
+```
+
+
+
+
+
 
 
 
