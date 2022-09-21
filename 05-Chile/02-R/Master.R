@@ -2,6 +2,9 @@
 # main: download bidding data (Reporte de Licitaciones) from Chile procurement and unzip
 
 # 0: Setting R ----
+
+options(scipen=999)
+
 {
   # 1: Cleaning R
   rm(list=ls()) 
@@ -49,7 +52,7 @@
     # 3: Defying range files
   {
     # first month/year - MM/01/YYYY
-    year_month_start = mdy("01/01/2015")
+    year_month_start = mdy("01/01/2022")
     year_month_end   = mdy("01/06/2022")
     
     # To use in the loop
@@ -93,16 +96,20 @@
 }
 
 # 1: Downloading and unzip file
-  source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
+   # source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
 
 # 2: Splitting the data in four modules
-  source(file.path(github_dir,"02-Data_split-bid.R"))
+   # source(file.path(github_dir,"02-Data_split-bid.R"))
 
 # 3: Appending the month level data of the four modules and architecture
-  source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
+   # source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
 
 # 4: Deleting raw files used in the previous codes
-  source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
+   # source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
 
 # 5: Labelling Treatment (emergency COVID-19 purchases) vs Control
-  source(file.path(github_dir,"05-treatment_and_control.R"))
+  # source(file.path(github_dir,"05-treatment_and_control.R"))
+
+
+load("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
+

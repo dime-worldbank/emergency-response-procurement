@@ -74,6 +74,7 @@
       
       # Remove the first data frame 2015
       rm(list = paste0("data_", level, "_2015"))
+      rm(data)
       
     }
     
@@ -107,7 +108,7 @@
     data_offer <- left_join(data_offer, currency_conversion, by = c("year","month","offer_currency"))
     
     # I convert the values in USD (and exclude data that are inconsistent following the list provided by Chile Compra)
-    data_offer_usd <- data_offer %>% 
+    data_offer <- data_offer %>% 
       mutate(
         offer_award_value        = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_award_value       * VMUSD), 
         offer_unit_price         = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_unit_price        * VMUSD), 
@@ -115,7 +116,19 @@
         offer_total_price_award  = ifelse(tender_code %in% amount_issues$NroLicitacion, NA, offer_total_price_award * VMUSD),
         offer_currency           = "USD"
       ) %>% 
-    select(-c(VMUSD))
+      select(-c(VMUSD)) %>% 
+      mutate( # there are 7 wrong cases
+        offer_qtd_award         = ifelse(offer_qtd_award         == "FALSE", 0, offer_qtd_award        ),
+        offer_total_price_award = ifelse(offer_total_price_award == "FALSE", 0, offer_total_price_award)
+      ) 
+    
+    # Remove not more useful data frames
+    rm(currency_conversion, amount_issues)
+    
+    # Now, I want to create the total value purchased from the offers 
+    tot_purchased <- data_offer %>%
+      dplyr::group_by(lot_id)  %>% 
+      dplyr::summarise(offer_total_price_award = sum(offer_total_price_award))
     
   }
 
@@ -127,11 +140,11 @@
      colnames(tender_covid)[3] <- "ID"
      colnames(item_covid)[3]   <- "ITEM_ID"
      
-     # Label the tenders from 2022
-     tender_covid$year_2022       <- ifelse(tender_covid$ID %in% data_tender_2022$tender_code, 1, 0)
-     
      # Label the tenders that can be matched with the e-procurement data
      tender_covid$tender_covid_bin <- ifelse(tender_covid$ID %in% data_tender$tender_code, "Matched", "Unmatched")
+     
+     # Label 2022 tenders
+     tender_covid$year_2022        <- ifelse(tender_covid$ID %in% data_tender_2022$tender_code, 1, 0)
      
      # List of matched data
      list_matched <- (tender_covid[tender_covid$tender_covid_bin == "Matched",])
@@ -142,7 +155,7 @@
        filter(nchar(poiGoodAndService) > 2)
 
      # Add a variable to identify which tenders are COVID-emergency related
-     for (level in c("tender","lot","offer")) {
+     for (level in c("tender", "lot", "offer")) {
        
        if (level == "tender" | level == "offer") {
          
@@ -156,6 +169,8 @@
            )
          
          assign(paste0("data_", level), data)
+         
+         rm(data)
          
        } else {
          
@@ -179,8 +194,66 @@
      }
      
      # Remove covid-related data frame
-     rm(tender_covid, item_covid)
+     rm(item_covid, item_covid_list)
      
    }   
 
-save.image("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
+
+# SUBSAMPLING -------------------------------------------------------------
+
+  {
+    
+    # I need to sub-sample for getting the final sample of interest for the analysis
+    list_tender_code_sub <- data_tender %>% 
+      filter(
+        tender_status == "Adjudicada"
+      )
+    
+    # We sub-sample and save each data frame
+    for (level in c("tender","lot","offer")) {
+      
+      if (level == "tender" | level == "lot") {
+        
+        # load the data
+        assign("data", get(paste0("data_", level)))
+        
+        # add the variable based on the ID from the COVID-19 data set
+        data <- data %>%
+          filter(
+            tender_code %in% list_tender_code_sub$tender_code
+          )
+        
+        saveRDS(data, paste0(dropbox_dir, "2 - data_construct/", paste0("data_", level, "_sub.rds")))
+        
+        rm(data)
+        
+      } else {
+        
+        # load the data
+        assign("data", get(paste0("data_", level, "_usd")))
+        
+        # add the variable based on the ID from the COVID-19 data set
+        data <- data %>%
+          filter(
+            tender_code %in% list_tender_code_sub$tender_code
+          )
+        
+        saveRDS(data, paste0(dropbox_dir, "2 - data_construct/", paste0("data_", level, "_sub.rds")))
+        
+        rm(data)
+        
+      }
+      
+    }
+    
+  }
+
+
+# SAVING  -----------------------------------------------------------------
+
+    {
+      
+      # Save data for the report
+      save(data_tender, tender_covid, file = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
+      
+    }

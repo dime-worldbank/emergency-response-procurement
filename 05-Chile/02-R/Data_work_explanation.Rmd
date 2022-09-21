@@ -1,5 +1,5 @@
 ---
-title: "Report Chile: data work COVID-19"
+title: "Report Chile: data_tender work COVID-19"
 author: "Ruggero Doino"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
@@ -19,18 +19,17 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R") }) 
 ---
 
-# Data Exploring
+# data_tender Exploring
 
 ```{r Master, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
 # Run the Master script
-load("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/data.RData")
+source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
 
 ```
-
 **E-procurement**
 
-The e-procurement portal gathers information about `r format(nrow(data), nsmall = 0, digits = 2, big.mark = ",")` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada"(`r format((nrow(data %>% filter(tender_status == "Cerrada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Desierta" (`r format((nrow(data %>% filter(tender_status == "Desierta (o art. 3 ó 9 Ley 19.886)"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Revocada" (`r format((nrow(data %>% filter(tender_status == "Revocada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Suspendida" (`r format((nrow(data %>% filter(tender_status == "Suspendida"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \%) will be excluded. As such, the final sample will account for `r format(nrow(data %>% filter(tender_status == "Adjudicada")), nsmall = 0, digits = 2, big.mark = ",")` (`r format((nrow(data %>% filter(tender_status == "Adjudicada"))/nrow(data))*100, nsmall = 0, digits = 2, big.mark = ",")` \% of the original sample). 
+The e-procurement portal gathers information about `r format(nrow(data_tender), nsmall = 0, digits = 2, big.mark = ",")` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada"(`r format((nrow(data_tender %>% filter(tender_status == "Cerrada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Desierta" (`r format((nrow(data_tender %>% filter(tender_status == "Desierta (o art. 3 ó 9 Ley 19.886)"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Revocada" (`r format((nrow(data_tender %>% filter(tender_status == "Revocada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Suspendida" (`r format((nrow(data_tender %>% filter(tender_status == "Suspendida"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%) will be excluded. As such, the final sample will account for `r format(nrow(data_tender %>% filter(tender_status == "Adjudicada")), nsmall = 0, digits = 2, big.mark = ",")` (`r format((nrow(data_tender %>% filter(tender_status == "Adjudicada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \% of the original sample). 
 
 This dataset contains a wide set of variables summarized in the following list: 
 
@@ -42,7 +41,7 @@ This dataset contains a wide set of variables summarized in the following list:
 
 **Covid portal**
 
-First, I download COVID-19 data from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r format(nrow(tender_covid), nsmall = 0, digits = 2, big.mark = ",")` tenders with the following set of variables:
+First, I download COVID-19 data_tender from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r format(nrow(tender_covid), nsmall = 0, digits = 2, big.mark = ",")` tenders with the following set of variables:
 
 \begin{itemize}
   \item Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
@@ -52,7 +51,7 @@ First, I download COVID-19 data from [here](https://app.powerbi.com/view?r=eyJrI
 
 **Merging two datasets** 
 
-As I merge the chile_compra datasets with the tender-level emergency data, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
+As I merge the chile_compra datasets with the tender-level emergency data_tender, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
 
 \begin{itemize}
   \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, `r format(nrow(tender_covid %>% filter(year_2022 == 1)), nsmall = 0, digits = 2)` (`r format((nrow(tender_covid %>% filter(year_2022 == 1))/nrow(tender_covid))*100, nsmall = 2, digits = 2)` \%) are from 2022. 
@@ -92,12 +91,12 @@ The emergency portal can only partially help us to identify which tenders are co
 \end{itemize}
 
 # Task 1 
-
+ 
 \begin{itemize}
   \item Product classification: We define three different categories: 
   \begin{enumerate}
-    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data).
-    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is noy part of the covid emergency data)
+    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data\_tender).
+    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is not part of the covid emergency data\_tender)
     \item non medical products (UNSPSC code does not start with 42)
   \end{enumerate}
 \end{itemize}

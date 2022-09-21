@@ -77,14 +77,14 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
-  pdftitle={Report Chile: data work COVID-19},
+  pdftitle={Report Chile: data\_tender work COVID-19},
   pdfauthor={Ruggero Doino},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
-\title{Report Chile: data work COVID-19}
+\title{Report Chile: data\_tender work COVID-19}
 \author{Ruggero Doino}
-\date{19 September, 2022}
+\date{21 September, 2022}
 
 \begin{document}
 \maketitle
@@ -93,8 +93,8 @@
 \setcounter{tocdepth}{2}
 \tableofcontents
 }
-\hypertarget{data-exploring}{%
-\section{Data Exploring}\label{data-exploring}}
+\hypertarget{data_tender-exploring}{%
+\section{data\_tender Exploring}\label{data_tender-exploring}}
 
 \textbf{E-procurement}
 
@@ -117,7 +117,7 @@ following list:
 
 \textbf{Covid portal}
 
-First, I download COVID-19 data from
+First, I download COVID-19 data\_tender from
 \href{https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9}{here}.
 The repository contains two files: ``OC\_COVID19.csv'' (tenders related
 to COVID-19 emergency) and ``OCItem\_COVID19.csv'' (list of items
@@ -136,12 +136,12 @@ the following set of variables:
 \textbf{Merging two datasets}
 
 As I merge the chile\_compra datasets with the tender-level emergency
-data, I find that only 42 \% of covid emergency tenders can be
+data\_tender, I find that only 42 \% of covid emergency tenders can be
 identified in the chile\_compra datasets. However, discrapencies could
 be explained by several reasons:
 
 \begin{itemize}
-  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, 0 (0.00 \%) are from 2022. 
+  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, 355 (0.16 \%) are from 2022. 
   \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes 44837 (20.3 \%).
   \item Since we focus only on successful tenders from the ordinary e-procurement portal, 220584 (20 \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
   \item 122546 (55.6 \%) emergency tenders do not show any tender ID. 
@@ -177,16 +177,14 @@ defined as any tender that meet one of the two following conditions:
   \item The tender has in its description a string such as "COVID-19", "COVID" and/or "CORONAVIRUS".  
 \end{itemize}
 
-data\$
-
 \hypertarget{task-1}{%
 \section{Task 1}\label{task-1}}
 
 \begin{itemize}
   \item Product classification: We define three different categories: 
   \begin{enumerate}
-    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data).
-    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is noy part of the covid emergency data)
+    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data\_tender).
+    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is not part of the covid emergency data\_tender)
     \item non medical products (UNSPSC code does not start with 42)
   \end{enumerate}
 \end{itemize}
