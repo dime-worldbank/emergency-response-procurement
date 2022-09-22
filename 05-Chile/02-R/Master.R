@@ -84,6 +84,15 @@ options(scipen=999)
     dir.create(file.path(dropbox_dir, path_imp, "2-data_compiled" ), showWarnings = FALSE)
     
     # Results
+    path_result <-"3 - data_clean"
+    
+    # Creating folder -raw
+    dir.create(file.path(dropbox_dir, path_result), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_result, "0-data"), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_result, "1-outputs"     ), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_result, "2-graphs"), showWarnings = FALSE)
+    
+    # Results
     path_out <-"data_temporary"
     
     # Creating folder -raw
@@ -108,7 +117,7 @@ options(scipen=999)
    # source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
 
 # 5: Labelling Treatment (emergency COVID-19 purchases) vs Control
-  # source(file.path(github_dir,"05-treatment_and_control.R"))
+   source(file.path(github_dir,"05 - Cleaning.R"))
 
 
 load("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
