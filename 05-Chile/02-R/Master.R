@@ -3,7 +3,7 @@
 
 # 0: Setting R ----
 
-options(scipen=999)
+options(scipen=99999)
 
 {
   # 1: Cleaning R
@@ -26,7 +26,9 @@ options(scipen=999)
          "rebus", 
          "R.utils",
          "janitor",
-         "kableExtra"
+         "kableExtra",
+         "Hmisc",
+         "httr"
       )
     
     # Leitura dos pacotes e dependencias
@@ -51,15 +53,15 @@ options(scipen=999)
 
     # 3: Defying range files
   {
-    # first month/year - MM/01/YYYY
-    year_month_start = mdy("01/01/2022")
+    # first DT_TENDER_MONTH/DT_TENDER_YEAR - MM/01/YYYY
+    year_month_start = mdy("01/01/2015")
     year_month_end   = mdy("01/06/2022")
     
     # To use in the loop
     sequence_dates <- seq.Date( from = year_month_start,
                                 to = year_month_end,
                                 by = 'month')
-    #by = 'year')
+    #by = 'DT_TENDER_YEAR')
   }
   
   # 4: Creating folder to save files
@@ -82,6 +84,7 @@ options(scipen=999)
     dir.create(file.path(dropbox_dir, path_imp), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_imp, "1-data_temp"     ), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_imp, "2-data_compiled" ), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_imp, "3-data_pooled" ), showWarnings = FALSE)
     
     # Results
     path_result <-"3 - data_clean"
@@ -105,20 +108,17 @@ options(scipen=999)
 }
 
 # 1: Downloading and unzip file
-   # source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
+     source(file.path(github_dir,"01-download_data_and_unzip-bid.R"))
 
 # 2: Splitting the data in four modules
-   # source(file.path(github_dir,"02-Data_split-bid.R"))
+     source(file.path(github_dir,"02-Data_split-bid.R"))
 
-# 3: Appending the month level data of the four modules and architecture
-   # source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
+# 3: Appending the DT_TENDER_MONTH level data of the four modules and architecture
+     source(file.path(github_dir,"03-Appending_months_by_module-bid.R"))
 
 # 4: Deleting raw files used in the previous codes
-   # source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
+     source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
 
 # 5: Labelling Treatment (emergency COVID-19 purchases) vs Control
-   source(file.path(github_dir,"05 - Cleaning.R"))
-
-
-load("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
+     source(file.path(github_dir,"05-Cleaning.R"))
 

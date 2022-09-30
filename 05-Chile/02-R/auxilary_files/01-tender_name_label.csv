@@ -1,108 +1,113 @@
-﻿Level,Original_names,New_names,Label,label_pdf
-1_tender,year                          ,year,year tender,
-1_tender,month,month,month tender,
-1_tender,Codigo                        ,tender_id,tender id index,
-1_tender,Link                          ,tender_link,url to tender,url licitacion
-1_tender,CodigoExterno                 ,tender_code,tender id code,Licitacion id
-1_tender,Nombre                        ,tender_name,tender name,nombre de la licitacion
-1_tender,Descripcion                   ,tender_description,tender description,description de la licitacion
-1_tender,Tipo de Adquisicion,tender_type_acquire,tender type,tipo de licitacion
-1_tender,CodigoEstado                  ,tender_status_code,tender status code,Estado
-1_tender,Estado                        ,tender_status_name,tender status name,Estado
-2_buyer,CodigoOrganismo               ,buyer_organ_code,Responsible organ for tender - code,Responsable de esta licitación
-2_buyer,NombreOrganismo               ,buyer_organ_name,Responsible organ for tender - name,
-2_buyer,sector                        ,buyer_sector,,
-2_buyer,RutUnidad                     ,buyer_rut,buyer rut,RUT
-2_buyer,CodigoUnidad                  ,buyer_id,buyer id index,
-2_buyer,NombreUnidad                  ,buyer_name,buyer name,unidad de compra
-2_buyer,DireccionUnidad               ,buyer_address,buyer street name,direccion
-2_buyer,ComunaUnidad                  ,buyer_commune,buyer ,Comuna
-2_buyer,RegionUnidad                  ,buyer_region,region that generates the tender,region en que se genera la licitacion
-1_tender,Informada                     ,tender_informed,,
-1_tender,CodigoTipo                    ,tender_type_code,,
-1_tender,Tipo                          ,tender_type,,
-1_tender,TipoConvocatoria              ,tender_type_call,,
-1_tender,CodigoMoneda                  ,tender_currency_code,,
-1_tender,Moneda Adquisicion            ,tender_currency,,
-1_tender,Etapas                        ,tender_stage,,
-1_tender,EstadoEtapas                  ,tender_status_stage,,
-1_tender,TomaRazon                     ,tender_justification,,Toma de razón por Contraloría
-1_tender,EstadoPublicidadOfertas       ,tender_public_state_offer,,
-1_tender,JustificacionPublicidad       ,tender_adv_jusficatino,,Publicidad de ofertas técnicas
-1_tender,EstadoCS                      ,tender_status_cs,,
-1_tender,Contrato                      ,tender_contract,,
-1_tender,Obras                         ,tender_works,,
-1_tender,CantidadReclamos              ,tender_complains,,
-1_tender,FechaCreacion                 ,tender_date_creation,,fecha de creacion
-1_tender,FechaCierre                   ,tender_date_close_offer,,Fecha de cierre de recepción de la oferta:
-1_tender,FechaInicio                   ,tender_date_start_questions,,Fecha inicio de preguntas
-1_tender,FechaFinal                    ,tender_date_end_questions,,Fecha final de preguntas
-1_tender,FechaPubRespuestas            ,tender_date_answers,,Fecha de publicación de respuestas
-1_tender,FechaActoAperturaTecnica      ,tender_date_tec_act,,Fecha de acto de apertura técnica
-1_tender,FechaActoAperturaEconomica    ,tender_date_economic_act,,Fecha de acto de apertura económica (referencial)
-1_tender,FechaPublicacion              ,tender_date_publication,,fecha de publicacion
-1_tender,FechaAdjudicacion             ,tender_award,,fecha de adjucacion
-1_tender,FechaEstimadaAdjudicacion     ,tender_estimate_award,,
-1_tender,FechaSoporteFisico            ,tender_date_support,,Fecha de entrega en soporte fisico
-1_tender,FechaTiempoEvaluacion         ,tender_date_evaluation,,Fecha estimada de firma de contrato
-1_tender,UnidadTiempoEvaluacion        ,tender_date_format,,
-1_tender,FechaEstimadaFirma            ,tender_date_firm,,Fecha estimada de firma de contrato
-1_tender,FechasUsuario                 ,tender_date_user,,
-1_tender,FechaVisitaTerreno            ,tender_date_visit,,
-1_tender,DireccionVisita               ,tender_DireccionVisita               ,,
-1_tender,FechaEntregaAntecedentes      ,tender_FechaEntregaAntecedentes      ,,
-1_tender,DireccionEntrega              ,tender_DireccionEntrega              ,,
-1_tender,Estimacion                    ,tender_Estimacion                    ,,
-1_tender,FuenteFinanciamiento          ,tender_FuenteFinanciamiento          ,,
-1_tender,VisibilidadMonto              ,tender_VisibilidadMonto              ,,
-1_tender,MontoEstimado                 ,tender_estimated_volume         ,,
+﻿Level,Original_names,New_names,Label,Description
+1_tender,year                          ,DT_TENDER_YEAR,,Year in which the tender was registered in the e-procurement portal
+1_tender,month,DT_TENDER_MONTH,month tender,Month in which the tender was registered in the e-procurement portal
+1_tender,Codigo                        ,ID_TENDER,tender id index,Tender ID that can be used for internal mergings 
+1_tender,Link                          ,URL_TENDER,url to tender,URL link for the official page in the e-procurement portal
+1_tender,CodigoExterno                 ,ID_TENDER_EXTERNAL,Tender code refered to external services,Código de la Licitación de Mercado Publico: external code that can be used as a reference for Mercado Publico
+1_tender,Nombre                        ,STR_TENDER_NAME,Name of the tender,Name of the tender
+1_tender,Descripcion                   ,STR_TENDER_DESCRIPTION,Description of the tender,Description of the tender 
+1_tender,Tipo de Adquisicion,STR_TENDER_TYPE,Type of the tender,Type of the tender (string)
+1_tender,Estado                        ,CAT_TENDER_STATUS,tender status name,"There are 5 status (""Adjudicada"" ""Cerrada"" ""Desierta (o art. 3 ó 9 Ley 19.886)"" ""Revocada"" ""Suspendida"""
+1_tender,Informada                     ,IND_INFORMADA,,"1 if the tender is ""Informada""(Informed)"
+1_tender,CodigoTipo                    ,IND_TENDER_PUBLIC,,"(Public == 1, Private == 2)"
+1_tender,Tipo                          ,CAT_TENDER_TYPE,,"There are 13 types (""LP"" ""LE"" ""L1"" ""LS"" ""CO"" ""B2"" ""E2"" ""LQ"" ""LR"" ""H2"" ""I2"" ""O1"" ""O2"")"
+1_tender,TipoConvocatoria              ,IND_TENDER_CALL,,1 = Abierto 0 = Cerrada
+1_tender,CodigoMoneda                  ,CAT_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
+1_tender,Moneda Adquisicion            ,STR_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
+1_tender,Etapas                        ,IND_TENDER_STAGE,,"Stage of the tender (0,1) --> ??"
+1_tender,EstadoEtapas                  ,CAT_TENDER_STAGE,,"Stage of the tender (1,2) --> ??"
+1_tender,TomaRazon                     ,IND_TENDER_JUSTIFICATION,,1 if the tender requires the decision of the Contraloría
+1_tender,EstadoPublicidadOfertas       ,IND_OFFER_PUBLICITY,,1 if the technical offers will be public knowledge once the technical opening of the offers has been carried out.
+1_tender,JustificacionPublicidad       ,STR_OFFER_PUBLICITY,,Description that justifies showing the technical offer for public knowledge. (Step 1)
+1_tender,EstadoCS                      ,CAT_CS_STATUS,,"Possible values:
+null = when the tender is created,
+1 = assigned when it is published,
+2 = Assigned when the pre-offer is accepted,
+3 = Indicates that the dates in the prcRFBDate were entered,
+4 = when the ranking is inserted or criterion in the prcRankingCS table,
+5 = When the LS decision is published"
+1_tender,Contrato                      ,IND_TENDER_CONTRACT,,If the tender has been awarded with contract
+1_tender,Obras                         ,IND_TENDER_WORKS,,Licitación del tipo Obra Pública: Public Works type tender
+1_tender,CantidadReclamos              ,N_TENDER_COMPLAINS,,Number of complaints received by the Institution or Public Organization responsible for the Tender
+1_tender,FechaCreacion                 ,DT_TENDER_START,,Date of the creation of the tender
+1_tender,FechaCierre                   ,DT_OFFER_END,,Deadline for the end of the bidding period
+1_tender,FechaInicio                   ,DT_QUESTION_START,,Start of the period whithin which firms can ask for clarification about the tender
+1_tender,FechaFinal                    ,DT_QUESTION_END,,End of the period whithin which firms can ask for clarification about the tender
+1_tender,FechaPubRespuestas            ,DT_ANSWERS,,Date of publication of answers requested during the question period
+1_tender,FechaActoAperturaTecnica      ,DT_TECHNICAL_ACT_OPEN,,Date of opening of the tecnhical act
+1_tender,FechaActoAperturaEconomica    ,DT_ECONOMIC_ACT_OPEN,,Date of opening od the economic act 
+1_tender,FechaPublicacion              ,DT_OFFER_START,,"Date of publication of the tender, thus the beggining of the bidding period"
+1_tender,FechaAdjudicacion             ,DT_TENDER_AWARD,,Date of award
+1_tender,FechaEstimadaAdjudicacion     ,DT_TENDER_EST_AWARD,,Fecha Estimada Adjudicacion: estimated date of award
+1_tender,FechaSoporteFisico            ,DT_TENDER_SUPPORT,,Fecha de entrega en soporte fisico: date of delivery in physical support
+1_tender,FechaTiempoEvaluacion         ,DT_TENDER_EVALUATION,,Date of the evaluation of the tender
+1_tender,UnidadTiempoEvaluacion        ,DT_TENDER_FORMAT,,Format of the date
+1_tender,FechaEstimadaFirma            ,DT_SIGNATURE_ESTIMATED,,Estimated date of signature
+1_tender,FechasUsuario                 ,tender_date_user,,Indicates if the user defined additional dates to the tender
+1_tender,FechaVisitaTerreno            ,tender_date_visit,,Field visit date
+1_tender,DireccionVisita               ,tender_DireccionVisita               ,,visiting address
+1_tender,FechaEntregaAntecedentes      ,tender_FechaEntregaAntecedentes      ,,Date on which the Records must be delivered
+1_tender,DireccionEntrega              ,tender_DireccionEntrega              ,,Delivery address
+1_tender,Estimacion                    ,CAT_ESTIMATION,,1 Presupuesto Disponible 2 Precio Referencial 3 Monto no es posible de estimar  
+1_tender,FuenteFinanciamiento          ,STR_FINANCING_SOURCE,,Financing source
+1_tender,VisibilidadMonto              ,IND_ESTIMATION_PUBLICITY,,1 if make public the estimated amount in the tender file
+1_tender,MontoEstimado                 ,AMT_TENDER_ESTIMATED,,Amount estimated by the public body for the tender
 1_tender,Tiempo                        ,tender_time  ,,
 1_tender,UnidadTiempo                  ,tender_time_unit         ,,
-1_tender,Modalidad                     ,tender_Modalidad                     ,,
-1_tender,TipoPago                      ,tender_TipoPago                      ,,
-1_tender,ProhibicionContratacion       ,tender_ProhibicionContratacion       ,,
-1_tender,SubContratacion               ,tender_SubContratacion               ,,
-1_tender,UnidadTiempoDuracionContrato  ,tender_UnidadTiempoDuracionContrato  ,,
-1_tender,TiempoDuracionContrato        ,tender_TiempoDuracionContrato        ,,
-1_tender,TipoDuracionContrato          ,tender_TipoDuracionContrato          ,,
-1_tender,JustificacionMontoEstimado    ,tender_JustificacionMontoEstimado    ,,
-1_tender,ObservacionContrato           ,tender_ObservacionContrato           ,,
-1_tender,ExtensionPlazo                ,tender_ExtensionPlazo                ,,
-1_tender,EsBaseTipo                    ,tender_EsBaseTipo                    ,,
+1_tender,Modalidad                     ,STR_PAYMENT_TYPE,,Type of the payment
+1_tender,TipoPago                      ,CAT_PAYMENT_TYPE,,Type of the payment
+1_tender,ProhibicionContratacion       ,STR_CONTRACT_PROHIBITION,,string that describes what is not allowed for the contract
+1_tender,SubContratacion               ,IND_SUBCONTRACTION,,1 if sub contracting is allowed
+1_tender,UnidadTiempoDuracionContrato  ,TM_CONTRACT_UNIT,,Unit measure used for TM_CONTRACT_DD
+1_tender,TiempoDuracionContrato        ,TM_CONTRACT_DD,,Contract period in days
+1_tender,TipoDuracionContrato          ,IND_CONTRACT_IMMEDIATE,,"Type of execution timing for the contract: 1 if needs to be immediately be executed, 0 if the execution is over a time period"
+1_tender,JustificacionMontoEstimado    ,STR_TENDER_ESTIMATED,,Justification of the tender amount estimated
+1_tender,ObservacionContrato           ,STR_FREE_TEXT_CONTRACT,,"Comments on Amounts, duration and subcontracting (free text)"
+1_tender,ExtensionPlazo                ,IND_TERM_EXTENSION,,"1 if the time terms were extended (If at the closing date/time for receipt of bids, 2 or fewer proposals have been received, the closing period will be automatically extended by 2 business days, only once, under the conditions established by article 25, final paragraph, of the regulation of law 19,886.)"
+1_tender,EsBaseTipo                    ,IND_TENDER_STANDARDS,,1 if the tender was created through standard tenders.
 1_tender,UnidadTiempoContratoLicitacion,tender_UnidadTiempoContratoLicitacion,,
 1_tender,ValorTiempoRenovacion         ,tender_ValorTiempoRenovacion         ,,
 1_tender,PeriodoTiempoRenovacion       ,tender_PeriodoTiempoRenovacion       ,,
-1_tender,EsRenovable                   ,tender_EsRenovable                   ,,
-1_tender,TipoAprobacion                ,tender_TipoAprobacion                ,,
-1_tender,NumeroAprobacion              ,tender_NumeroAprobacion              ,,
-1_tender,FechaAprobacion               ,tender_FechaAprobacion               ,,
-1_tender,NumeroOferentes               ,tender_NumeroOferentes               ,,
-1_tender,Correlativo                   ,tender_Correlativo                   ,,
+1_tender,EsRenovable                   ,IND_RENEWABLE,,1 if it is renewable
+1_tender,TipoAprobacion                ,CAT_APPROVAL_TYPE,,?
+1_tender,NumeroAprobacion              ,ID_APPROVAL,,ID for approval process 
+1_tender,FechaAprobacion               ,DT_APPROVAL,,Date time for tender approval
+1_tender,NumeroOferentes               ,N_SUPPLIERS,,Displays the number of awarded suppliers
+1_tender,Correlativo                   ,CAT_CORRELATIVE,,?
 1_tender,CodigoEstadoLicitacion        ,tender_CodigoEstadoLicitacion        ,,
-3_lot,Codigoitem                    ,lot_id,,
-3_lot,CodigoProductoONU             ,lot_code_onu,,
+2_buyer,CodigoOrganismo               ,ID_BUYER_DEPARTMENT,,Responsible organ for tender - code
+2_buyer,NombreOrganismo               ,STR_BUYER_NAME,,Responsible organ for tender - name
+2_buyer,sector                        ,STR_BUYER_SECTOR,,Type of the buyer
+2_buyer,RutUnidad                     ,ID_BUYER_RUT,buyer rut,Buyer RUT
+2_buyer,CodigoUnidad                  ,ID_BUYER_UNIT,buyer id index,Buyer ID unit
+2_buyer,NombreUnidad                  ,STR_BUYER_UNIT,buyer name,Buyer name unit
+2_buyer,DireccionUnidad               ,STR_BUYER_ADDRESS,buyer street name,Buyer unit address
+2_buyer,ComunaUnidad                  ,STR_BUYER_CITY,buyer ,Buyer unit city
+2_buyer,RegionUnidad                  ,STR_BUYER_REGION,,Buyer unit region 
+3_lot,Codigoitem                    ,ID_ITEM,,
+3_lot,CodigoProductoONU             ,ID_ITEM_UNSPSC,,
 3_lot,Rubro1                        ,lot_RubroN1,,
 3_lot,Rubro2                        ,lot_RubroN2,,
 3_lot,Rubro3                        ,lot_RubroN3,,
-3_lot,Nombre producto genrico       ,lot_generic_name,,
-3_lot,Nombre linea Adquisicion      ,lot_name,,
-3_lot,Descripcion linea Adquisicion ,lot_description,,
-3_lot,UnidadMedida                  ,lot_measure,unit of measurement,unidad de medida
-3_lot,Cantidad                      ,lot_qtd,item quantity,Cantidad/unidad
-4_participant,CodigoProveedor               ,participant_firm_id,participant code,Código provedor
-4_participant,CodigoSucursalProveedor       ,participant_estab_id,participant/offer code,Nombre provedor
-4_participant,RutProveedor                  ,participant_rut,RUT participant,
-4_participant,NombreProveedor               ,participant_name,participant name,
-4_participant,RazonSocialProveedor          ,participant_formal_name,participant formal name,
-4_participant,DescripcionProveedor          ,participant_descrition,participant_description,
-5_offer,Monto Estimado Adjudicado     ,offer_award_value,pode ser item,
-5_offer,Nombre de la Oferta           ,offer_name,,
-5_offer,Estado Oferta                 ,offer_status,offer accepted or decline,
-5_offer,Cantidad Ofertada             ,offer_quantity,,
-5_offer,Moneda de la Oferta           ,offer_currency,offer currency,
-5_offer,MontoUnitarioOferta           ,offer_unit_price,unit price offer,
-5_offer,Valor Total Ofertado          ,offer_total_price,volume of the offer,
-5_offer,CantidadAdjudicada            ,offer_qtd_award,,
-5_offer,MontoLineaAdjudica            ,offer_total_price_award,,
-5_offer,FechaEnvioOferta              ,offer_date_send,Date that the offer was send,
-5_offer,Oferta seleccionada           ,offer_select,tag if the offer win,
+3_lot,Nombre producto genrico       ,STR_ITEM_NAME_GENERAL,,General name of the item purchased
+3_lot,Nombre linea Adquisicion      ,STR_ITEM_NAME_SPECIFIC,,Specific name of the item purchased
+3_lot,Descripcion linea Adquisicion ,STR_ITEM_DESCRIPTION,,Description of the item purchased
+3_lot,UnidadMedida                  ,CAT_ITEM_UNIT,unit of measurement,Unit of measurement for the item amount
+3_lot,Cantidad                      ,AMT_ITEM,item quantity,Amount of item purchased
+4_participant,CodigoProveedor               ,ID_PARTICIPANT_INTERNAL,participant code,Internal ID for the department of the participant
+4_participant,CodigoSucursalProveedor       ,ID_SUB_PARTICIPANT_INTERNAL,participant/offer code,Internal ID for the unit of the participant
+4_participant,RutProveedor                  ,ID_RUT_PARTICIPANT,RUT participant,RUT of the participant
+4_participant,NombreProveedor               ,STR_PARTICIPANT_NAME,participant name,Name of the participant
+4_participant,RazonSocialProveedor          ,STR_PARTICIPANT_LEGAL_NAME,participant formal name,Legal name of the participant
+4_participant,DescripcionProveedor          ,STR_PARTICIPANT_DESCRIPTION,participant_description,Description of the participant
+5_offer,Monto Estimado Adjudicado     ,AMT_VALUE_ESTIMATED,pode ser item,Total amount of the awarded purchase
+5_offer,Nombre de la Oferta           ,STR_OFFER_NAME,,Name of the offer
+5_offer,Estado Oferta                 ,IND_OFFER_ACCEPTED,offer accepted or decline,1 if the offer was accepted
+5_offer,Cantidad Ofertada             ,AMT_OFFER_QUANTITY,,Total quantity awarded
+5_offer,Moneda de la Oferta           ,CAT_OFFER_CURRENCY,offer currency,
+5_offer,MontoUnitarioOferta,AMT_PRICE_UNIT,unit price offer,
+5_offer,Valor Total Ofertado          ,AMT_TOTAL_PRICE,volume of the offer,
+5_offer,CantidadAdjudicada            ,AMT_QUANTITY_AWARDED,,
+5_offer,MontoLineaAdjudica            ,AMT_VALUE_AWARDED,,
+5_offer,FechaEnvioOferta              ,DT_OFFER_SEND,Date that the offer was send,
+5_offer,Oferta seleccionada           ,IND_OFFER_WIN,tag if the offer win,

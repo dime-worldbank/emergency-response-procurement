@@ -1,13 +1,13 @@
 # Made by Leandro Veloso
 # main: Appending data and create architecture
 
-# 1: Appending offer by year ----
+# 1: Appending offer by DT_TENDER_YEAR ----
 {
   # Checking pattern
   {
     # Defying pattern
-    year =2013
-    patter_order_file <-  paste0("offer-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+    DT_TENDER_YEAR =2013
+    patter_order_file <-  paste0("offer-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
     
     # testing pattern
     str_view(c("offer-201301.rds","offer-20198.rds","otherfile.rds"), pattern=patter_order_file)
@@ -16,21 +16,21 @@
   # list of files
   file_list<-list(dir(paste0(dropbox_dir,"2 - data_construct/1-data_temp")))[[1]]
   
-  # year seq
-  year_seq<-unique(year(sequence_dates))
-  for (year in year_seq) {
-    print(paste("appending order",year))
+  # DT_TENDER_YEAR seq
+  DT_TENDER_YEAR_seq<-unique(year(sequence_dates))
+  for (DT_TENDER_YEAR in DT_TENDER_YEAR_seq) {
+    print(paste("appending order",DT_TENDER_YEAR))
     
     # starting with an empty list
     panel_list<- list()
     
-    # Reading each file by year
+    # Reading each file by DT_TENDER_YEAR
     index<-0
     for (file in file_list) {
       # defying pattern
-      patter_order_file <-  paste0("offer-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+      patter_order_file <-  paste0("offer-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
       
-      # Running if it is an specific year
+      # Running if it is an specific DT_TENDER_YEAR
       if (str_detect(file,pattern =patter_order_file )) {
         print(paste(">>",file))
         
@@ -42,14 +42,14 @@
     # Appending files
     data_appended<-rbindlist(panel_list, fill = TRUE)    %>%
       as.data.table( )       %>% 
-      relocate(year,month)    
+      relocate(DT_TENDER_YEAR,DT_TENDER_MONTH)    
     
-    # Checking by year month
-    print(data_appended[,.N,by=c("year","month")])
+    # Checking by DT_TENDER_YEAR DT_TENDER_MONTH
+    print(data_appended[,.N,by=c("DT_TENDER_YEAR","DT_TENDER_MONTH")])
     
     # Saving in rds
     write_rds(data_appended,file.path(dropbox_dir,"2 - data_construct/2-data_compiled/",
-                                      paste0("offer-",year,".rds")))
+                                      paste0("offer-",DT_TENDER_YEAR,".rds")))
     
     # Removing file to save ram
     rm(panel_list)
@@ -57,13 +57,13 @@
   }
 }
 
-# 2: Appending lot by year ----
+# 2: Appending lot by DT_TENDER_YEAR ----
 {
   # Checking pattern
   {
     # Defying pattern
-    year =2013
-    patter_order_file <-  paste0("lot-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+    DT_TENDER_YEAR =2013
+    patter_order_file <-  paste0("lot-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
     
     # testing pattern
     str_view(c("lot-201301.rds","lot-20198.rds","otherfile.rds"), pattern=patter_order_file)
@@ -72,21 +72,21 @@
   # list of files
   file_list<-list(dir(paste0(dropbox_dir,"2 - data_construct/1-data_temp")))[[1]]
   
-  # year seq
-  year_seq<-unique(year(sequence_dates))
-  for (year in year_seq) {
-    print(paste("appending order",year))
+  # DT_TENDER_YEAR seq
+  DT_TENDER_YEAR_seq<-unique(year(sequence_dates))
+  for (DT_TENDER_YEAR in DT_TENDER_YEAR_seq) {
+    print(paste("appending order",DT_TENDER_YEAR))
     
     # starting with an empty list
     panel_list<- list()
     
-    # Reading each file by year
+    # Reading each file by DT_TENDER_YEAR
     index<-0
     for (file in file_list) {
       # defying pattern
-      patter_order_file <-  paste0("lot-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+      patter_order_file <-  paste0("lot-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
       
-      # Running if it is an specific year
+      # Running if it is an specific DT_TENDER_YEAR
       if (str_detect(file,pattern =patter_order_file )) {
         print(paste(">>",file))
         
@@ -98,14 +98,14 @@
     # Appending files
     data_appended<-rbindlist(panel_list, fill = TRUE)    %>%
       as.data.table( )       %>% 
-      relocate(year,month)    
+      relocate(DT_TENDER_YEAR,DT_TENDER_MONTH)    
     
-    # Checking by year month
-    print(data_appended[,.N,by=c("year","month")])
+    # Checking by DT_TENDER_YEAR DT_TENDER_MONTH
+    print(data_appended[,.N,by=c("DT_TENDER_YEAR","DT_TENDER_MONTH")])
     
     # Saving in rds
     write_rds(data_appended,file.path(dropbox_dir,"2 - data_construct/2-data_compiled/",
-                                      paste0("lot-",year,".rds")))
+                                      paste0("lot-",DT_TENDER_YEAR,".rds")))
     
     # Removing file to save ram
     rm(panel_list)
@@ -113,13 +113,13 @@
   }
 }
 
-# 3: Appending tender by year ----
+# 3: Appending tender by DT_TENDER_YEAR ----
 {
   # Checking pattern
   {
     # Defying pattern
-    year =2013
-    patter_order_file <-  paste0("tender-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+    DT_TENDER_YEAR =2013
+    patter_order_file <-  paste0("tender-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
     
     # testing pattern
     str_view(c("tender-201301.rds","tender-20198.rds","otherfile.rds"), pattern=patter_order_file)
@@ -128,21 +128,21 @@
   # list of files
   file_list<-list(dir(paste0(dropbox_dir,"2 - data_construct/1-data_temp")))[[1]]
   
-  # year seq
-  year_seq<-unique(year(sequence_dates))
-  for (year in year_seq) {
-    print(paste("appending order",year))
+  # DT_TENDER_YEAR seq
+  DT_TENDER_YEAR_seq<-unique(year(sequence_dates))
+  for (DT_TENDER_YEAR in DT_TENDER_YEAR_seq) {
+    print(paste("appending order",DT_TENDER_YEAR))
     
     # starting with an empty list
     panel_list<- list()
     
-    # Reading each file by year
+    # Reading each file by DT_TENDER_YEAR
     index<-0
     for (file in file_list) {
       # defying pattern
-      patter_order_file <-  paste0("tender-",year) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
+      patter_order_file <-  paste0("tender-",DT_TENDER_YEAR) %R% or(DGT,DGT %R% DGT) %R% ".rds" 
       
-      # Running if it is an specific year
+      # Running if it is an specific DT_TENDER_YEAR
       if (str_detect(file,pattern =patter_order_file )) {
         print(paste(">>",file))
         
@@ -154,14 +154,14 @@
     # Appending files
     data_appended<-rbindlist(panel_list, fill = TRUE)    %>%
       as.data.table( )       %>% 
-      relocate(year,month)    
+      relocate(DT_TENDER_YEAR,DT_TENDER_MONTH)    
     
-    # Checking by year month
-    print(data_appended[,.N,by=c("year","month")])
+    # Checking by DT_TENDER_YEAR DT_TENDER_MONTH
+    print(data_appended[,.N,by=c("DT_TENDER_YEAR","DT_TENDER_MONTH")])
     
     # Saving in rds
     write_rds(data_appended,file.path(dropbox_dir,"2 - data_construct/2-data_compiled/",
-                                      paste0("tender-",year,".rds")))
+                                      paste0("tender-",DT_TENDER_YEAR,".rds")))
     
     # Removing file to save ram
     rm(panel_list)
@@ -171,37 +171,37 @@
 
 # 4: Buyer ----
 {
-  # Reading each file by year
+  # Reading each file by DT_TENDER_YEAR
   index<-0
   panel_list<-list()
   for (k in seq_along(sequence_dates)) { 
-    # Getting year month
-    year  <- year(sequence_dates[k])
-    month <- month(sequence_dates[k])  
+    # Getting DT_TENDER_YEAR DT_TENDER_MONTH
+    DT_TENDER_YEAR  <- year(sequence_dates[k])
+    DT_TENDER_MONTH <- month(sequence_dates[k])  
     
     # Filling left zero
-    month_str<- str_pad(month, 2, pad = "0")
+    DT_TENDER_MONTH_str<- str_pad(DT_TENDER_MONTH, 2, pad = "0")
     
     # Checking
-    file<-paste0("buyer-",year,month_str,".rds")
+    file<-paste0("buyer-",DT_TENDER_YEAR,DT_TENDER_MONTH_str,".rds")
     print(paste(">>",file))
     
     panel_list[[paste0("f-",k)]] <- read_rds(paste0(dropbox_dir,"2 - data_construct/1-data_temp/",file)) %>%
-      mutate(year_month_aux = dmy(paste0("01",month_str,year)))
+      mutate(DT_TENDER_YEAR_DT_TENDER_MONTH_aux = dmy(paste0("01",DT_TENDER_MONTH_str,DT_TENDER_YEAR)))
   }
   
   # Appending files
   data_appended<-rbindlist(panel_list, fill = TRUE)    %>%
     as.data.table( )      
   
-  # Checking by year month
-  print(data_appended[,.N,by=c("year_month_aux")])
+  # Checking by DT_TENDER_YEAR DT_TENDER_MONTH
+  print(data_appended[,.N,by=c("DT_TENDER_YEAR_DT_TENDER_MONTH_aux")])
   
   # Removing duplicates. Keep most recent
   data_appended <- data_appended %>%
-    arrange(desc(year_month_aux),buyer_id) %>%
-    distinct(buyer_id, .keep_all = TRUE) %>% 
-    select(-year_month_aux)
+    arrange(desc(DT_TENDER_YEAR_DT_TENDER_MONTH_aux),STR_BUYER_UNIT) %>%
+    distinct(STR_BUYER_UNIT, .keep_all = TRUE) %>% 
+    select(-DT_TENDER_YEAR_DT_TENDER_MONTH_aux)
   
   # checking
   glimpse(data_appended)
@@ -220,37 +220,37 @@
 
 # 5: Appending participant ----
 {
-  # Reading each file by year
+  # Reading each file by DT_TENDER_YEAR
   index<-0
   panel_list<-list()
   for (k in seq_along(sequence_dates)) { 
-    # Getting year month
-    year  <- year(sequence_dates[k])
-    month <- month(sequence_dates[k])  
+    # Getting DT_TENDER_YEAR DT_TENDER_MONTH
+    DT_TENDER_YEAR  <- year(sequence_dates[k])
+    DT_TENDER_MONTH <- month(sequence_dates[k])  
     
     # Filling left zero
-    month_str<- str_pad(month, 2, pad = "0")
+    DT_TENDER_MONTH_str<- str_pad(DT_TENDER_MONTH, 2, pad = "0")
     
     # Checking
-    file<-paste0("seller-",year,month_str,".rds")
+    file<-paste0("seller-",DT_TENDER_YEAR,DT_TENDER_MONTH_str,".rds")
     print(paste(">>",file))
     
     panel_list[[paste0("f-",k)]] <- read_rds(paste0(dropbox_dir,"2 - data_construct/1-data_temp/",file)) %>%
-      mutate(year_month_aux = dmy(paste0("01",month_str,year)))
+      mutate(DT_TENDER_YEAR_DT_TENDER_MONTH_aux = dmy(paste0("01",DT_TENDER_MONTH_str,DT_TENDER_YEAR)))
   }
   
   # Appending files
   data_appended<-rbindlist(panel_list, fill = TRUE)    %>%
     as.data.table( )      
   
-  # Checking by year month
-  print(data_appended[,.N,by=c("year_month_aux")])
+  # Checking by DT_TENDER_YEAR DT_TENDER_MONTH
+  print(data_appended[,.N,by=c("DT_TENDER_YEAR_DT_TENDER_MONTH_aux")])
   
   # Removing duplicates. Keep most recent
   data_appended <- data_appended %>%
-    arrange(desc(year_month_aux),participant_estab_id) %>%
-    distinct(participant_estab_id, .keep_all = TRUE) %>% 
-    select(-year_month_aux)
+    arrange(desc(DT_TENDER_YEAR_DT_TENDER_MONTH_aux),ID_RUT_PARTICIPANT) %>%
+    distinct(ID_RUT_PARTICIPANT, .keep_all = TRUE) %>% 
+    select(-DT_TENDER_YEAR_DT_TENDER_MONTH_aux)
   
   # checking
   glimpse(data_appended)
@@ -286,7 +286,7 @@
     # Joing with rename data
     aux_struct<- aux_struct %>%
       left_join(rename_variables, by=c("skim_variable"="New_names") ) %>%
-      relocate( skim_variable,Label ,Original_names, label_pdf ,skim_type  ) %>%
+      relocate( skim_variable,Label ,Original_names ,skim_type  ) %>%
       select(-Level)  
     
     # Joing with data_output to keep the order variable
@@ -303,15 +303,15 @@
     filter(!is.na(New_names))
   
   # Offer
-  offer_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/offer-",year_seq[length(year_seq)],".rds"))
+  offer_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/offer-",DT_TENDER_YEAR_seq[length(DT_TENDER_YEAR_seq)],".rds"))
   arq_offer  <- arq_function(offer_data) 
   
   # Lot
-  lot_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/lot-",year_seq[length(year_seq)],".rds"))
+  lot_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/lot-",DT_TENDER_YEAR_seq[length(DT_TENDER_YEAR_seq)],".rds"))
   arq_lot  <- arq_function(lot_data) 
   
   # Tender
-  tender_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/tender-",year_seq[length(year_seq)],".rds"))
+  tender_data <- read_rds(paste0(dropbox_dir,"2 - data_construct/2-data_compiled/tender-",DT_TENDER_YEAR_seq[length(DT_TENDER_YEAR_seq)],".rds"))
   arq_tender  <- arq_function(tender_data)
   
   # Buyer
@@ -337,6 +337,6 @@
                   "4-buyer"       = arq_buyer,
                   "5-participant" = arq_seller,
                   "6-notes"       = notes),
-             path = paste0(dropbox_dir,"2 - data_construct/3-data_tables/", 
+             path = paste0(dropbox_dir,"2 - data_construct/4-data_tables/", 
                               "4-arquiteture.xlsx")) 
 }

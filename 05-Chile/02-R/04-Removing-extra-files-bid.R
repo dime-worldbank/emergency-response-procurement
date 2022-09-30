@@ -6,18 +6,18 @@ closeAllConnections()
 
 # 1: Removing compressed download files ----
 for (k in seq_along(sequence_dates)) { 
-  # Getting year month
-  year  <- year(sequence_dates[k])
-  month <- month(sequence_dates[k])
+  # Getting DT_TENDER_YEAR DT_TENDER_MONTH
+  DT_TENDER_YEAR  <- year(sequence_dates[k])
+  DT_TENDER_MONTH <- month(sequence_dates[k])
   
-  # month leading zero
-  month_str<- str_pad(month, 2, pad = "0")
+  # DT_TENDER_MONTH leading zero
+  DT_TENDER_MONTH_str<- str_pad(DT_TENDER_MONTH, 2, pad = "0")
   
   # displaying
-  print(paste0("Excluding file -  ",month_str,"/",year ))
+  print(paste0("Excluding file -  ",DT_TENDER_MONTH_str,"/",DT_TENDER_YEAR ))
   
   # path to save
-  path_raw <- paste0(dropbox_dir,"1 - import/1-compress/lic-",year, month_str,".zip")
+  path_raw <- paste0(dropbox_dir,"1 - import/1-compress/lic-",DT_TENDER_YEAR, DT_TENDER_MONTH_str,".zip")
   
   # Donwloading file and checking time
   file.remove(path_raw)
@@ -25,15 +25,15 @@ for (k in seq_along(sequence_dates)) {
 
 # 2: Removing csv raw files ----
 for (k in seq_along(sequence_dates)) { 
-  # Getting year month
-  year  <- year(sequence_dates[k])
-  month <- month(sequence_dates[k])
+  # Getting DT_TENDER_YEAR DT_TENDER_MONTH
+  DT_TENDER_YEAR  <- year(sequence_dates[k])
+  DT_TENDER_MONTH <- month(sequence_dates[k])
   
   # displaying
-  print(paste0("Deleting ",year,"-",month,".csv")) 
+  print(paste0("Deleting ",DT_TENDER_YEAR,"-",DT_TENDER_MONTH,".csv")) 
   
   # CSV raw file
-  csv_file <- paste0(dropbox_dir,"1 - import/2-unzipped/lic_",year,"-",month,".csv")
+  csv_file <- paste0(dropbox_dir,"1 - import/2-unzipped/lic_",DT_TENDER_YEAR,"-",DT_TENDER_MONTH,".csv")
   
   # Extracting
   file.remove(csv_file)    

@@ -19,7 +19,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(inputFile, encoding = encoding, output_dir = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R") }) 
 ---
 
-# data_tender Exploring
+# Explore Data
 
 ```{r Master, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
@@ -27,9 +27,10 @@ knit: (function(inputFile, encoding) {
 source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
 
 ```
+
 **E-procurement**
 
-The e-procurement portal gathers information about `r format(nrow(data_tender), nsmall = 0, digits = 2, big.mark = ",")` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada"(`r format((nrow(data_tender %>% filter(tender_status == "Cerrada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Desierta" (`r format((nrow(data_tender %>% filter(tender_status == "Desierta (o art. 3 ó 9 Ley 19.886)"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Revocada" (`r format((nrow(data_tender %>% filter(tender_status == "Revocada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%), "Suspendida" (`r format((nrow(data_tender %>% filter(tender_status == "Suspendida"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \%) will be excluded. As such, the final sample will account for `r format(nrow(data_tender %>% filter(tender_status == "Adjudicada")), nsmall = 0, digits = 2, big.mark = ",")` (`r format((nrow(data_tender %>% filter(tender_status == "Adjudicada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")` \% of the original sample). 
+The e-procurement portal gathers information about `r n_tenders` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada" (`r p_tenders_cerrada` \%), "Desierta" (`r p_tenders_desierta` \%), "Revocada" (`r p_tenders_revocada` \%), "Suspendida" (`r p_tenders_suspendida` \%) will be excluded. As such, the final sample will account for `r p_tenders_adjudicada` (`r p_tenders_subsample` \% of the original sample). 
 
 This dataset contains a wide set of variables summarized in the following list: 
 
@@ -41,7 +42,7 @@ This dataset contains a wide set of variables summarized in the following list:
 
 **Covid portal**
 
-First, I download COVID-19 data_tender from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r format(nrow(tender_covid), nsmall = 0, digits = 2, big.mark = ",")` tenders with the following set of variables:
+First, I download COVID-19 data_tender from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r n_tender_covid` tenders with the following set of variables:
 
 \begin{itemize}
   \item Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
@@ -51,26 +52,16 @@ First, I download COVID-19 data_tender from [here](https://app.powerbi.com/view?
 
 **Merging two datasets** 
 
-As I merge the chile_compra datasets with the tender-level emergency data_tender, I find that only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
+As I merge the chile_compra datasets with the tender-level emergency data_tender, I find that only `r p_covid_match` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
 
 \begin{itemize}
-  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, `r format(nrow(tender_covid %>% filter(year_2022 == 1)), nsmall = 0, digits = 2)` (`r format((nrow(tender_covid %>% filter(year_2022 == 1))/nrow(tender_covid))*100, nsmall = 2, digits = 2)` \%) are from 2022. 
-  \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes `r format(nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA")), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA"))/nrow(tender_covid))*100, nsmall = 1, digits = 2)` \%).
-  \item Since we focus only on successful tenders from the ordinary e-procurement portal, `r format(nrow(tender_covid %>% filter(ClaseDeCompra != "Enviada al Proveedor" | ClaseDeCompra != "Aceptada")), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(ClaseDeCompra == "LICITACION PUBLICA" | ClaseDeCompra == "LICITACION PRIVADA"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
-  \item `r format(nrow(tender_covid %>% filter(is.na(ID))), nsmall = 1, digits = 2)` (`r format((nrow(tender_covid %>% filter(is.na(ID)))/nrow(tender_covid))*100, nsmall = 1, digits = 2)` \%) emergency tenders do not show any tender ID. 
+  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, `r n_tenders_2022` (`r p_tenders_2022` \%) are from 2022. 
+  \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes `r p_tenders_pub_priv` (`r p_tenders_pub_priv` \%).
+  \item Since we focus only on successful tenders from the ordinary e-procurement portal, `r n_tenders_success` (`r p_tenders_success` \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
+  \item `r n_tenders_without_id` (`r p_tenders_without_id` \%) emergency tenders do not show any tender ID. 
 \end{itemize}
 
 ```{r freq table for tag, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
-
-    # Create two way freq tab to see how the unmatched tenders are distributed
-    tab_1 <- tender_covid %>%                     # set the dataset to work on
-      tabyl(ClaseDeCompra, tender_covid_bin)  %>%  # select the variables of interest and compute a two-way frequency table
-      adorn_totals( where = c("row", "col")) %>%  # compute totals by row and cols
-      adorn_percentages("all")               %>%  # add percentages to the table
-      adorn_pct_formatting(digits = 0)       %>%  # format with 0 digits
-      adorn_ns( position = "front" )  
-
-names(tab_1)[1] <-"Tender Type"
 
 tab_1 %>%
   kable(format = "latex",
@@ -82,25 +73,45 @@ tab_1 %>%
 
 ```
 
-The emergency portal can only partially help us to identify which tenders are covid-related since the merging rate with the main sample is only `r format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)` \%. Therefore, I will also define tenders based on the description of the tender.
+The emergency portal can only partially help us to identify which tenders are covid-related since the merging rate with the main sample is only `r p_covid_match` \%. Therefore, I will also define tenders based on the description of the tender.
 
-*Definition of covid-related tender* Covid-related tender is defined  as any tender that meet one of the two following conditions:
-\begin{itemize}
-  \item The tender has been registered in the covid emergency e-procurement portal. However, we need to keep in mind that `r format(((nrow(tender_covid %>% filter(!grepl("COVID|covid|Covid|CORONAVIRUS|covid-19", get("Descripcion OC")) & !grepl("COVID|covid|Covid|CORONAVIRUS|covid-19", get("Nombre OC")))))/(nrow(tender_covid)))*100, nsmall = 0, digits = 2)` \% of tenders do not have a string such as "COVID-19", "COVID" and/or "CORONAVIRUS" in its description.  
-  \item The tender has in its description a string such as "COVID-19", "COVID" and/or "CORONAVIRUS".  
-\end{itemize}
+# Data Cleaning
+
+## Offer Value ($AMT\_VALUE\_AWARDED$)
+
+\enumerate{begin}
+  \item I replace `r n_negative_amount_awarded` values as missing: they are negative numbers.
+  \item `r n_case_check_1` observations present the following irregularity: quantity awarded is equal to total price offered (very weird) plus the value awarded is the product of these two terms (even more weird). After checking a sample of 10 cases, I realize thatthe value awarded is equal to the price offered. I replace them.
+```{r check-url-1, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+check_1
+
+```
+  \item `r n_case_check_2` observation present the following irregularity: all offer values are equal to 1. I check 10 random ones, and they seem to be just mistypes. I replace them as missing. 
+```{r check-url-2, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+check_2
+
+```
+\enumerate{end}
 
 # Task 1 
- 
-\begin{itemize}
-  \item Product classification: We define three different categories: 
-  \begin{enumerate}
-    \item medical products, covid related (UNSPSC code starts with 42 + the item is part of the covid emergency data\_tender).
-    \item medical products, non-covid related (UNSPSC code starts with 42 + the item is not part of the covid emergency data\_tender)
-    \item non medical products (UNSPSC code does not start with 42)
-  \end{enumerate}
-\end{itemize}
 
+**Define variable: medical equipment** We can define items as medical equipment following the UNSPC code: item codes that start with "42" are considered as such. The following table shows the distribution of "Medical Equipment" among "Tender Emergency".
+
+```{r freq table for med, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+tab_2 %>%
+  kable(format = "latex",
+        booktabs = T, 
+        longtable = T, 
+        caption = "Frequency table: medical equipment among emergency tenders", 
+        digits = 2, format.args = list(big.mark = ",")) %>%
+  kable_styling(latex_options = c("striped", "HOLD_position"))
+
+```
+
+**Define variable: tender-covid** We first need to analyse the composition of emergency tenders and decide a rule to establish which share of total value can be considered 
 
 # Task 2
 
