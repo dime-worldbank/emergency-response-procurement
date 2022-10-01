@@ -44,7 +44,7 @@ options(scipen=99999)
   if (Sys.getenv("USER") == "ruggerodoino") {
     print("Ruggero user has been selected")
     dropbox_dir  <- "/Users/ruggerodoino/Dropbox/COVID_19/CHILE/"
-    github_dir   <- "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R"
+    github_dir   <- "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Scripts"
   } else if (Sys.getenv("USERNAME") == "........") {
     print("............")
     dropbox_dir  <- ""
@@ -85,6 +85,7 @@ options(scipen=99999)
     dir.create(file.path(dropbox_dir, path_imp, "1-data_temp"     ), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_imp, "2-data_compiled" ), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_imp, "3-data_pooled" ), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_imp, "4-data_tables" ), showWarnings = FALSE)
     
     # Results
     path_result <-"3 - data_clean"
@@ -119,6 +120,12 @@ options(scipen=99999)
 # 4: Deleting raw files used in the previous codes
      source(file.path(github_dir,"04-Removing-extra-files-bid.R"))
 
-# 5: Labelling Treatment (emergency COVID-19 purchases) vs Control
-     source(file.path(github_dir,"05-Cleaning.R"))
+# 5: Deleting raw files used in the previous codes
+     source(file.path(github_dir,"05-Pooling_Subsampling.R"))
+
+# 6: Deleting raw files used in the previous codes
+     source(file.path(github_dir,"06-Cleaning.R"))
+
+# 7: Labelling Treatment (emergency COVID-19 purchases) vs Control
+     source(file.path(github_dir,"07-Outputs.R"))
 

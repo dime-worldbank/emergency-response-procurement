@@ -8,14 +8,14 @@
 1_tender,Descripcion                   ,STR_TENDER_DESCRIPTION,Description of the tender,Description of the tender 
 1_tender,Tipo de Adquisicion,STR_TENDER_TYPE,Type of the tender,Type of the tender (string)
 1_tender,Estado                        ,CAT_TENDER_STATUS,tender status name,"There are 5 status (""Adjudicada"" ""Cerrada"" ""Desierta (o art. 3 ó 9 Ley 19.886)"" ""Revocada"" ""Suspendida"""
-1_tender,Informada                     ,IND_INFORMADA,,"1 if the tender is ""Informada""(Informed)"
+1_tender,Informada                     ,,,"1 if the tender is ""Informada""(Informed)"
 1_tender,CodigoTipo                    ,IND_TENDER_PUBLIC,,"(Public == 1, Private == 2)"
 1_tender,Tipo                          ,CAT_TENDER_TYPE,,"There are 13 types (""LP"" ""LE"" ""L1"" ""LS"" ""CO"" ""B2"" ""E2"" ""LQ"" ""LR"" ""H2"" ""I2"" ""O1"" ""O2"")"
 1_tender,TipoConvocatoria              ,IND_TENDER_CALL,,1 = Abierto 0 = Cerrada
 1_tender,CodigoMoneda                  ,CAT_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
 1_tender,Moneda Adquisicion            ,STR_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
 1_tender,Etapas                        ,IND_TENDER_STAGE,,"Stage of the tender (0,1) --> ??"
-1_tender,EstadoEtapas                  ,CAT_TENDER_STAGE,,"Stage of the tender (1,2) --> ??"
+1_tender,EstadoEtapas                  ,,,"Stage of the tender (1,2) --> ??"
 1_tender,TomaRazon                     ,IND_TENDER_JUSTIFICATION,,1 if the tender requires the decision of the Contraloría
 1_tender,EstadoPublicidadOfertas       ,IND_OFFER_PUBLICITY,,1 if the technical offers will be public knowledge once the technical opening of the offers has been carried out.
 1_tender,JustificacionPublicidad       ,STR_OFFER_PUBLICITY,,Description that justifies showing the technical offer for public knowledge. (Step 1)
@@ -40,20 +40,20 @@ null = when the tender is created,
 1_tender,FechaAdjudicacion             ,DT_TENDER_AWARD,,Date of award
 1_tender,FechaEstimadaAdjudicacion     ,DT_TENDER_EST_AWARD,,Fecha Estimada Adjudicacion: estimated date of award
 1_tender,FechaSoporteFisico            ,DT_TENDER_SUPPORT,,Fecha de entrega en soporte fisico: date of delivery in physical support
-1_tender,FechaTiempoEvaluacion         ,DT_TENDER_EVALUATION,,Date of the evaluation of the tender
+1_tender,FechaTiempoEvaluacion         ,,,Date of the evaluation of the tender
 1_tender,UnidadTiempoEvaluacion        ,DT_TENDER_FORMAT,,Format of the date
 1_tender,FechaEstimadaFirma            ,DT_SIGNATURE_ESTIMATED,,Estimated date of signature
-1_tender,FechasUsuario                 ,tender_date_user,,Indicates if the user defined additional dates to the tender
-1_tender,FechaVisitaTerreno            ,tender_date_visit,,Field visit date
-1_tender,DireccionVisita               ,tender_DireccionVisita               ,,visiting address
-1_tender,FechaEntregaAntecedentes      ,tender_FechaEntregaAntecedentes      ,,Date on which the Records must be delivered
-1_tender,DireccionEntrega              ,tender_DireccionEntrega              ,,Delivery address
+1_tender,FechasUsuario                 ,,,Indicates if the user defined additional dates to the tender
+1_tender,FechaVisitaTerreno            ,,,Field visit date
+1_tender,DireccionVisita               ,,,visiting address
+1_tender,FechaEntregaAntecedentes      ,,,Date on which the Records must be delivered
+1_tender,DireccionEntrega              ,,,Delivery address
 1_tender,Estimacion                    ,CAT_ESTIMATION,,1 Presupuesto Disponible 2 Precio Referencial 3 Monto no es posible de estimar  
 1_tender,FuenteFinanciamiento          ,STR_FINANCING_SOURCE,,Financing source
 1_tender,VisibilidadMonto              ,IND_ESTIMATION_PUBLICITY,,1 if make public the estimated amount in the tender file
 1_tender,MontoEstimado                 ,AMT_TENDER_ESTIMATED,,Amount estimated by the public body for the tender
-1_tender,Tiempo                        ,tender_time  ,,
-1_tender,UnidadTiempo                  ,tender_time_unit         ,,
+1_tender,Tiempo                        ,,,
+1_tender,UnidadTiempo                  ,,,
 1_tender,Modalidad                     ,STR_PAYMENT_TYPE,,Type of the payment
 1_tender,TipoPago                      ,CAT_PAYMENT_TYPE,,Type of the payment
 1_tender,ProhibicionContratacion       ,STR_CONTRACT_PROHIBITION,,string that describes what is not allowed for the contract
@@ -65,16 +65,16 @@ null = when the tender is created,
 1_tender,ObservacionContrato           ,STR_FREE_TEXT_CONTRACT,,"Comments on Amounts, duration and subcontracting (free text)"
 1_tender,ExtensionPlazo                ,IND_TERM_EXTENSION,,"1 if the time terms were extended (If at the closing date/time for receipt of bids, 2 or fewer proposals have been received, the closing period will be automatically extended by 2 business days, only once, under the conditions established by article 25, final paragraph, of the regulation of law 19,886.)"
 1_tender,EsBaseTipo                    ,IND_TENDER_STANDARDS,,1 if the tender was created through standard tenders.
-1_tender,UnidadTiempoContratoLicitacion,tender_UnidadTiempoContratoLicitacion,,
-1_tender,ValorTiempoRenovacion         ,tender_ValorTiempoRenovacion         ,,
-1_tender,PeriodoTiempoRenovacion       ,tender_PeriodoTiempoRenovacion       ,,
-1_tender,EsRenovable                   ,IND_RENEWABLE,,1 if it is renewable
+1_tender,UnidadTiempoContratoLicitacion,,,
+1_tender,ValorTiempoRenovacion         ,,,
+1_tender,PeriodoTiempoRenovacion       ,,,
+1_tender,EsRenovable                   ,,,1 if it is renewable
 1_tender,TipoAprobacion                ,CAT_APPROVAL_TYPE,,?
 1_tender,NumeroAprobacion              ,ID_APPROVAL,,ID for approval process 
 1_tender,FechaAprobacion               ,DT_APPROVAL,,Date time for tender approval
 1_tender,NumeroOferentes               ,N_SUPPLIERS,,Displays the number of awarded suppliers
 1_tender,Correlativo                   ,CAT_CORRELATIVE,,?
-1_tender,CodigoEstadoLicitacion        ,tender_CodigoEstadoLicitacion        ,,
+1_tender,CodigoEstadoLicitacion        ,,,
 2_buyer,CodigoOrganismo               ,ID_BUYER_DEPARTMENT,,Responsible organ for tender - code
 2_buyer,NombreOrganismo               ,STR_BUYER_NAME,,Responsible organ for tender - name
 2_buyer,sector                        ,STR_BUYER_SECTOR,,Type of the buyer
@@ -86,9 +86,9 @@ null = when the tender is created,
 2_buyer,RegionUnidad                  ,STR_BUYER_REGION,,Buyer unit region 
 3_lot,Codigoitem                    ,ID_ITEM,,
 3_lot,CodigoProductoONU             ,ID_ITEM_UNSPSC,,
-3_lot,Rubro1                        ,lot_RubroN1,,
-3_lot,Rubro2                        ,lot_RubroN2,,
-3_lot,Rubro3                        ,lot_RubroN3,,
+3_lot,Rubro1                        ,,,
+3_lot,Rubro2                        ,,,
+3_lot,Rubro3                        ,,,
 3_lot,Nombre producto genrico       ,STR_ITEM_NAME_GENERAL,,General name of the item purchased
 3_lot,Nombre linea Adquisicion      ,STR_ITEM_NAME_SPECIFIC,,Specific name of the item purchased
 3_lot,Descripcion linea Adquisicion ,STR_ITEM_DESCRIPTION,,Description of the item purchased

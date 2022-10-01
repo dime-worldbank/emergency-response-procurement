@@ -298,7 +298,7 @@
   
   # Load the list of original names and R names
   rename_variables <- 
-    read_csv(file.path(github_dir,"Auxilary_files",
+    read_csv(file.path(github_dir,"auxilary_files",
                        "01-tender_name_label.csv")) %>% 
     filter(!is.na(New_names))
   
