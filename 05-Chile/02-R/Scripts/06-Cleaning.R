@@ -59,11 +59,8 @@
         # Number of these cases
         n_case_check_1 <- format(nrow(test_1), nsmall = 0, digits = 2)
         
-        # Check 10 random cases
-        check_1 <- test_1[sample(nrow(test_1), 10), "ID_TENDER_EXTERNAL"]
-        
         # Display URL of these cases
-        check_1 <- data_tender_sub %>% select(URL_TENDER, ID_TENDER_EXTERNAL) %>% filter(ID_TENDER_EXTERNAL %in% check_1$ID_TENDER_EXTERNAL)
+        check_1 <- left_join(test_1, data_tender_sub %>% select(ID_TENDER, URL_TENDER))
         
       }
       
@@ -78,11 +75,8 @@
         # Number of these cases
         n_case_check_2 <- format(nrow(test_2), nsmall = 0, digits = 2)
         
-        # Check 10 random cases
-        check_2 <- test_1[sample(nrow(test_2), 10), "ID_TENDER_EXTERNAL"]
-        
         # Display URL of these cases
-        check_2 <- data_tender_sub %>% select(URL_TENDER, ID_TENDER_EXTERNAL) %>% filter(ID_TENDER_EXTERNAL %in% check_2$ID_TENDER_EXTERNAL)
+        check_2 <- left_join(test_2[sample(nrow(test_2), 10)], data_tender_sub %>% select(ID_TENDER, URL_TENDER))
         
       }
       
@@ -90,6 +84,8 @@
         
         # Number of these cases
         n_case_check_3 <- format(nrow(data_offer_sub %>% filter((IND_OFFER_WIN == 0) & ((AMT_VALUE_AWARDED != 0) | (AMT_QUANTITY_AWARDED != 0)))), nsmall = 0, digits = 2)
+        
+        n_case_check_3
         
       }
 
@@ -114,9 +110,9 @@
                                      AMT_VALUE_AWARDED)
         ) %>% 
         
-        mutate( # there are 7 wrong cases
-          AMT_VALUE_AWARDED    = ifelse(IND_OFFER_WIN == 0, 0, AMT_VALUE_AWARDED   ),
-          AMT_QUANTITY_AWARDED = ifelse(IND_OFFER_WIN == 0, 0, AMT_QUANTITY_AWARDED)
+        mutate( # there is 1 wrong case
+          AMT_VALUE_AWARDED    = ifelse(IND_OFFER_WIN == 0, NA, AMT_VALUE_AWARDED   ),
+          AMT_QUANTITY_AWARDED = ifelse(IND_OFFER_WIN == 0, NA, AMT_QUANTITY_AWARDED)
         ) 
       
     }
@@ -155,6 +151,9 @@
       #
       data_offer_sub <- data_offer_sub %>% 
         mutate(
+          AMT_VALUE_ESTIMATED = as.numeric(AMT_VALUE_ESTIMATED)
+        ) %>% 
+        mutate(
           AMT_VALUE_ESTIMATED = AMT_VALUE_ESTIMATED * VMUSD,
           AMT_VALUE_AWARDED   = AMT_VALUE_AWARDED   * VMUSD,
           AMT_PRICE_UNIT      = AMT_PRICE_UNIT      * VMUSD,
@@ -169,8 +168,6 @@
       # Add trimmed values 
       data_offer_sub <- data_offer_sub %>% 
         
-      filter(IND_OFFER_WIN == 1) %>% 
-        
       mutate(
         
         AMT_VALUE_AWARDED_99 = ifelse(AMT_VALUE_AWARDED > quantile(AMT_VALUE_AWARDED, 0.99, na.rm = TRUE), NA, ifelse(
@@ -184,6 +181,17 @@
         
       ) 
       
+      data_plot <- data_offer_sub %>% 
+        select(
+          starts_with("AMT_VALUE_AWARDED")
+        ) %>% 
+        na.omit("AMT_VALUE_AWARDED") %>% 
+        filter(AMT_VALUE_AWARDED != 0)
+      
+      plot_data_1 <- ggplot(data_offer_sub, aes(x=factor(0), y = AMT_VALUE_AWARDED)) +
+        geom_boxplot() + 
+        facet_grid("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_99", "AMT_VALUE_AWARDED_95", "AMT_VALUE_AWARDED_90")
+      
     }
     
   }
@@ -193,9 +201,16 @@
   {
     
     # Save data frames
-    saveRDS(data_lot_sub   , file.path(dropbox_dir, path_result, "0-data", "data_lot_sub.rds"   ))
-    saveRDS(data_tender_sub, file.path(dropbox_dir, path_result, "0-data", "data_tender_sub.rds"))
-    saveRDS(data_offer_sub , file.path(dropbox_dir, path_result, "0-data", "data_offer_sub.rds" ))
+    saveRDS(data_lot_sub   , file.path(dropbox_dir, path_result, "1-data_cleaned", "data_lot_sub.rds"   ))
+    saveRDS(data_tender_sub, file.path(dropbox_dir, path_result, "1-data_cleaned", "data_tender_sub.rds"))
+    saveRDS(data_offer_sub , file.path(dropbox_dir, path_result, "1-data_cleaned", "data_offer_sub.rds" ))
+    
+    # Remove data frames to free RAM
+    rm(data_lot_sub,data_tender_sub, data_offer_sub)
+    
+    # Save data for the report
+    save.image(file = file.path(dropbox_dir, "3 - data_clean", "1-outputs", "sample_analysis_cleaning.RData"))
+    
     
   }
 

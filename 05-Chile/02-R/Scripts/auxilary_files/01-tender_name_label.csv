@@ -12,8 +12,8 @@
 1_tender,CodigoTipo                    ,IND_TENDER_PUBLIC,,"(Public == 1, Private == 2)"
 1_tender,Tipo                          ,CAT_TENDER_TYPE,,"There are 13 types (""LP"" ""LE"" ""L1"" ""LS"" ""CO"" ""B2"" ""E2"" ""LQ"" ""LR"" ""H2"" ""I2"" ""O1"" ""O2"")"
 1_tender,TipoConvocatoria              ,IND_TENDER_CALL,,1 = Abierto 0 = Cerrada
-1_tender,CodigoMoneda                  ,CAT_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
-1_tender,Moneda Adquisicion            ,STR_TENDER_CURRENCY,,"Currency registered for the values. Yet, we need to check cause it seems that all are already in dollars"
+1_tender,CodigoMoneda                  ,CAT_TENDER_CURRENCY,,Currency registered for the values.
+1_tender,Moneda Adquisicion            ,,,Currency registered for the values.
 1_tender,Etapas                        ,IND_TENDER_STAGE,,"Stage of the tender (0,1) --> ??"
 1_tender,EstadoEtapas                  ,,,"Stage of the tender (1,2) --> ??"
 1_tender,TomaRazon                     ,IND_TENDER_JUSTIFICATION,,1 if the tender requires the decision of the Contraloría
@@ -102,12 +102,13 @@ null = when the tender is created,
 4_participant,DescripcionProveedor          ,STR_PARTICIPANT_DESCRIPTION,participant_description,Description of the participant
 5_offer,Monto Estimado Adjudicado     ,AMT_VALUE_ESTIMATED,pode ser item,Total amount of the awarded purchase
 5_offer,Nombre de la Oferta           ,STR_OFFER_NAME,,Name of the offer
-5_offer,Estado Oferta                 ,IND_OFFER_ACCEPTED,offer accepted or decline,1 if the offer was accepted
+5_offer,Estado Oferta                 ,,,1 if the offer was accepted
 5_offer,Cantidad Ofertada             ,AMT_OFFER_QUANTITY,,Total quantity awarded
-5_offer,Moneda de la Oferta           ,CAT_OFFER_CURRENCY,offer currency,
-5_offer,MontoUnitarioOferta,AMT_PRICE_UNIT,unit price offer,
-5_offer,Valor Total Ofertado          ,AMT_TOTAL_PRICE,volume of the offer,
-5_offer,CantidadAdjudicada            ,AMT_QUANTITY_AWARDED,,
-5_offer,MontoLineaAdjudica            ,AMT_VALUE_AWARDED,,
-5_offer,FechaEnvioOferta              ,DT_OFFER_SEND,Date that the offer was send,
-5_offer,Oferta seleccionada           ,IND_OFFER_WIN,tag if the offer win,
+5_offer,Moneda de la Oferta           ,CAT_OFFER_CURRENCY,offer currency,Currency registered for the values.
+5_offer,MontoUnitarioOferta,AMT_PRICE_UNIT,unit price offer,Unit price of the offer
+5_offer,Valor Total Ofertado          ,AMT_TOTAL_PRICE,volume of the offer,Total value of the offer 
+5_offer,CantidadAdjudicada            ,AMT_QUANTITY_AWARDED,,Total quantity of the offer
+5_offer,MontoLineaAdjudica            ,AMT_VALUE_AWARDED,,Total amount of value awarded
+5_offer,FechaEnvioOferta              ,DT_OFFER_SEND,Date that the offer was send,Date that the offer was send
+5_offer,Oferta seleccionada           ,IND_OFFER_WIN,tag if the offer win,1 if the offer was selected (winning bid)
+5_offer,,AMT_VALUE_AWARDED_99,,Winsorised data at the 99 percentile of the amount total value awarded

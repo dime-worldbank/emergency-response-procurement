@@ -206,9 +206,6 @@
   # checking
   glimpse(data_appended)
   
-  # Checking rut correct
-  data_appended[,.N, by=c("D_rut_buyer_ok")]
-  
   # Saving in rds
   write_rds(data_appended,file.path(dropbox_dir,"2 - data_construct/2-data_compiled/",
                                     paste0("buyer.rds")))
@@ -254,9 +251,6 @@
   
   # checking
   glimpse(data_appended)
-  
-  # Checking rut correct
-  data_appended[,.N, by=c("D_rut_participant_ok")]
   
   # Saving in rds
   write_rds(data_appended,file.path(dropbox_dir,"2 - data_construct/2-data_compiled/",

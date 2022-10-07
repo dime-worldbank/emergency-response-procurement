@@ -28,7 +28,9 @@ options(scipen=99999)
          "janitor",
          "kableExtra",
          "Hmisc",
-         "httr"
+         "httr",
+         "xlsx",
+         "plotly"
       )
     
     # Leitura dos pacotes e dependencias
@@ -47,7 +49,6 @@ options(scipen=99999)
     github_dir   <- "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Scripts"
   } else if (Sys.getenv("USERNAME") == "........") {
     print("............")
-    dropbox_dir  <- ""
     github_dir   <- ""
   }
 
@@ -93,6 +94,7 @@ options(scipen=99999)
     # Creating folder -raw
     dir.create(file.path(dropbox_dir, path_result), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_result, "0-data"), showWarnings = FALSE)
+    dir.create(file.path(dropbox_dir, path_result, "1-data_cleaned"), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_result, "1-outputs"     ), showWarnings = FALSE)
     dir.create(file.path(dropbox_dir, path_result, "2-graphs"), showWarnings = FALSE)
     
@@ -106,6 +108,7 @@ options(scipen=99999)
     dir.create(file.path(dropbox_dir, path_out, "2-tables"), showWarnings = FALSE)
     
   }
+  
 }
 
 # 1: Downloading and unzip file

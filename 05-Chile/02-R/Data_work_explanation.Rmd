@@ -4,7 +4,7 @@ author: "Ruggero Doino"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 geometry: "left=2cm,right=2cm,top=2cm,bottom=2cm"
 output: 
-  pdf_document: 
+  html_document: 
     keep_tex: yes
     toc: yes
     number_sections: yes
@@ -14,86 +14,265 @@ header-includes:
    - \usepackage{dcolumn}
    - \usepackage{float}
    - \usepackage{enumitem}
-   
-knit: (function(inputFile, encoding) {
-  rmarkdown::render(inputFile, encoding = encoding, output_dir = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R") }) 
 ---
 
 # Explore Data
 
 ```{r Master, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 
-# Run the Master script
-source("/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Master.R")
+  # 1: Cleaning R
+  rm(list=ls()) 
+  
+  # 2: Loading package
+  {
+    packages <- 
+      c( 
+         "cli",
+         "stringr",
+         "lubridate",
+         "skimr",
+         "readxl",
+         "writexl",
+         "tidyverse",
+         "labelled",
+         "huxtable",
+         "data.table",
+         "rebus", 
+         "R.utils",
+         "janitor",
+         "kableExtra",
+         "Hmisc",
+         "httr",
+         "knitr",
+         "DT",
+         "plotly"
+      )
+    
+    # Leitura dos pacotes e dependencias
+    if (!require("pacman")) install.packages("pacman")
+    
+    # Loading list of packages
+    pacman::p_load(packages,
+                   character.only = TRUE,
+                   install = TRUE)
+  }
+  
+  # Setting path
+  if (Sys.getenv("USER") == "ruggerodoino") {
+    print("Ruggero user has been selected")
+    drop_dir  <- "/Users/ruggerodoino/Dropbox/COVID_19/CHILE"
+    github_dir   <- "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Scripts"
+  } else if (Sys.getenv("USERNAME") == "........") {
+    print("............")
+    github_dir   <- ""
+  }
+
+load(file.path(drop_dir, "3 - data_clean", "1-outputs", "sample_analysis_cleaning.RData"))
+load(file.path(drop_dir, "3 - data_clean", "1-outputs", "n_sample_initial.RData"))
+
+tender_data      <- readRDS(file.path(drop_dir, "3 - data_clean", "1-data_cleaned", "data_tender_sub.rds"))
+offer_data       <- readRDS(file.path(drop_dir, "3 - data_clean", "1-data_cleaned", "data_offer_sub.rds" ))
+item_data        <- readRDS(file.path(drop_dir, "3 - data_clean", "1-data_cleaned", "data_lot_sub.rds"   ))
+participant_data <- readRDS(file.path(drop_dir, "3 - data_clean", "1-data_cleaned", "participant.rds"    ))
+buyer_data       <- readRDS(file.path(drop_dir, "3 - data_clean", "1-data_cleaned", "buyer.rds"          ))
+
+tab_summary_item_covid   <- readRDS(file.path(drop_dir, "3 - data_clean","1-outputs","tab_summary_item_covid.rds"  ))
+tab_summary_item_covid_6 <- readRDS(file.path(drop_dir, "3 - data_clean","1-outputs","tab_summary_item_covid_6.rds"))
+tab_summary_item_covid_4 <- readRDS(file.path(drop_dir, "3 - data_clean","1-outputs","tab_summary_item_covid_4.rds"))
+tab_summary_item_covid_2 <- readRDS(file.path(drop_dir, "3 - data_clean","1-outputs","tab_summary_item_covid_2.rds"))
+
+offer_values       <- read_xlsx(file.path(drop_dir, "2 - data_construct", "4-data_tables", "4-arquiteture.xlsx"), sheet = "1-Offer"      )
+item_values        <- read_xlsx(file.path(drop_dir, "2 - data_construct", "4-data_tables", "4-arquiteture.xlsx"), sheet = "2-lot"        )
+tender_values      <- read_xlsx(file.path(drop_dir, "2 - data_construct", "4-data_tables", "4-arquiteture.xlsx"), sheet = "3-tender"     )
+buyer_values       <- read_xlsx(file.path(drop_dir, "2 - data_construct", "4-data_tables", "4-arquiteture.xlsx"), sheet = "4-buyer"      )
+participant_values <- read_xlsx(file.path(drop_dir, "2 - data_construct", "4-data_tables", "4-arquiteture.xlsx"), sheet = "5-participant")
 
 ```
 
+
+> There are two main datasets: extansive data from the e-procurement portal that gathers all 
+information about bids registered for all tenders, and list of tenders that involved covid-19
+purchases. 
+
 **E-procurement**
 
-The e-procurement portal gathers information about `r n_tenders` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada" (`r p_tenders_cerrada` \%), "Desierta" (`r p_tenders_desierta` \%), "Revocada" (`r p_tenders_revocada` \%), "Suspendida" (`r p_tenders_suspendida` \%) will be excluded. As such, the final sample will account for `r p_tenders_adjudicada` (`r p_tenders_subsample` \% of the original sample). 
+The e-procurement portal gathers all the bids that were registered. First, I exclude `r n_rejected_bids` bids that were not accepted (meaning that for any reasons that were considered not valid by the authorities): being accepted is a necessary but no sufficient condition for winning the tender. I also exclude `r n_no_id` bids that did not have an identifier. 
+
+Then this dataframe gathers information about `r n_tenders` tenders such as "Licitation Publica" and "Licitation Privada", from 2015 to 2021. The analysis will focus only on successful tenders ("Adjudicada"), and thus tenders that went "Cerrada" (`r p_tenders_cerrada` \%), "Desierta" (`r p_tenders_desierta` \%), "Revocada" (`r p_tenders_revocada` \%), "Suspendida" (`r p_tenders_suspendida` \%) will be excluded. As such, the final sample will account for `r p_tenders_adjudicada` (`r p_tenders_subsample` \% of the original sample). 
+
+> The final sample of interest excludes a tiny portion of bids that cannot be identified with a unique Identifier, a consistent share of bids that were not accepted (different from being selected!), and 
+focusing only on tenders that were awarded. 
 
 This dataset contains a wide set of variables summarized in the following list: 
 
-\begin{itemize}
-  \item Tender-level: description, title, date of publication/query/award/payment, type, buyer characteristics.
-  \item Item-level: quantity, price, description, title, UNSPSC codes.
-  \item Participant-level: bid details such as price and volumes, firms' name.
-\end{itemize}
+- **Tender-level**
+
+```{r tender-level, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(tender_values,
+                           rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+```
+
+- **Item-level**
+  
+```{r item-level, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(item_values,
+                           rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+- **Offer-level**
+
+```{r offer-level, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(offer_values,
+                           rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+- **Participant-level**
+
+```{r participant-level, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(participant_values,
+                           rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+- **Buyer-level**
+
+```{r buyer-level, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(buyer_values,
+                           rownames = FALSE, extensions = c("Buttons",'Scroller'),
+                                    options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
 
 **Covid portal**
 
 First, I download COVID-19 data_tender from [here](https://app.powerbi.com/view?r=eyJrIjoiNmU2NzBkNzUtYmM1Mi00NGVmLTljYWQtNTIxNTlhMTQ4ZjQ5IiwidCI6ImIwMGQ1ZjQ5LTk4YWMtNGJjNS1hMmM5LWNhZmRmNzEyMTZmMCIsImMiOjR9). The repository contains two files: "OC_COVID19.csv" (tenders related to COVID-19 emergency) and "OCItem_COVID19.csv" (list of items related to COVID-19 emergency). From now on, I will call these datasets tender-level and item-level emergency datasets, while the ordinary full sample of tenders prepared by Leandro will be called chile_compra datasets. This dataset gathers information about `r n_tender_covid` tenders with the following set of variables:
 
-\begin{itemize}
-  \item Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
-  \item Item-level: quantity, price, only date of delivery, UNSPSC code, description. 
-  \item Participant-level: no bid information.
-\end{itemize}
+  - Tender-level: description, title, no date of publication/query/award/payment, type, buyer characteristics.
+  - Item-level: quantity, price, only date of delivery, UNSPSC code, description. 
+  - Participant-level: no bid information.
+
+
+# How do we get to the final sample?
 
 **Merging two datasets** 
 
 As I merge the chile_compra datasets with the tender-level emergency data_tender, I find that only `r p_covid_match` \% of covid emergency tenders can be identified in the chile_compra datasets. However, discrapencies could be explained by several reasons: 
 
-\begin{itemize}
-  \item Emergency portal covers also tenders from 2022, while our sample ranges from 2015 to 2021. Indeed, `r n_tenders_2022` (`r p_tenders_2022` \%) are from 2022. 
-  \item Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes `r p_tenders_pub_priv` (`r p_tenders_pub_priv` \%).
-  \item Since we focus only on successful tenders from the ordinary e-procurement portal, `r n_tenders_success` (`r p_tenders_success` \%) unsuccessful emergency tenders will not be necessary. The table below better explores this point. 
-  \item `r n_tenders_without_id` (`r p_tenders_without_id` \%) emergency tenders do not show any tender ID. 
-\end{itemize}
+- Emergency portal gathers information not only about "Licitation Privada" and "Licitation Publica", which are the only type of tenders present in the ordinary e-procurement portal. Indeed, the emergency portal includes `r p_tenders_pub_priv` (`r p_tenders_pub_priv` \%).
+- Since we focus only on successful tenders from the ordinary e-procurement portal, `r n_tenders_success` (`r p_tenders_success` \%) unsuccessful emergency tenders will not be necessary.
+- `r n_tenders_without_id` (`r p_tenders_without_id` \%) emergency tenders do not show any tender ID. 
 
-```{r freq table for tag, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+The emergency portal can only partially help us to identify which tenders are covid-related since the merging rate with the main sample is only `r p_covid_match` \%.
 
-tab_1 %>%
-  kable(format = "latex",
-        booktabs = T, 
-        longtable = T, 
-        caption = "Frequency table: Tender type and matching with covid-19", 
-        digits = 2, format.args = list(big.mark = ",")) %>%
-  kable_styling(latex_options = c("striped", "HOLD_position"))
+```{r fig-margin, echo=FALSE}
+
+knitr::include_graphics(file.path(github_dir, "auxilary_files", "Chile Compra.png"))
 
 ```
-
-The emergency portal can only partially help us to identify which tenders are covid-related since the merging rate with the main sample is only `r p_covid_match` \%. Therefore, I will also define tenders based on the description of the tender.
 
 # Data Cleaning
 
-## Offer Value ($AMT\_VALUE\_AWARDED$)
+## Offer Value - *AMT\_VALUE\_AWARDED*
 
-\enumerate{begin}
-  \item I replace `r n_negative_amount_awarded` values as missing: they are negative numbers.
-  \item `r n_case_check_1` observations present the following irregularity: quantity awarded is equal to total price offered (very weird) plus the value awarded is the product of these two terms (even more weird). After checking a sample of 10 cases, I realize thatthe value awarded is equal to the price offered. I replace them.
+> I replace all negative numbers as missing values. 
+
+I replace `r n_negative_amount_awarded` values as missing: they are negative numbers.
+
+> I replace irregular cases as missing. 
+
+`r n_case_check_1` observations present the following irregularity: quantity awarded is equal to total price offered (very weird) plus the value awarded is the product of these two terms (even more 
+weird). After checking a sample of 10 cases, I realize that the value awarded is equal to the price 
+offered. I replace them.
+  
 ```{r check-url-1, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
 
-check_1
+
+check_1 <- check_1 %>% 
+  mutate(
+    ID_TENDER = paste0('<a href="', URL_TENDER, '">',ID_TENDER,'</a>')
+  ) %>% 
+  select(-URL_TENDER)
+
+datatable(check_1, escape=FALSE,
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )) 
 
 ```
-  \item `r n_case_check_2` observation present the following irregularity: all offer values are equal to 1. I check 10 random ones, and they seem to be just mistypes. I replace them as missing. 
+
+> I replace the rest of irregular cases as missing. 
+
+`r n_case_check_2` observations present the following irregularity: AMT_QUANTITY_AWARDED, AMT_VALUE_AWARDED and AMT_TOTAL_PRICE are equal to 1. Then, I code as missings since I believe they are all mistypes.
+
 ```{r check-url-2, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
 
-check_2
+check_2 <- check_2 %>% 
+  mutate(
+    ID_TENDER = paste0('<a href="', URL_TENDER, '">',ID_TENDER,'</a>')
+  ) %>% 
+  select(-URL_TENDER)
+
+datatable(check_2, escape=FALSE,
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )) 
 
 ```
-\enumerate{end}
+
+> I convert all the values in USD following the instructions provided on the <a href="https://transparenciachc.blob.core.windows.net/oc-da/ParidadMoneda.csv">Chile Compra</a> platform. 
+
+> I trim the values at the 99th percentile.
+
+The following box-plots illustrate the variation of the value using different percentiles while trimming.  
 
 # Task 1 
 
@@ -102,16 +281,86 @@ check_2
 ```{r freq table for med, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
 
 tab_2 %>%
-  kable(format = "latex",
+  kable(format = "html",
         booktabs = T, 
         longtable = T, 
         caption = "Frequency table: medical equipment among emergency tenders", 
         digits = 2, format.args = list(big.mark = ",")) %>%
-  kable_styling(latex_options = c("striped", "HOLD_position"))
+  kable_minimal()
 
 ```
 
-**Define variable: tender-covid** We first need to analyse the composition of emergency tenders and decide a rule to establish which share of total value can be considered 
+**Define variable: tender-covid** We first need to analyse the composition of emergency tenders and decide a rule to establish which share of total value can be considered. The following lists show aggregated composition of tender values by type of item sold through a covid-tender. There are 5 lists: each one is aggregated a different item level following the UNSPSC codes. 
+
+> Composition of tenders by type of item (only covid-19 items purchased): all UNSPSC digits
+
+```{r unspc-code-table, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(
+    tab_summary_item_covid %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)), 
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+> Composition of tenders by type of item (only covid-19 items purchased): 6 UNSPSC digits
+
+```{r unspc-code-table_6, echo=FALSE, warning=FALSE, header=FALSE, results='asis'}
+
+DT::datatable(
+    tab_summary_item_covid_6 %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)),
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+> Composition of tenders by type of item (only covid-19 items purchased): 4 UNSPSC digits
+
+```{r unspc-code-table_4, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(
+    tab_summary_item_covid_4 %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)),
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 'Bfrtip',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE
+  )
+)
+
+```
+
+> Composition of tenders by type of item (only covid-19 items purchased): 2 UNSPSC digits
+
+```{r unspc-code-table_2, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
+
+DT::datatable(
+  tab_summary_item_covid_2 %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)),
+  rownames = FALSE, extensions = c("Buttons",'Scroller'),
+  options = list(dom = 't',
+                                   buttons = c('csv','excel'),
+                                   scrollY = "500px",
+                                   scrollX = TRUE,
+                                   scroller = TRUE,
+                 scrollCollapse = TRUE
+  )
+)
+  
+ 
+```
 
 # Task 2
 

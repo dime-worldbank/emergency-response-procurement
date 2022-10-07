@@ -82,10 +82,6 @@
           count() != 0
         |
         data_lot %>% 
-          anti_join(data_offer, by = "ID_ITEM_UNSPSC") %>% 
-          count() != 0
-        |
-        data_lot %>% 
           anti_join(data_offer, by = "ID_ITEM") %>% 
           count() != 0
         |
@@ -111,6 +107,10 @@
   # Number of tenders 
   n_tenders <- format(nrow(data_tender), nsmall = 0, digits = 2, big.mark = ",")
   n_tenders
+  
+  # Number of tenders 
+  n_bids <- format(nrow(data_offer), nsmall = 0, digits = 2, big.mark = ",")
+  n_bids
   
   # Percentage of tenders "Cerrada"
   p_tenders_cerrada <- format((nrow(data_tender %>% filter(CAT_TENDER_STATUS == "Cerrada"))/nrow(data_tender))*100, nsmall = 0, digits = 2, big.mark = ",")
@@ -145,7 +145,7 @@
   
   # Change name of columns for ID
   colnames(item_covid)[3]   <- "ID_TENDER"
-  colnames(tender_covid)[3]   <- "ID_TENDER"
+  colnames(tender_covid)[3] <- "ID_TENDER"
   
   # Number of covid tenders
   n_tender_covid <- format(nrow(item_covid %>% distinct(ID_TENDER)), nsmall = 0, digits = 2, big.mark = ",")
@@ -250,10 +250,6 @@
     count() != 0
     |
     data_lot_sub %>% 
-    anti_join(data_offer_sub, by = "ID_ITEM_UNSPSC") %>% 
-    count() != 0
-    |
-    data_lot_sub %>% 
     anti_join(data_offer_sub, by = "ID_ITEM") %>% 
     count() != 0
     |
@@ -276,7 +272,7 @@
 {
   
   # Percentage of tender matched 
-  p_covid_match <- format((nrow(item_covid %>% filter(tender_covid_bin == "Matched") %>% distinct(ID_TENDER, tender_covid_bin))/nrow(tender_covid))*100, nsmall = 0, digits = 2)
+  p_covid_match <- format((nrow(tender_covid %>% filter(tender_covid_bin == "Matched"))/nrow(tender_covid))*100, nsmall = 0, digits = 2)
   p_covid_match
   
   # Create two way freq tab to see how the unmatched tenders are distributed
@@ -318,7 +314,7 @@
   
   tab_2              <- tab_2[,c(1,2)]
   colnames(tab_2)[2] <- "Emergency Tender"
-  colnames(tab_2)[2] <- "Medical Equipment"
+  colnames(tab_2)[1] <- "Medical Equipment"
   
   # Remove unnecessary data frames
   rm(list = c(
@@ -332,14 +328,14 @@
 {
   
   # Save data frames
-  saveRDS(data_lot_sub   , file.path(dropbox_dir, path_result, "0-data", "data_lot_sub.rds"   ))
-  saveRDS(data_tender_sub, file.path(dropbox_dir, path_result, "0-data", "data_tender_sub.rds"))
-  saveRDS(data_offer_sub , file.path(dropbox_dir, path_result, "0-data", "data_offer_sub.rds" ))
+  saveRDS(data_lot_sub   , paste0(dropbox_dir, path_result, "/0-data/", "data_lot_sub.rds"   ))
+  saveRDS(data_tender_sub, paste0(dropbox_dir, path_result, "/0-data/", "data_tender_sub.rds"))
+  saveRDS(data_offer_sub , paste0(dropbox_dir, path_result, "/0-data/", "data_offer_sub.rds" ))
   
   # Remove data frames to free RAM
   rm(data_lot_sub,data_tender_sub, data_offer_sub)
   
   # Save data for the report
-  save.image(file = "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/Data.RData")
+  save.image(file = paste0(dropbox_dir, "3 - data_clean/", "1-outputs/", "n_sample_pooling.RData"))
   
 }

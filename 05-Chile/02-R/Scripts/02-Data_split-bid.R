@@ -2,7 +2,12 @@
 # main: Separate the data set in groups
 
 # DT_TENDER_YEAR seq
+
+n_no_id         = 0
+n_rejected_bids = 0
+
 for (k in seq_along(sequence_dates)) { 
+  
   # 1: reading data  ----
   {  
     # Getting DT_TENDER_YEAR DT_TENDER_MONTH
@@ -39,11 +44,17 @@ for (k in seq_along(sequence_dates)) {
 
   # 2: Renaming and labeling  ----
   {
+    
     # Checking file size
     print(object.size(bid_data), units = "Mb")
     
     # List of existing variables
     filter_var_names= colnames(bid_data)
+    
+    n_rejected_bids = sum(bid_data$`Estado Oferta` != "Aceptada") + n_rejected_bids
+    
+    bid_data <- bid_data %>%  
+      filter(`Estado Oferta` == "Aceptada") # We only keep bids that were accepted
     
     # Delete some variables that are redundant
     var_delete <- c(
@@ -66,7 +77,8 @@ for (k in seq_along(sequence_dates)) {
       "EstadoEtapas"                   ,
       "EsRenovable"                    ,
       "CodigoEstadoLicitacion"         ,
-      "Moneda Adquisicion"
+      "Moneda Adquisicion"             ,
+      "Estado Oferta"
     )
     
     bid_data <- select(bid_data, -var_delete)
@@ -93,7 +105,8 @@ for (k in seq_along(sequence_dates)) {
   }
   
   # 3: id study ----
-  { 
+  {
+    
     # 0: From the previous:
     {
       
@@ -106,10 +119,8 @@ for (k in seq_along(sequence_dates)) {
       
       # Creating an offer id
       bid_data_rename<-bid_data_rename %>%
-        dplyr::group_by(ID_ITEM, ID_RUT_PARTICIPANT, ID_TENDER, DT_OFFER_SEND) %>%
         arrange(DT_OFFER_SEND) %>% 
         dplyr::mutate(ID_OFFER = paste0(ID_ITEM, "_", row_number())) %>%
-        dplyr::ungroup() %>%
         relocate(DT_TENDER_YEAR, DT_TENDER_MONTH, ID_TENDER,STR_BUYER_UNIT,ID_ITEM_UNSPSC,ID_RUT_PARTICIPANT,ID_OFFER ) %>%
         as.data.table() 
       
@@ -123,14 +134,13 @@ for (k in seq_along(sequence_dates)) {
       # Rate duplicaitoin
       dup_rate = round(100*sum(duplicated(checking_select))/nrow(checking_select), d=2)
       
-      if (dup_rate == 0) {
+      if (dup_rate != 0) {
         
         View(checking_select[duplicated(checking_select) | duplicated(checking_select, fromLast=TRUE),])
         
+        stop(paste0("We have ", dup_rate, "% of duplication"))
+        
       }
-      
-      # Counting 
-      print( paste0("We have ", dup_rate, "% of duplication"))
       
       # Checking missing
       
@@ -146,14 +156,27 @@ for (k in seq_along(sequence_dates)) {
       sum(is.na(checking_select$ID_ITEM)) != 0
       ) {
         
-        stop(paste0("There is a missing ID: ", DT_TENDER_MONTH, "/", DT_TENDER_YEAR))
+        n_no_id = sum(is.na(checking_select$ID_TENDER)) + 
+          sum(is.na(checking_select$ID_ITEM_UNSPSC)) +
+          sum(is.na(checking_select$ID_OFFER)) +
+          sum(is.na(checking_select$ID_RUT_PARTICIPANT)) +
+          sum(is.na(checking_select$ID_ITEM)) + n_no_id
         
+        bid_data_rename <- bid_data_rename %>% filter(
+          !is.na(ID_TENDER) &
+          !is.na(ID_ITEM_UNSPSC) &
+          !is.na(ID_OFFER) &
+          !is.na(ID_RUT_PARTICIPANT) &
+          !is.na(ID_ITEM)
+        )
+
       }
       
     }
     
     # 1: tender id
     {
+      
       # Couting duplications
       bid_data_rename[, N_rep_item:= .N , by= c("ID_TENDER")]
       
@@ -330,7 +353,6 @@ for (k in seq_along(sequence_dates)) {
         "IND_CONTRACT_IMMEDIATE",
         "IND_TERM_EXTENSION",
         "IND_TENDER_STANDARDS",
-        "IND_OFFER_ACCEPTED",
         "IND_OFFER_WIN",
         "AMT_PRICE_UNIT"
       )      
@@ -338,7 +360,6 @@ for (k in seq_along(sequence_dates)) {
     bid_data_rename <- bid_data_rename %>% 
       mutate(
         IND_CONTRACT_IMMEDIATE = ifelse(IND_CONTRACT_IMMEDIATE == "RFB_CONTRACT_TIME_PERIOD_INMEDIATE_EXECUTION", 1, ifelse(IND_CONTRACT_IMMEDIATE == "", NA, 0)),
-        IND_OFFER_ACCEPTED     = ifelse(IND_OFFER_ACCEPTED == "Aceptada", 1, 0),
         IND_OFFER_WIN          = ifelse(IND_OFFER_WIN == "Seleccionada", 1, 0)
       )
     
@@ -382,28 +403,7 @@ for (k in seq_along(sequence_dates)) {
     
     # Heading
     head(bid_data_rename %>% select(DT_TENDER_FORMAT))
-    
-    # Checking order of data
-    {
-      
-      # Renaming
-      date_list <- bid_data_rename %>% select(!starts_with("DT"),
-                                          ID_TENDER,
-                                          DT_TENDER_START,
-                                          DT_APPROVAL,
-                                          DT_OFFER_START ,
-                                          DT_QUESTION_START,
-                                          DT_QUESTION_END,
-                                          DT_ANSWERS,
-                                          DT_OFFER_END,
-                                          DT_TENDER_SUPPORT,
-                                          DT_ECONOMIC_ACT_OPEN,
-                                          DT_TECHNICAL_ACT_OPEN,
-                                          DT_TENDER_AWARD,
-                                          DT_TENDER_EST_AWARD,
-                                          DT_SIGNATURE_ESTIMATED,
-                                          DT_OFFER_SEND)
-          } 
+  
   }
   
   # 6: Cleaning variables  ----
@@ -463,147 +463,138 @@ for (k in seq_along(sequence_dates)) {
   
   # 7: Splitting Data  ----
   { 
+    
+    # Set var tender
+    
+    tender_list<- c( 
+    
+      "ID_BUYER_RUT"            ,
+      "URL_TENDER"              ,
+      "STR_TENDER_NAME"         ,
+      "STR_TENDER_DESCRIPTION"  ,      
+      "STR_TENDER_TYPE"         ,
+      "CAT_TENDER_STATUS"       , 
+      "IND_TENDER_PUBLIC"       , 
+      "CAT_TENDER_TYPE"         ,
+      "IND_TENDER_CALL"         ,
+      "CAT_TENDER_CURRENCY"     ,   
+      "IND_TENDER_STAGE"        ,
+      "IND_TENDER_JUSTIFICATION",        
+      "IND_OFFER_PUBLICITY"     ,   
+      "STR_OFFER_PUBLICITY"     ,   
+      "CAT_CS_STATUS"           ,
+      "IND_TENDER_CONTRACT"     ,   
+      "IND_TENDER_WORKS"        ,
+      "N_TENDER_COMPLAINS"      ,  
+      "DT_TENDER_START"         ,
+      "DT_OFFER_END"            ,
+      "DT_QUESTION_START"       , 
+      "DT_QUESTION_END"         ,
+      "DT_ANSWERS"              ,
+      "DT_TECHNICAL_ACT_OPEN"   ,     
+      "DT_ECONOMIC_ACT_OPEN"    ,    
+      "DT_OFFER_START"          ,
+      "DT_TENDER_AWARD"         ,
+      "DT_TENDER_EST_AWARD"     ,   
+      "DT_TENDER_SUPPORT"       , 
+      "DT_TENDER_FORMAT"        ,
+      "DT_SIGNATURE_ESTIMATED"  ,      
+      "CAT_ESTIMATION"          ,
+      "STR_FINANCING_SOURCE"    ,    
+      "IND_ESTIMATION_PUBLICITY",        
+      "AMT_TENDER_ESTIMATED"    ,    
+      "STR_PAYMENT_TYPE"        ,
+      "CAT_PAYMENT_TYPE"        ,
+      "STR_CONTRACT_PROHIBITION",        
+      "IND_SUBCONTRACTION"      ,  
+      "TM_CONTRACT_UNIT"        ,
+      "TM_CONTRACT_DD"          ,
+      "IND_CONTRACT_IMMEDIATE"  ,      
+      "STR_TENDER_ESTIMATED"    ,    
+      "STR_FREE_TEXT_CONTRACT"  ,      
+      "IND_TERM_EXTENSION"      ,  
+      "IND_TENDER_STANDARDS"    ,    
+      "CAT_APPROVAL_TYPE"       , 
+      "ID_APPROVAL"             ,
+      "DT_APPROVAL"             ,
+      "N_SUPPLIERS"             ,
+      "CAT_CORRELATIVE"            
+      
+    )
+    
+    buyer_list <- c(
+      
+      "ID_BUYER_RUT"       ,
+      "ID_BUYER_DEPARTMENT",
+      "STR_BUYER_NAME"     ,
+      "STR_BUYER_SECTOR"   ,
+      "ID_BUYER_UNIT"      ,
+      "STR_BUYER_UNIT"     ,
+      "STR_BUYER_ADDRESS"  ,
+      "STR_BUYER_CITY"     ,
+      "STR_BUYER_REGION"   
+      
+    )
+    
+    part_list  <- c(
+      
+      "ID_PARTICIPANT_INTERNAL"    ,
+      "ID_SUB_PARTICIPANT_INTERNAL",
+      "STR_PARTICIPANT_NAME"       ,
+      "STR_PARTICIPANT_LEGAL_NAME" ,
+      "STR_PARTICIPANT_DESCRIPTION"
+      
+    )
+    
+    item_list  <- c(
+      
+      "ID_ITEM_UNSPSC"        ,
+      "STR_ITEM_NAME_GENERAL" , 
+      "STR_ITEM_NAME_SPECIFIC",    
+      "STR_ITEM_DESCRIPTION"  ,
+      "CAT_ITEM_UNIT"         ,
+      "AMT_ITEM"   
+      
+    )
+    
+    offer_list <- c(
+      
+      "ID_BUYER_RUT"        ,
+      "AMT_VALUE_ESTIMATED" ,    
+      "STR_OFFER_NAME"      ,
+      "AMT_OFFER_QUANTITY"  ,  
+      "CAT_OFFER_CURRENCY"  ,  
+      "AMT_PRICE_UNIT"      ,
+      "AMT_TOTAL_PRICE"     ,
+      "AMT_QUANTITY_AWARDED",    
+      "AMT_VALUE_AWARDED"   , 
+      "DT_OFFER_SEND"       ,
+      "IND_OFFER_WIN"      
+      
+    )
+    
     # 1: Tender X lot X offer
     {
-      # Set var tender
-      
-      tender_list<- c( 
         
-        "DT_TENDER_YEAR"          ,
-        "DT_TENDER_MONTH"         ,
-        "ID_BUYER_RUT"            ,
-        "URL_TENDER"              ,
-        "ID_TENDER_EXTERNAL"      ,  
-        "STR_TENDER_NAME"         ,
-        "STR_TENDER_DESCRIPTION"  ,      
-        "STR_TENDER_TYPE"         ,
-        "CAT_TENDER_STATUS"       , 
-        "IND_TENDER_PUBLIC"       , 
-        "CAT_TENDER_TYPE"         ,
-        "IND_TENDER_CALL"         ,
-        "CAT_TENDER_CURRENCY"     ,   
-        "IND_TENDER_STAGE"        ,
-        "IND_TENDER_JUSTIFICATION",        
-        "IND_OFFER_PUBLICITY"     ,   
-        "STR_OFFER_PUBLICITY"     ,   
-        "CAT_CS_STATUS"           ,
-        "IND_TENDER_CONTRACT"     ,   
-        "IND_TENDER_WORKS"        ,
-        "N_TENDER_COMPLAINS"      ,  
-        "DT_TENDER_START"         ,
-        "DT_OFFER_END"            ,
-        "DT_QUESTION_START"       , 
-        "DT_QUESTION_END"         ,
-        "DT_ANSWERS"              ,
-        "DT_TECHNICAL_ACT_OPEN"   ,     
-        "DT_ECONOMIC_ACT_OPEN"    ,    
-        "DT_OFFER_START"          ,
-        "DT_TENDER_AWARD"         ,
-        "DT_TENDER_EST_AWARD"     ,   
-        "DT_TENDER_SUPPORT"       , 
-        "DT_TENDER_FORMAT"        ,
-        "DT_SIGNATURE_ESTIMATED"  ,      
-        "CAT_ESTIMATION"          ,
-        "STR_FINANCING_SOURCE"    ,    
-        "IND_ESTIMATION_PUBLICITY",        
-        "AMT_TENDER_ESTIMATED"    ,    
-        "STR_PAYMENT_TYPE"        ,
-        "CAT_PAYMENT_TYPE"        ,
-        "STR_CONTRACT_PROHIBITION",        
-        "IND_SUBCONTRACTION"      ,  
-        "TM_CONTRACT_UNIT"        ,
-        "TM_CONTRACT_DD"          ,
-        "IND_CONTRACT_IMMEDIATE"  ,      
-        "STR_TENDER_ESTIMATED"    ,    
-        "STR_FREE_TEXT_CONTRACT"  ,      
-        "IND_TERM_EXTENSION"      ,  
-        "IND_TENDER_STANDARDS"    ,    
-        "CAT_APPROVAL_TYPE"       , 
-        "ID_APPROVAL"             ,
-        "DT_APPROVAL"             ,
-        "N_SUPPLIERS"             ,
-        "CAT_CORRELATIVE"            
-        
-      )
-      
-      buyer_list <- c(
-      
-        "ID_BUYER_RUT"       ,
-        "ID_BUYER_DEPARTMENT",
-        "STR_BUYER_NAME"     ,
-        "STR_BUYER_SECTOR"   ,
-        "ID_BUYER_UNIT"      ,
-        "STR_BUYER_UNIT"     ,
-        "STR_BUYER_ADDRESS"  ,
-        "STR_BUYER_CITY"     ,
-        "STR_BUYER_REGION"   
-        
-        )
-      
-      part_list  <- c(
-        
-        "ID_PARTICIPANT_INTERNAL"    ,
-        "ID_SUB_PARTICIPANT_INTERNAL",
-        "STR_PARTICIPANT_NAME"       ,
-        "STR_PARTICIPANT_LEGAL_NAME" ,
-        "STR_PARTICIPANT_DESCRIPTION"
-        
-        )
-      
-      item_list  <- c(
-        
-        
-        "DT_TENDER_YEAR"        ,
-        "DT_TENDER_MONTH"       ,
-        "ID_ITEM_UNSPSC"        ,
-        "STR_ITEM_NAME_GENERAL" , 
-        "STR_ITEM_NAME_SPECIFIC",    
-        "STR_ITEM_DESCRIPTION"  ,
-        "CAT_ITEM_UNIT"         ,
-        "AMT_ITEM"   
-        
-        )
-      
-      offer_list <- c(
-        
-        "DT_TENDER_YEAR"      ,
-        "DT_TENDER_MONTH"     ,
-        "AMT_VALUE_ESTIMATED" ,    
-        "STR_OFFER_NAME"      ,
-        "IND_OFFER_ACCEPTED"  ,  
-        "AMT_OFFER_QUANTITY"  ,  
-        "CAT_OFFER_CURRENCY"  ,  
-        "AMT_PRICE_UNIT"      ,
-        "AMT_TOTAL_PRICE"     ,
-        "AMT_QUANTITY_AWARDED",    
-        "AMT_VALUE_AWARDED"   , 
-        "DT_OFFER_SEND"       ,
-        "IND_OFFER_WIN"      
-        
-      )
-      
-      # Change type of vars
-      bid_data_rename <- bid_data_rename %>% 
-        dplyr::mutate(across(starts_with("AMT","IND","N"), as.numeric)) %>% 
-        dplyr::mutate(across(starts_with("STR","ID","CAT"), as.character)) %>% 
-        dplyr::mutate(across(starts_with("DT"), as.Date)) 
-        
-      
-      offer_data <- select(bid_data_rename   ,
-                           ID_OFFER          ,
-                           ID_TENDER         ,
-                           ID_ITEM           ,
-                           ID_BUYER_RUT      ,
-                           ID_PARTICIPANT_RUT,
-                           !!tender_list     ,
-                           !!buyer_list      ,
-                           !!part_list       ,
-                           !!item_list) %>%
+      offer_data <- select(bid_data_rename      ,
+                           -all_of(tender_list) ,
+                           -all_of(buyer_list)  ,
+                           -all_of(part_list)   ,
+                           -all_of(item_list)   ,
+                           -N_rep_item          ,
+                           -D_rut_participant_ok,
+                           -D_rut_buyer_ok      ,
+                           DT_TENDER_YEAR       ,
+                           DT_TENDER_MONTH      ,
+                           ID_OFFER             ,
+                           ID_TENDER            ,
+                           ID_TENDER_EXTERNAL   ,
+                           ID_ITEM              ,
+                           ID_ITEM_UNSPSC       ,
+                           ID_RUT_PARTICIPANT   ,
+                           all_of(offer_list)) %>%
         # removing duplicates
-        distinct(ID_ITEM_UNSPSC, ID_RUT_PARTICIPANT, ID_OFFER, .keep_all = TRUE) %>%
-        relocate(ID_TENDER,ID_ITEM_UNSPSC,ID_RUT_PARTICIPANT,ID_OFFER,IND_OFFER_WIN,ID_TENDER_EXTERNAL,STR_BUYER_UNIT,ID_BUYER_UNIT,
-                 STR_PARTICIPANT_NAME,STR_ITEM_NAME_GENERAL, DT_TENDER_YEAR,DT_TENDER_MONTH) %>%
-        arrange(ID_TENDER,ID_ITEM_UNSPSC,ID_RUT_PARTICIPANT) 
+        distinct(ID_OFFER, .keep_all = TRUE)
       
       
       # Checking file size
@@ -617,20 +608,23 @@ for (k in seq_along(sequence_dates)) {
     
     { 
       
-      lot_data <- select(bid_data_rename   ,
-                         ID_TENDER         ,
-                         ID_ITEM           ,
-                         ID_BUYER_RUT      ,
-                         !!offer_list      ,
-                         !!buyer_list      ,
-                         !!part_list       ,
-                         !!tender_list) %>%
+      lot_data <- select(bid_data_rename      ,
+                         -all_of(offer_list)  ,
+                         -all_of(buyer_list)  ,
+                         -all_of(part_list)   ,
+                         -all_of(tender_list) ,
+                         -N_rep_item          ,
+                         -D_rut_participant_ok,
+                         -D_rut_buyer_ok      ,
+                         DT_TENDER_YEAR       ,
+                         DT_TENDER_MONTH      ,
+                         ID_ITEM              ,
+                         ID_TENDER            ,
+                         ID_TENDER_EXTERNAL   ,
+                         ID_BUYER_RUT         ,
+                         all_of(item_list)) %>%
         # removing duplicates
-        distinct(ID_ITEM, .keep_all = TRUE) %>%
-        relocate(ID_TENDER_EXTERNAL,ID_ITEM,STR_ITEM_NAME_GENERAL) %>% 
-        mutate(
-          AMT_ITEM               = as.numeric(AMT_ITEM)
-        )
+        distinct(ID_ITEM, .keep_all = TRUE) 
 
       
       # Checking file size
@@ -641,13 +635,20 @@ for (k in seq_along(sequence_dates)) {
     
     # 3: Tender
     {
-      tender_data <- select(bid_data_rename   ,
-                            ID_TENDER         ,
-                            ID_BUYER_RUT      ,
-                            !!offer_list      ,
-                            !!buyer_list      ,
-                            !!part_list       ,
-                            !!lot_list)  %>%
+      tender_data <- select(bid_data_rename      ,
+                            DT_TENDER_YEAR       ,
+                            DT_TENDER_MONTH      ,
+                            ID_TENDER            ,
+                            ID_TENDER_EXTERNAL   ,
+                            ID_BUYER_RUT         ,
+                            -all_of(offer_list)  ,
+                            -all_of(buyer_list)  ,
+                            -all_of(part_list)   ,
+                            -all_of(item_list)   ,
+                            all_of(tender_list)  ,
+                            -N_rep_item          ,
+                            -D_rut_participant_ok,
+                            -D_rut_buyer_ok       )  %>%
         # removing duplicates
         distinct(ID_TENDER, .keep_all = TRUE) %>%
         relocate(ID_TENDER,ID_TENDER_EXTERNAL,DT_TENDER_YEAR,DT_TENDER_MONTH) %>%
@@ -664,17 +665,19 @@ for (k in seq_along(sequence_dates)) {
     # 4: Buyer
     {
       
-      buyer_data <- select(bid_data_rename   ,
-                           ID_TENDER         ,
-                           ID_BUYER_RUT      ,
-                           !!offer_list      ,
-                           !!tender_list     ,
-                           !!part_list       ,
-                           !!lot_list)  %>%
+      buyer_data <- select(bid_data_rename      ,
+                           ID_TENDER            ,
+                           ID_BUYER_RUT         ,
+                           -all_of(offer_list)  ,
+                           -all_of(tender_list) ,
+                           -all_of(part_list)   ,
+                           -all_of(item_list)   ,
+                           all_of(buyer_list)   ,
+                           -N_rep_item          ,
+                           -D_rut_participant_ok,
+                           -D_rut_buyer_ok      ) %>%
         # removing duplicates
-        distinct(STR_BUYER_UNIT, .keep_all = TRUE) %>%
-        relocate(STR_BUYER_UNIT,ID_BUYER_UNIT ) %>%
-        arrange(STR_BUYER_UNIT)
+        distinct(ID_BUYER_UNIT, .keep_all = TRUE)
     
       
       # Checking size 
@@ -687,18 +690,20 @@ for (k in seq_along(sequence_dates)) {
     # 5: Participant
     {
       
-      seller_data <- select(bid_data_rename   ,
-                            ID_TENDER         ,
-                            ID_BUYER_RUT      ,
-                            ID_RUT_PARTICIPANT,
-                            !!offer_list      ,
-                            !!tender_list     ,
-                            !!buyer_list       ,
-                            !!lot_list) %>%
+      seller_data <- select(bid_data_rename      ,
+                            ID_TENDER            ,
+                            ID_BUYER_RUT         ,
+                            ID_RUT_PARTICIPANT   ,
+                            -all_of(offer_list)  ,
+                            -all_of(tender_list) ,
+                            -all_of(buyer_list)  ,
+                            -all_of(item_list)   ,
+                            all_of(part_list)    ,
+                            -N_rep_item          ,
+                            -D_rut_participant_ok,
+                            -D_rut_buyer_ok      ) %>%
         # removing duplicates
-        distinct(ID_RUT_PARTICIPANT, .keep_all = TRUE) %>%
-        relocate(ID_RUT_PARTICIPANT,STR_PARTICIPANT_NAME) %>%
-        arrange(ID_RUT_PARTICIPANT)
+        distinct(ID_RUT_PARTICIPANT, .keep_all = TRUE) 
 
       
       # Checking file size
@@ -770,16 +775,16 @@ for (k in seq_along(sequence_dates)) {
       
       # Matches
       offer_data %>%  
-        semi_join(buyer_data, by = c("STR_BUYER_UNIT")) %>%
+        semi_join(buyer_data, by = c("ID_BUYER_RUT")) %>%
         count()
       
       # Anti-joing
       offer_data %>%  
-        anti_join(buyer_data, by = c("STR_BUYER_UNIT")) %>%
+        anti_join(buyer_data, by = c("ID_BUYER_RUT")) %>%
         count()
       
       if (offer_data %>%  
-          anti_join(buyer_data, by = c("STR_BUYER_UNIT")) %>%
+          anti_join(buyer_data, by = c("ID_BUYER_RUT")) %>%
           count() != 0){
         
         stop(paste0("There is an issue with offer vs buyer for ", DT_TENDER_MONTH_str, "/",DT_TENDER_YEAR ))
@@ -812,4 +817,21 @@ for (k in seq_along(sequence_dates)) {
       }
     }
   }
+  print(
+    paste0("We have :", n_no_id        , " wihout an ID")
+  )
+  print(
+        paste0("We have: ", n_rejected_bids, " rejected bids")
+  )
+
 }
+
+
+n_no_id         <- format(n_no_id, nsmall = 0, digits = 2)
+
+n_rejected_bids <- format(n_rejected_bids, nsmall = 0, digits = 2)
+
+
+save(n_no_id, n_rejected_bids, file = file.path(dropbox_dir, "3 - data_clean", "1-outputs", "n_sample_initial.RData"))
+
+
