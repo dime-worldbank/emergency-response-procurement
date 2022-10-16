@@ -348,14 +348,13 @@ DT::datatable(
 ```{r unspc-code-table_2, echo = FALSE, results='asis', warning = FALSE, header=FALSE}
 
 DT::datatable(
-  tab_summary_item_covid_2 %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)),
+    tab_summary_item_covid_2 %>% mutate_if(is.numeric, ~ format(round(., 0) , nsmall = 2 , scientific = FALSE)),
   rownames = FALSE, extensions = c("Buttons",'Scroller'),
-  options = list(dom = 't',
+  options = list(dom = 'Bfrtip',
                                    buttons = c('csv','excel'),
                                    scrollY = "500px",
                                    scrollX = TRUE,
-                                   scroller = TRUE,
-                 scrollCollapse = TRUE
+                                   scroller = TRUE
   )
 )
   

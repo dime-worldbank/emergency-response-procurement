@@ -181,17 +181,35 @@
         
       ) 
       
-      data_plot <- data_offer_sub %>% 
-        select(
-          starts_with("AMT_VALUE_AWARDED")
-        ) %>% 
-        na.omit("AMT_VALUE_AWARDED") %>% 
-        filter(AMT_VALUE_AWARDED != 0)
       
-      plot_data_1 <- ggplot(data_offer_sub, aes(x=factor(0), y = AMT_VALUE_AWARDED)) +
-        geom_boxplot() + 
-        facet_grid("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_99", "AMT_VALUE_AWARDED_95", "AMT_VALUE_AWARDED_90")
+summary_table <- function(data, vars) {
+        
+  data %>%  
+    summarise(
+      across({{ vars }},
+             list(
+               n    = ~ sum(!is.na(.x)),
+               mean = ~ mean(.x, na.rm = TRUE)       ,
+               sd   = ~ sd(.x, na.rm = TRUE)         ,
+               min  = ~ min(.x, na.rm = TRUE)        ,
+               max  = ~ max(.x, na.rm = TRUE)),
+             .names = "{.col}-{.fn}")) %>% 
+    pivot_longer(everything()) %>% 
+    separate(name, sep = "-", into = c("var","stat"))  %>% 
+    pivot_wider(names_from = "stat", values_from = "value") %>% 
+    mutate_if(
+      is.numeric,
+      funs(
+        format(., )
+        )
+    )
+  
+        
+      }
+
+data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_99"))
       
+
     }
     
   }
@@ -210,7 +228,6 @@
     
     # Save data for the report
     save.image(file = file.path(dropbox_dir, "3 - data_clean", "1-outputs", "sample_analysis_cleaning.RData"))
-    
     
   }
 

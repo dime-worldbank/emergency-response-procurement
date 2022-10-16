@@ -85,8 +85,8 @@ options(digits = 2)
       # Adjust the final table to be ready  
       tab_summary_item_covid <- tab_summary_item_covid %>% 
         mutate(
-          PCT_CONTRACT_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
-          PCT_VALUE_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
+          PCT_VALUE_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
+          PCT_CONTRACT_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
           type_of_equipment      = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == 42, "Medical", "Non-medical")
         )
       
@@ -143,8 +143,8 @@ options(digits = 2)
       # Adjust the final table to be ready  
       tab_summary_item_covid_6 <- tab_summary_item_covid_6 %>% 
         mutate(
-          PCT_CONTRACT_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
-          PCT_VALUE_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
+          PCT_VALUE_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
+          PCT_CONTRACT_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
           type_of_equipment      = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == 42, "Medical", "Non-medical")
         )
       
@@ -207,8 +207,8 @@ options(digits = 2)
       # Adjust the final table to be ready  
       tab_summary_item_covid_4 <- tab_summary_item_covid_4 %>% 
         mutate(
-          PCT_CONTRACT_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
-          PCT_VALUE_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
+          PCT_VALUE_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
+          PCT_CONTRACT_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
           type_of_equipment      = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == 42, "Medical", "Non-medical")
         )
       
@@ -271,8 +271,8 @@ options(digits = 2)
       # Adjust the final table to be ready  
       tab_summary_item_covid_2 <- tab_summary_item_covid_2 %>% 
         mutate(
-          PCT_CONTRACT_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
-          PCT_VALUE_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
+          PCT_VALUE_EMERGENCY = (AMT_VALUE_AWARDED_99_EMERGENCY/AMT_VALUE_AWARDED_99_ALL * 100),
+          PCT_CONTRACT_EMERGENCY    = (N_TENDERS_EMERGENCY/N_TENDERS_ALL)* 100     ,
           type_of_equipment      = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == 42, "Medical", "Non-medical")
         )
       
