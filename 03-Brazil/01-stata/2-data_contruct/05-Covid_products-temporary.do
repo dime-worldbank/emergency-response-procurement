@@ -1,8 +1,9 @@
 * Made by Leandro Veloso
 * Main: Winners level: item level restrict to items
 
-
 * 0: data preparation
+{
+	* reading data
 	use   "${path_project}/1_data/04-winners_data.dta"  if year_month >=`=ym(2020,1)',clear
 	keep if type_product==1
 
@@ -11,6 +12,8 @@
 	keep code_item D_covid covid_item product_pdm  product_class product_group value_item_estimated
 	
 	save  "${path_project}/4_outputs/1-data_temp/covid_product_temp",replace
+}
+.
 
 * 2: Covid items: Assign a "covid tag"
 {
