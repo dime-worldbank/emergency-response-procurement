@@ -56,16 +56,16 @@ pacman::p_load(packages,
 
 ```{r}
 
-awards.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.rds")
-awards.final.22 <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/awards-constructed.rds")
+#awards.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.rds")
+awards.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/awards-constructed.rds")
 
 bids.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/bids-constructed.rds")
 
-complaints.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.rds")
-complaints.final.22 <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/complaints-constructed.rds")
+#complaints.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.rds")
+complaints.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/complaints-constructed.rds")
 
-initiation.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.rds")
-initiation.final.22 <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/initiation-constructed.rds")
+#initiation.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.rds")
+initiation.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/initiation-constructed.rds")
 
 ```
 
@@ -73,23 +73,8 @@ initiation.final.22 <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Ro
 # Variables analysis between new and old data
 
 ```{r}
-
-## Awards data
-table(awards.final$award_year)
-table(awards.final.22$award_year)
-
-vars_awards <- ls(awards.final)
-vars_awards22 <- ls(awards.final.22)
-
-## Initiation data
-table(initiation.final$initiation_year)
-table(initiation.final.22$initiation_year)
-
-vars_initiation <- ls(initiation.final)
-vars_initiation22 <- ls(initiation.final.22)
-
 # Initiation data 22 is at the initiation-lot level, we have to collapse to initiation level 
-initiation.final.22.init <- initiation.final.22 %>% 
+initiation.final <- initiation.final %>% 
   distinct(initiation_notice_id, .keep_all = TRUE) %>% 
   rename(value_est_ron = value_est_procedure)
 
@@ -165,8 +150,7 @@ initiation.final.complete <- initiation.final %>%
          type_wb = ifelse(type_wb=="Covid related", "medical_covid",type_wb),
          month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
          year=as.numeric(initiation_year),
-         init_year_number=as.numeric(initiation_year)) %>% 
-  filter(year>7)
+         init_year_number=as.numeric(initiation_year))
 
 # cleaning bids dataset
 bids.final.complete <- bids.final %>% 
@@ -188,8 +172,8 @@ awards.final.complete <- awards.final.complete %>%
 
 # Obtaining dates from other datasets
 dates.contracts <- awards.final.complete %>% 
-  select(initiation_notice_id, lot_number, winner_cui_id, award_notice_date, contract_date) %>% 
-  rename(bidder_cui = winner_cui_id)
+  select(initiation_notice_id, lot_number, winner_cui, award_notice_date, contract_date) %>% 
+  rename(bidder_cui = winner_cui)
 bids.final.complete <- left_join(bids.final.complete, dates.contracts, by = c('initiation_notice_id', 'lot_number', 'bidder_cui'))
 
 # obtaining initiation date
@@ -211,7 +195,7 @@ awards.final.complete <- awards.final.complete %>%
 
 # Filtering mount of tenders and keeping only two types of procedure type
 awards.final.complete <- awards.final.complete %>% 
-  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
+  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_contract_ron<1000000000)
 
 initiation.final.complete <- initiation.final.complete %>% 
   filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
@@ -267,7 +251,7 @@ bids.monthly2 <- bids.monthly %>%
 
 # Number of bidders
 ggplot(bids.monthly, aes(x=date, y=N_bidders)) +
-  geom_line() + ylab("") + xlab("Year") + ylim(0, 200000)+ labs(title = "Total number of bidders", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year.") + theme(plot.caption = element_text(hjust = 0))
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Total number of bidders", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year.") + theme(plot.caption = element_text(hjust = 0))
 ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders.png")
 
 ggplot(bids.monthly, aes(x=date, y=N_bidders_tender)) +
@@ -327,8 +311,8 @@ The data then is aggregated at the monthly level to produce graphical representa
 
 # New Winners and share of contracts with a new winner
 awards.final.complete <- awards.final.complete %>% 
-  group_by(winner_cui_id) %>% 
-  arrange(winner_cui_id,contract_date, lot_number) %>% 
+  group_by(winner_cui) %>% 
+  arrange(winner_cui,contract_date, lot_number) %>% 
   mutate(diff_days_contract = difftime(contract_date, lag(contract_date) , units = "days"),
          new_winner = case_when(is.na(diff_days_contract) ~ 1 ,
                                 diff_days_contract > 365 ~ 1 ,
@@ -336,8 +320,8 @@ awards.final.complete <- awards.final.complete %>%
 
 # New winner if the firm wins a contract in another sector 
 awards.final.complete <- awards.final.complete %>% 
-  group_by(winner_cui_id, cpv_group) %>% 
-  arrange(winner_cui_id,contract_date, lot_number) %>% 
+  group_by(winner_cui, cpv_group) %>% 
+  arrange(winner_cui,contract_date, lot_number) %>% 
   mutate(diff_days_contract_sector = difftime(contract_date, lag(contract_date) , units = "days"),
          new_winner_sector = case_when(is.na(diff_days_contract_sector) ~ 1 ,
                                 diff_days_contract > 365 ~ 1 ,
