@@ -14,10 +14,7 @@ options(scipen=99999)
     packages <- 
       c( 
          "cli",
-         "stringr",
-         "lubridate",
          "skimr",
-         "readxl",
          "writexl",
          "tidyverse",
          "labelled",
@@ -30,7 +27,9 @@ options(scipen=99999)
          "Hmisc",
          "httr",
          "xlsx",
-         "plotly"
+         "plotly",
+         "lubridate",
+         "readxl"
       )
     
     # Leitura dos pacotes e dependencias
