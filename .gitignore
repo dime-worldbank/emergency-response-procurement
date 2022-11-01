@@ -54,6 +54,10 @@
 !/**/*.tex
 !/**/*.bib
 
+# HTML
+!/**/*.html
+!/**/*.html
+
 # Python
 !/**/*.py
 !/**/*.ipynb
