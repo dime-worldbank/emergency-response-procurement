@@ -20,6 +20,10 @@ format %tq year_quarter
 merge m:1 id_bidder	 using "${path_project}/1_data/02-firm_caracteristcs", keep(1 3) ///
 	keepusing(id_bidder cnae20 great_sectors SME porte_empresa  uf_estab date_simples_end)
 drop _merge
+ 
+* Getting code classification
+merge m:1 id_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-item-code", ///
+	keepusing(id_item	type_item	item_5d_code	item_4d_code item_2d_code) keep(3) nogen
 
 * Saving
 compress

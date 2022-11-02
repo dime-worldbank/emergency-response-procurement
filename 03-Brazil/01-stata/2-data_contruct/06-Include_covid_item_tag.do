@@ -1,10 +1,37 @@
 * Made by Leandro Veloso
 * Main: Winners level: item level restrict to items
 
-* 1: data preparation
+* 1: Participants data
 {
-	* reading data
-	use   "${path_project}/1_data/04-winners_data.dta"  if year_month >=`=ym(2020,1)',clear
+	use  "${path_project}/1_data/03-participants_data",clear
+
+	* Keeping
+	keep if type_item !=""
+	replace type_item = "Product" if type_item == "prod"
+	replace type_item = "Service" if type_item == "serv"
+
+	merge m:1 type_item item_2d_code "${path_project}/1_data/03-covid_item-item_level", ///
+	keep(type_item item_2d_code Covid_item_level item_5d_name)
+}
+
+
+{
+	use "${path_project}/1_data/04-winners_data",clear
+ 
+	merge m:1 type_item item_5d_code using  "${path_project}/1_data/03-covid_item-item_level", ///
+		keepusing(type_item item_2d_code Covid_item_level item_5d_name)
+	
+	
+	*  
+	save "${path_project}/1_data/04-winners_data-v2",clear	
+}
+	
+	
+	label var type_item           "Product/Service"
+	label var item_2d_code        "item group - 2 digits"
+	label var item_4d_code        "item class - 4 digits"
+	label var item_5d_code        "item code - 5 digits"
+	label var item_5d_name        "item name"
 	
 	* Keeping
 	keep if type_item !=""
@@ -88,25 +115,6 @@
 	 ytitle("The proportion of covid lots on covid tender")
 	 	
 	graph export "${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-region.png", replace as(png)
-	
- 
-	* K-means
-	* Final Criteria
-	twoway  /// 
-	(function y= 0  						,range(0              25) recast(area)  color("233 149 144")  base(10) )  ///
-	(function y= 1/(x+ log( 1400))  +log(  5) ,range(`=log(  1400)' 25) recast(area)  color("104 172 32")  base(10) )  ///
-	(function y= 1/(x+ log( 49950)) +log( 60) ,range(`=log( 49950)' 25) recast(area)  color("180 182 26")  base(10) )  ///
-	(function y= 1/(x+ log( 253072))+log(512) ,range(`=log(253072)' 25) recast(area) color("98 190 121")  base(10) )   ///
- 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==3, m(c)  mc( gs7) ) ///
-	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
-	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
-	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
-	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
-	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
-	 ytitle("The proportion of covid lots on covid tender")
-	
-	
-	
 	
 	* Labeling
 	label var D_covid_tag 		 "Old-dummy if it is a covid item" 
