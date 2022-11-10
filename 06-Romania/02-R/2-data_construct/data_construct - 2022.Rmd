@@ -8,20 +8,23 @@ output: pdf_document
 
 ```{r}
 
+rm(list = ls(all = TRUE))
 # 1) Set working directory
-#if (Sys.info()['user'] == "vgamarra" ) {   
-#  setwd("C:/Users/vgamarra/Documents/GitHub/emergency-response-procurement/02-R/2-data_construct")
-#} else {  
-# setwd("C:/Users/wb554125/Documents/GitHub/ie-dr-endline/IE_DR_endline/1. Data cleaning")
-#}
-#Maria enter path to data here}
+if (Sys.info()['user'] == "Victo" ) {   
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+} else {  
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+}
+# Maria enter path to data here}
 
 ```
 
 
 # Setup packages
 
-```{r setup, include=FALSE}
+```{r}
 packages <-
 	c(
 		"ggplot2",
@@ -45,7 +48,6 @@ packages <-
 		"BBmisc"
 		)
   
-
 pacman::p_load(packages,
                character.only = TRUE, # So we can list all packages in a single vector
                dependencies = TRUE)   # Install packages that are required by the packages we listed
@@ -56,16 +58,14 @@ pacman::p_load(packages,
 
 ```{r}
 
-#awards.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.rds")
-awards.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/awards-constructed.rds")
+# Awards data
+awards.final <- read_rds(here(path_data, "Final", "awards-constructed.rds")) 
 
-# bids.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/bids-constructed.rds")
+# Complaints data
+complaints.final <- read_rds(here(path_data, "Final", "complaints-constructed.rds")) 
 
-#complaints.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.rds")
-complaints.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/complaints-constructed.rds")
-
-#initiation.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.rds")
-initiation.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/initiation-constructed.rds")
+# Initiation data
+initiation.final <- read_rds(here(path_data, "Final", "initiation-constructed.rds")) 
 
 ```
 
@@ -101,8 +101,8 @@ covid.TED.codes <- covid.TED.codes %>%
   select(Description, type_TED)
 
 # importing and cleaning CPV data
-CPV.data <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/1-raw/cpv_codes.xlsx")
-CPV.data.classified <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/1-raw/cpv-product classification.xlsx")
+CPV.data <- read_excel(here(root_path, "4-datasets", "1-raw", "cpv_codes.xlsx"))
+CPV.data.classified <- read_excel(here(root_path, "4-datasets", "1-raw", "cpv-product classification.xlsx"))
 
 CPV.data <- CPV.data %>% 
   mutate(Description = gsub("\\.", "", Description))
@@ -129,7 +129,7 @@ CPV.data.export <- CPV.data.classified %>%
          type_final = ifelse(type_final=="Covid related", "medical_covid",type_final)) %>% 
   select(-c(level, D_most_disaggregated_level, description))
 
-write_xlsx(CPV.data.export,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/2-clean/cpv_codes_classified.xlsx")
+write_xlsx(CPV.data.export, here(root_path, "4-datasets", "2-clean", "cpv_codes_classified.xlsx"))
 
 # Codes for future merge with the other datasets
 codes.initiation <- initiation.final %>% 
@@ -595,6 +595,9 @@ procedures <- complaints.final %>%
 write_xlsx(appeals,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/appeals.xlsx")
 write_xlsx(procedures,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/procedures.xlsx")
 
+write_xlsx(appeals, here(root_path, "4-datasets", "appeals.xlsx"))
+write_xlsx(procedures, here(root_path, "4-datasets", "procedures.xlsx"))
+
 # translating variables that are translated in R
 complaints.final <- complaints.final %>% 
   mutate(
@@ -620,8 +623,8 @@ awards.final.complete <- awards.final.complete %>%
       procedure_type == "Procedura simplificata" ~ "Simplified procedure"))
   
 # Importing translated Data
-appeals.en <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets//2-clean/appeals_en.xlsx")
-procedures.en <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets//2-clean/procedures_en.xlsx")
+appeals.en <- read_excel(here(root_path, "4-datasets", "2-clean", "appeals_en.xlsx"))
+procedures.en <- read_excel(here(root_path, "4-datasets", "2-clean", "procedures_en.xlsx"))
 
 # Joining translated data and exporting
 complaints.final <- left_join(complaints.final, appeals.en , by = 'appeal_id')
@@ -630,7 +633,7 @@ complaints.final <- left_join(complaints.final, procedures.en , by = 'appeal_id'
 complaints.final.export <- complaints.final %>% 
   select(procedure_name, procedure_name_en, appellant_name, contested_en, outcome_en, outcome_method_en, appeal_id, appeal_object,  appeal_object_en)
     
-write_xlsx(complaints.final.export,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets//2-clean/complaints_translated.xlsx")
+write_xlsx(complaints.final.export, here(root_path, "4-datasets", "2-clean", "complaints_translated.xlsx"))
 
 ```
 
