@@ -4,7 +4,7 @@
 #                                                                              # 
 #                                     MERGE                                    #
 #                                                                              #
-#        Author: Hao Lyu (RA - DIME3)            Last Update: Sept 30 2022     #
+#        Author: Hao Lyu (RA - DIME3)            Last Update: Oct 13 2022     #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
@@ -109,38 +109,6 @@ data_tenders_old        <- readRDS(file.path(final, "DATA_TENDERS.RDS"     ))
       
       # append  
           data_participants_agg <- rbind(data_participants_old, data_participants_covid)
-
-      
-      # calculate the number of unique supplier in non-covid, covid, and matches 
-          num_supp_covid <- data_participants_agg%>%
-            filter(GROUP == "T")%>%
-            summarise(num_supp_covid = n_distinct(ID_PARTY))               # 12431
-          num_supp_covid <- as.numeric(num_supp_covid)
-          print(paste0("Number of Suppliers in COVID Data = ", num_supp_covid))
-          
-          
-          num_supp_non_covid <- data_participants_agg%>%
-            filter(GROUP == "C" & 
-                     CAT_PARTY_ROLE != "tenderer")%>%
-            summarise(num_supp_non_covid = n_distinct(ID_PARTY))           # 3113
-          num_supp_non_covid <- as.numeric(num_supp_non_covid)
-          print(paste0("Number of Suppliers in Non-Covid Data = ", num_supp_non_covid))
-          
-        
-          num_supp_match_ID <- length(unique(overlap_ID$ID_PARTY))         # 136
-          print(paste0("Number of Suppliers Matched by ID = ", num_supp_match_ID))
-          
-          num_supp_match_name <- length(unique(overlap_name$ID_PARTY))     # 121
-          print(paste0("Number of Suppliers Matched by Name = ", num_supp_match_name))
-          
-          
-          
-      # calculate the number of tenderers, suppliers, and tenders and suppliers in non-covid data 
-          supp_ten_distribute <- data_participants_agg%>%
-            filter(GROUP == "C")%>%
-            group_by(CAT_PARTY_ROLE)%>%
-            dplyr::summarise(n = n())%>%
-            ungroup()
           
           
       # delete un-necessary data 
@@ -148,12 +116,7 @@ data_tenders_old        <- readRDS(file.path(final, "DATA_TENDERS.RDS"     ))
             
             data_participants_covid        ,
             data_participants_old          ,
-            data_participants_final        ,
-            num_supp_covid                 ,
-            num_supp_non_covid             , 
-            overlap_ID                     ,
-            overlap_name                   ,
-            supp_ten_distribute
+            data_participants_final        
           )
 
 # DATA DOCUMENTS --------------------------------------------------------------
@@ -332,7 +295,7 @@ data_tenders_old        <- readRDS(file.path(final, "DATA_TENDERS.RDS"     ))
                       NAME_SOURCE_2            = "",
                       CAT_SOURCE_2             = "",             
                       SUB_SAMPLE               = "",             
-                      YEAR                     = "" 
+                      YEAR                     = ""
                       
                       )
           

@@ -4,7 +4,7 @@
 #                                                                              # 
 #                                     CLEAN                                    #
 #                                                                              #
-#        Author: Hao Lyu (RA - DIME3)            Last Update: Sept 22 2022     #
+#        Author: Hao Lyu (RA - DIME3)            Last Update: Sept 30 2022     #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
@@ -12,7 +12,15 @@
 #       This script aims to clean Honduras data downloaded from COVID portal.  #               
 #                                                                              #
 #       The structure of this script is as followed:                           #
-#
+#           1) Clean the 8 Data files that exist in both COVID portal          #
+#              and 'old' portal                                                #
+#           2) Merge to 5 levels:                                              #
+#                Participants                                                  #
+#                Documents                                                     #
+#                ITEM                                                          #
+#                Contracts                                                     #
+#                Tender                                                        #
+#           3) Save files
 #
 #                                                                              #
 # **************************************************************************** #
@@ -20,7 +28,7 @@
 
 # LOAD DATA -------------------------------------------------------------------
 
-  # Datasets exist in both old portal and covid portal 
+  # Data sets exist in both old portal and covid portal 
 
     # load the tender document data
     data_awards             <- as.data.frame(fread(file.path(data_covid,"awards.csv"                  ), encoding = "Latin-1", colClasses = "character")) 
@@ -39,17 +47,7 @@
     # load the tender document data 
     data_sources            <- as.data.frame(fread(file.path(data_covid,"sources.csv"                 ))) 
 
-  # Datasets only exist in covid portal 
-
-    bid_statistics          <- as.data.frame(fread(file.path(data_covid,"bid_statistics.csv"          ))) 
-    con_imp_transactions    <- as.data.frame(fread(file.path(data_covid,"con_imp_transactions.csv"    ))) 
-    con_ite_attributes      <- as.data.frame(fread(file.path(data_covid,"con_ite_attributes.csv"      ))) 
-    con_milestones          <- as.data.frame(fread(file.path(data_covid,"con_milestones.csv"          ))) 
-    con_val_exchangeRates   <- as.data.frame(fread(file.path(data_covid,"con_val_exchangeRates.csv"   ))) 
-    con_val_exchangeRates   <- as.data.frame(fread(file.path(data_covid,"con_val_exchangeRates.csv"   ))) 
-    links                   <- as.data.frame(fread(file.path(data_covid,"links.csv"                   ))) 
-    par_det_classifications <- as.data.frame(fread(file.path(data_covid,"par_det_classifications.csv" ))) 
-  
+      
 # DATA CLEANING ---------------------------------------------------------------
     
   # DATA AWARDS ---------------------------------------------------------------
@@ -59,9 +57,18 @@
       select(-c("ocid"                 ,
                 "awards/0/id"          ,
                 "awards/0/title"       ,
-                "awards/0/relatedBid"  , 
-                "awards/0/date"         ))%>%
-      dplyr::rename(ID = `id`)
+                "awards/0/relatedBid"  ))%>%
+      dplyr::rename(ID = `id`,
+                    DT_TENDER_PUB = `awards/0/date`)
+    
+    
+     data_awards_new <- data_awards_new %>% 
+       mutate(
+         
+         DT_TENDER_PUB = as.Date(substr(DT_TENDER_PUB,0,10))
+         
+         )
+    
     
     # drop the old dataset 
     rm(data_awards)
@@ -213,11 +220,13 @@
     # Then We study the distribution of contract values
     # First, we need to convert all the values in USD so that it is easier to understand the distribution
     # To do so, we use the average currency conversion rate provided by the WDI package
-    currency_matrix <- WDI(
+    # A caveat: WDI sometimes update their dataset. If the codes below are not able to run, it could be the consequence of their maintenance. Remember to revise code if needed after maintenance. 
+   
+    currency_matrix <- WDI( 
       
-      country   = "HN"                              ,
-      indicator = c("exchange_rate" = "PA.NUS.FCRF"),
-      start     = 2020                              ,
+      country   = "HN"                               ,
+      indicator = c("exchange_rate" = "PA.NUS.FCRF") ,
+      start     = 2020                               ,
       end       = 2021             
     )
     
@@ -225,8 +234,8 @@
       
       mutate(YEAR = as.numeric(substr(DT_CONTRACT_START, 0, 4))) 
     
-    currency_matrix <- currency_matrix[,c(3,4)]
-    colnames(currency_matrix) <- c("EXCHANGE_RATE", "YEAR")
+    currency_matrix <- currency_matrix[,c(4,5)]
+    colnames(currency_matrix) <- c("YEAR", "EXCHANGE_RATE")
     data_contracts_new_usd <- left_join(data_contracts_new_usd, currency_matrix, by = "YEAR")
     
     data_contracts_new_usd <- data_contracts_new_usd %>% 
@@ -329,7 +338,7 @@
       mutate(
         
         # only buyers have a parties_member_id 
-        # when there is a department the lenght of the string is 13
+        # when there is a department the length of the string is 13
         ID_PARTY_MEMBEROF = ifelse(CAT_PARTY_ROLE != "buyer", NA,   
                                    ifelse(nchar(ID_PARTY) == 6, NA, 
                                           substr(ID_PARTY,8,13))) 
@@ -345,13 +354,13 @@
     
     
     # Here, we create the new two variables
-    data_releases_new <- data_releases %>% 
-      mutate(
+    # data_releases_new <- data_releases %>% 
+    #   mutate(
         
         # we extract the date from the main variable
-        DT_TENDER_PUB = as.Date(substr(date,0,10))
+    #     DT_TENDER_PUB = as.Date(substr(date,0,10))
         
-      )
+    #   )
     
     
     # Here, we drop the old variable 
@@ -377,7 +386,7 @@
     )
     
     # we drop the list of vars
-    data_releases_new <- data_releases_new[,!colnames(data_releases_new) %in% drop] 
+    data_releases_new <- data_releases[,!colnames(data_releases) %in% drop] 
     
     # Here, we rename all the variables
     data_releases_new <- data_releases_new %>% 
@@ -395,68 +404,17 @@
     # We drop the old dataset 
     rm(data_releases)
     
-    
-    
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
 
 
 # MERGING ---------------------------------------------------------------------
-    
     
     # DATA MERGING: tender-level ---------------------------------------------------
     
     # First, we add information about the buyers
     data_releases_new$ID_PARTY<- as.character(data_releases_new$ID_PARTY)
+    
+    data_awards_new$ID        <- as.character(data_awards_new$ID)
     
     data_tender_final <- left_join(
       
@@ -491,6 +449,9 @@
       )
     
  
+    data_tender_final <- left_join(data_tender_final, data_awards_new, 
+                                   by = "ID")
+    
     # Finally, we reorder the columns...  
     
     data_tender_final <- data_tender_final[,c(
@@ -592,6 +553,20 @@
     
     # We do this for contract suppliers
     data_supp_con_check <- data_suppliers_con_new %>% 
+      
+      # this function cleans the string from all the special characters 
+      # and lower-case letters
+      mutate_at(c("ID_PARTY"), function(x) {  
+        
+        x <- gsub("HND-IDCARD-", ""   , x,fixed = TRUE)     
+        x <- gsub("HN-RTN-", ""       , x,fixed = TRUE)     
+        x <- gsub("HND-PASSPORT-", "" , x,fixed = TRUE)    
+        x <- str_replace_all(x, "[[:punct:]]", " "  ) 
+        
+      }) %>% 
+      
+      distinct() %>%
+      
       mutate(
         CHECK = paste0(ID, ID_PARTY)
       )
@@ -599,19 +574,21 @@
     # Then we check if some of those string are missing in the master data:
     
     nrow(data_supp_con_check %>% 
-           filter(!CHECK %in% data_parties_check$CHECK)) # 21610 missings!!! 
+           filter(!CHECK %in% data_parties_check$CHECK)) # 21604 missings
     
     data_supp_con_check <- data_supp_con_check %>% filter(!CHECK %in% data_parties_check$CHECK)
     
-    #  data_suppliers_con_new and data_awa_suppliers_new are already inside
+    # data_suppliers_con_new and data_awa_suppliers_new are already inside
     # data_parties_merged and therefore are redundant. We can just drop them, and 
     # keep only using data_parties_merged
     
-    #rm(
-    #  data_suppliers_con_new,
-    #  data_awa_suppliers_new,
-    #  data_ten_tenderers_new
-    #  )
+    rm(
+      data_suppliers_con_new,
+      data_supp_con_check,
+      data_parties_check,
+      data_parties_new
+      
+      )
     
     # Finally, we reorder the columns...  
     data_participants_final <- data_participants_final[,c(
@@ -667,7 +644,7 @@
       )
     
     
-    # DATA MERGING: contract-level ---------------------------------------------------
+    ## DATA MERGING: contract-level ---------------------------------------------------
 
         # we reorder the columns... 
     
@@ -721,15 +698,6 @@
       
     # )
     
-    # We drop all the old datasets that we used and we do not longer need
-    
-    rm(
-      
-      data_document_con_new ,
-      data_sources          ,
-      data_awards_new 
-      
-    )
     
     # Finally, we reorder the columns...  
     
@@ -746,63 +714,127 @@
     # ... and we label the columns 
     
     var_label(data_document_final$ID            ) <- "Global unique identifier: tender-level"
-    var_label(data_document_final$ID_CONTRACT   ) <- "Global unique identifier for each contract"
     var_label(data_document_final$ID_DOC        ) <- "Global unique identifier for each document"
+    var_label(data_document_final$ID_CONTRACT   ) <- "Global unique identifier for each contract"
     var_label(data_document_final$CAT_DOC_TITLE ) <- "Title of the document"
     # var_label(data_document_final$DT_DOC        ) <- "Date of document publication"
     var_label(data_document_final$URL_DOC       ) <- "Source of the document: url link"
     
     
+    # We drop all the old datasets that we used and we do not longer need
+    
+    rm(
+      
+      data_document_con_new ,
+      data_sources          ,
+      data_awards_new       ,
+      currency_matrix
+      
+    )
     
     
-    
-    
-    
-    
-    
-    
+
 
 # SAVING ----------------------------------------------------------------------
     
     # Check whether there is the folder, if there is not we create one 
     
-    if (file.exists(file.path(final))) { # if the path with the new folder already exists, then nothing happens 
+    if (file.exists(file.path(final_covid))) { # if the path with the new folder already exists, then nothing happens 
       
-      cat("The folder already exists: ")
+      cat("Saving COVID Data now ... ...")
       
     } else { # otherwise, we create a new path with the folder
       
-      dir.create(file.path(final))
+      dir.create(file.path(final_covid))
     }
     
     # Save data at the tender-level
     saveRDS(
       data_tender_final, 
-      file.path(final, "DATA_TENDERS.RDS")
+      file.path(final_covid, "DATA_TENDERS.RDS")
     )
     
     # Save data at the participant-level
     
     saveRDS(
       data_participants_final, 
-      file.path(final, "DATA_PARTICIPANTS.RDS")
+      file.path(final_covid, "DATA_PARTICIPANTS.RDS")
     )
     
     # Save data at the Item-level
     saveRDS(
       data_item_final, 
-      file.path(final, "DATA_ITEMS.RDS")
+      file.path(final_covid, "DATA_ITEMS.RDS")
     )
     
     # Save data at the document-level
     saveRDS(
       data_document_final, 
-      file.path(final, "DATA_DOCUMENTS.RDS")
+      file.path(final_covid, "DATA_DOCUMENTS.RDS")
     )
     
     # Save data at the tender-level
     saveRDS(
       data_contracts_final, 
-      file.path(final, "DATA_CONTRACTS.RDS")
+      file.path(final_covid, "DATA_CONTRACTS.RDS")
     )    
+    
+    
+    if (file.exists(file.path(final_covid, "DATA_CONTRACTS.RDS"))) { # if the path with the new folder already exists, then nothing happens 
+      
+      cat("COVID Data Construction Completed!")
+      
+    } else { # otherwise, we create a new path with the folder to save the files again
+      
+      dir.create(file.path(final_covid))
+    }
+    
+    
+    
+# Honduras COVID related variables 
+    
+    
+    # Datasets only exist in covid portal 
+    
+    bid_statistics          <- as.data.frame(fread(file.path(data_covid,"bid_statistics.csv"          ))) 
+    con_imp_transactions    <- as.data.frame(fread(file.path(data_covid,"con_imp_transactions.csv"    ))) 
+    con_ite_attributes      <- as.data.frame(fread(file.path(data_covid,"con_ite_attributes.csv"      ))) 
+    con_milestones          <- as.data.frame(fread(file.path(data_covid,"con_milestones.csv"          ))) 
+    con_val_exchangeRates   <- as.data.frame(fread(file.path(data_covid,"con_val_exchangeRates.csv"   ))) 
+    links                   <- as.data.frame(fread(file.path(data_covid,"links.csv"                   ))) 
+    par_det_classifications <- as.data.frame(fread(file.path(data_covid,"par_det_classifications.csv" ))) 
+    ten_locations           <- as.data.frame(fread(file.path(data_covid,"ten_locations.csv" ))) 
+    
+    
+    
+    # extract the variables 
+    
+    colnames(bid_statistics)
+    
+    colnames(con_imp_transactions)
+    
+    colnames(con_ite_attributes)
+    
+    colnames(con_milestones)
+    
+    colnames(con_val_exchangeRates)
+    
+    colnames(links)
+    
+    colnames(par_det_classifications)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
