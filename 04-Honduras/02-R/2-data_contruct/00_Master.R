@@ -2,9 +2,9 @@
 #                                                                              #
 #               FY23 MDTF - Emergency Response Procurement - Honduras          #
 #                                                                              # 
-#                                       MASTER                                 #
+#                                    MASTER                                    #
 #                                                                              #
-#        Author: Hao Lyu (RA - DIME3)            Last Update: Sept 30 2022     #
+#        Author: Hao Lyu                         Last Update: Oct 27 2022      #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
@@ -21,33 +21,39 @@
     rm(list=ls())
 
   # Set working directory -----------------------------------------
-
-    if (Sys.info()["user"] == "ruggerodoino"){
-  
-      projectFolder <- file.path("/Users/ruggerodoino/Dropbox/KCP_Procurement_WB/R")
-  
-    } else if (Sys.info()["user"] == "wb595473") {
+      
+      if (Sys.info()["user"] == "wb595473") {
   
       scriptFolder <- file.path("/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/04-Honduras/02-R") 
   
       projectFolder <- file.path("/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/1_data")
   
-    }
+      
+      } else if (Sys.info()["user"] == "") {
+      
+      scriptFolder <- file.path("") 
+      
+      projectFolder <- file.path("")
+      
+      }
 
 
-
-    scripts     <- file.path(scriptFolder,  "2-data_contruct"                                  ) # folder for the scripts
-    data_covid  <- file.path(projectFolder, "1_Raw/Data_covid/IAIP_Emergencia_Covid19"         ) # folder for raw data from the covid portal 
-    final_covid <- file.path(projectFolder, "1_Raw/Data_covid"                                 ) # folder for constructed covid data 
-    final       <- file.path(projectFolder, "1_Raw/Data_old/DCC/Final"                         )# folder for constructed old data    
-    data_agg    <- file.path(projectFolder, "1_Raw/Data_Aggregate")
-  
-    outputs     <- file.path(projectFolder, "4_Outputs"                                        ) # folder for all outputs produced
-    raw_Data    <- file.path(projectFolder, "1_Raw"                                            ) # folder for all raw datasets
-    Data        <- file.path(projectFolder, "1_Raw/DCC/Intermediate/1 - Panel data"            ) # folder for intermediate datasets of old data 
-    Data_final  <- file.path(projectFolder, "1_Raw/DCC/Intermediate/2 - Harmonized sub-sampled Panel Data") # folder for intermediate datasets of old data 
+    scripts          <- file.path(scriptFolder,  "2-data_contruct"                                  ) # folder for the scripts
+    raw_oncae        <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Final"                       ) # folder for raw data from the standard portal 
+    raw_data         <- file.path(projectFolder, "1_Raw"                                            ) # folder for all raw datasets
+    raw_oncae_interm <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Intermediate/1 - Panel data" )
+    intermediate     <- file.path(projectFolder, "2_Intermediate"                                   ) # all datasets used for variable constructions 
+      
+    # data_covid  <- file.path(projectFolder, "1_Raw/Data_covid/IAIP_Emergencia_Covid19"         ) # folder for raw data from the covid portal 
+    # final_covid <- file.path(projectFolder, "1_Raw/Data_covid"                                 ) # folder for constructed covid data 
+    # data_agg    <- file.path(projectFolder, "1_Raw/Data_Aggregate")
     
-
+    # Data        <- file.path(projectFolder, "1_Raw/DCC/Intermediate/1 - Panel data"            ) # folder for intermediate datasets of old data 
+    # Data_final  <- file.path(projectFolder, "1_Raw/DCC/Intermediate/2 - Harmonized sub-sampled Panel Data") # folder for intermediate datasets of old data 
+    # final       <- file.path(projectFolder, "1_Raw/Data_old/DCC/Final"                         ) # folder for constructed old data    
+  
+    # outputs     <- file.path(projectFolder, "4_Outputs"                                        ) # folder for all outputs produced
+    
     
   # Install and load packages -------------------------------------------------
 
@@ -125,12 +131,9 @@
 
 
     # 1) Clean and Merge Honduras Covid Data 
-     source(file.path(scripts, "01_Clean.R"))
+     source(file.path(scripts, "01_Clean_standard.R"))
 
-    # 2) Combine covid data and old data: check overlap, merge/append
-     source(file.path(scripts, "02_Append.R"))
-      
-    # 3) Task 1: Construct Variables - coming next
-    #source(file.path(scripts, "03_construct_var.R"))
-
+    # 2) Construct Variables 
+     source(file.path(scripts, "02_Construct_standard.R"))
+      # there is also a Rmarkdown version of this script - the markdown is the most up to date one 
 

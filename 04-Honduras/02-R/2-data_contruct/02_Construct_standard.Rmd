@@ -1,0 +1,435 @@
+---
+title: "02_Construct_Variables"
+author: "Hao Lyu"
+date: "2022-11-10"
+output: 
+    word_document: default
+    html_document: default 
+---
+<!--Global Chunk Settings-->
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = TRUE, message = TRUE)
+```
+
+<!--Path and packages loaded in from 00_Master.R-->
+```{r paths and packages, include=FALSE}
+
+  # Clear the environment -----------------------------------------------------
+
+    rm(list=ls())
+
+  # Set working directory -----------------------------------------
+      
+      if (Sys.info()["user"] == "wb595473") {
+  
+      scriptFolder <- file.path("/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/04-Honduras/02-R") 
+  
+      projectFolder <- file.path("/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/1_data")
+  
+      
+      } else if (Sys.info()["user"] == "") {
+      
+      scriptFolder <- file.path("") 
+      
+      projectFolder <- file.path("")
+      
+      }
+
+
+    scripts          <- file.path(scriptFolder,  "2-data_contruct"                                  ) # folder for the scripts
+    raw_oncae        <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Final"                       ) # folder for raw data from the standard portal 
+    raw_data         <- file.path(projectFolder, "1_Raw"                                            ) # folder for all raw datasets
+    raw_oncae_interm <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Intermediate/1 - Panel data" )
+    intermediate     <- file.path(projectFolder, "2_Intermediate"                                   ) # all datasets used for variable constructions 
+      
+
+  # Install and load packages -------------------------------------------------
+
+    # Packages 
+
+            packages <-  c(
+              
+              "dplyr"            ,
+              "tidyr"            ,
+              "haven"            ,
+              "plyr"             ,
+              "dplyr"            ,
+              "ggplot2"          ,
+              "here"             ,
+              "lubridate"        , 
+              "reshape2"         ,
+              "scales"           ,
+              "RColorBrewer"     ,
+              "fmsb"             ,
+              "janitor"          ,
+              "stargazer"        ,
+              "stringi"          ,
+              "stringr"          ,
+              "data.table"       ,
+              "gdata"            ,
+              "WDI"              
+
+              )
+
+
+      load_package <- function(pkg){
+        
+        new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
+        
+        if (length(new.pkg))
+      
+      install.packages(new.pkg, dependencies = TRUE)
+    
+    sapply(pkg, require, character.only = TRUE)
+    
+    }
+
+    load_package(packages)
+    
+    # Only install the new packages
+      
+      # new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
+      # if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org")
+
+    # Library the packages (needed for each new session)
+
+      # invisible(lapply(packages, library, character.only = TRUE))
+
+    # devtools::install_github("grattan/grattantheme", dependencies = FALSE, upgrade = "always")
+    # devtools::install_github("ricardo-bion/ggradar")
+
+      # options(scipen=999)
+      
+      
+      
+
+
+
+```
+
+<!--Load Datasets-->
+```{r load datasets, include=FALSE, echo=FALSE}
+
+    # aggregated data from 2018 to 2021
+      data_participants_final   <- readRDS(file.path(raw_oncae, "DATA_PARTICIPANTS.RDS"))
+
+      data_documents_final      <- readRDS(file.path(raw_oncae, "DATA_DOCUMENTS.RDS"   ))
+
+      data_items_final          <- readRDS(file.path(raw_oncae, "DATA_ITEMS.RDS"       ))
+      
+      data_contracts_final      <- readRDS(file.path(raw_oncae, "DATA_CONTRACTS.RDS"   ))
+      
+      data_tenders_final        <- readRDS(file.path(raw_oncae, "DATA_TENDERS.RDS"     ))
+
+    # intermediate datasets from cleaning file 
+      contract_participants <- as.data.frame(fread(file.path(intermediate,"Contract_Participants.csv"))) 
+      
+      contract_tender       <- as.data.frame(fread(file.path(intermediate,"Contract_Tender.csv"))) 
+      
+      data_parties_merged   <- as.data.frame(fread(file.path(intermediate,"Data_Parties_Merged.csv"))) 
+
+      tender_item           <- as.data.frame(fread(file.path(intermediate,"Tender_Item.csv"))) 
+      
+      supplier_item         <- as.data.frame(fread(file.path(intermediate,"Supplier_Item.csv"))) 
+      
+```
+
+
+<!--Construct Variables-->
+```{r COVID dummy}
+  
+    
+    # identify covid dummy 
+      covid <- data_items_final%>%
+        mutate(covid = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
+                                str_detect(STR_ITEM_DESCRIPTION, "COVID")|
+                                str_detect(STR_ITEM_DESCRIPTION, "Covid")|
+                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0))
+      
+      covid2 <- data_contracts_final%>%
+        mutate(covid = ifelse(str_detect(STR_CONTRACT_DESCRIPTION, "covid")|
+                                str_detect(STR_CONTRACT_DESCRIPTION, "COVID")|
+                                str_detect(STR_CONTRACT_DESCRIPTION, "Covid")|
+                                str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_CONTRACT_DESCRIPTION, "sars-cov-2"),1,0))
+      
+      covid3 <- data_tenders_final%>%
+        mutate(covid = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
+                                str_detect(STR_TENDER_DESCRIPTION, "COVID")|
+                                str_detect(STR_TENDER_DESCRIPTION, "Covid")|
+                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0))
+      
+      # table(d["covid"])
+      
+      #     0     1 
+      #   68429   540 
+      
+      # do tables by frequency 
+      # check by year - 
+      # by sector -  
+      # by entity - buyers - by health entities or entire 
+      
+    # add covid dummy to tender-item dataset 
+      tender_item <- tender_item%>%
+        mutate(covid_item = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
+                                str_detect(STR_ITEM_DESCRIPTION, "COVID")|
+                                str_detect(STR_ITEM_DESCRIPTION, "Covid")|
+                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0),
+               covid_contract = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
+                                str_detect(STR_TENDER_DESCRIPTION, "COVID")|
+                                str_detect(STR_TENDER_DESCRIPTION, "Covid")|
+                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0),
+               covid = case_when(covid_item == 1 ~ 1,
+                                 covid_contract == 1 ~ 1))
+
+```
+
+# Task 1 
+
+## New Winners 
+### Definition: new winner means a firm that has won a contract for the first time in the survey period or has won a contract beyond 12 months. The start date of a contract denotes the contract signature date. 
+### Reduce the contract-level data to month-year level
+
+```{r new winner}
+
+    # single out suppliers between 2018 and 2022   
+      contract_supplier <- contract_participants%>%
+        filter(cat_party_role == "supplier"|
+                 cat_party_role == "supplier;tenderer"&
+                 year <= 2022)%>%
+        arrange(id_party, dt_contract_signed)
+      
+    # calculate time lag 
+      contract_supplier <- as.data.table(contract_supplier)
+      
+      contract_supplier = contract_supplier[, lag_date:= shift(dt_contract_signed, 1, type="lag"), by="id_party"]
+      
+    # calculate how many days between the 2 contracts a firm has won 
+      contract_supplier$lag_date <- as_datetime(contract_supplier$lag_date, tz = lubridate::tz(contract_supplier$lag_date))
+      
+      contract_supplier$diff_days_contract <- interval(contract_supplier$lag_date, contract_supplier$dt_contract_signed) %/% days(1)
+      
+    # calculate the number of months from the previous contract by the same firm 
+      contract_supplier$diff_months_contract <- interval(contract_supplier$lag_date, contract_supplier$dt_contract_signed) %/% months(1)
+      
+    # identity new winners by days 
+      contract_supplier <- as.data.frame(contract_supplier)
+      
+      contract_supplier <- contract_supplier%>%
+        mutate(new_winner = case_when(is.na(diff_days_contract) ~ 1 ,
+                                      diff_days_contract > 365 ~ 1 ,
+                                      TRUE ~ 0 ))
+    # summary statistics by year 
+      new_winner_year <- contract_supplier%>%
+        group_by(year)%>%
+        dplyr::summarise(num_new_winner = sum(new_winner))%>%
+        ungroup()
+      
+      new_winner_year
+      
+    # summary statistics by month 
+      contract_supplier$month <- strftime(contract_supplier$dt_contract_signed, "%m")
+      
+      contract_supplier$year_month <- paste0(contract_supplier$year, contract_supplier$month)
+      
+      new_winner_month <- contract_supplier%>%
+        filter(year_month >= 201901)%>%
+        group_by(year_month)%>%
+        dplyr::summarise(num_new_winner = sum(new_winner))%>%
+        ungroup()
+
+      # Visualization for new winners by months  
+      ggplot(new_winner_month, aes(x = year_month, y = num_new_winner, group = 1))+
+        geom_line()+
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))
+  
+      
+```
+
+
+## Market Concentration 
+### Definition: at sector level, the number of winners per sector. Sector refers to the classification of medical-covid/medical-noncovid/non-covid
+
+```{r market concentration}
+      
+    # Identify covid related items to 
+      supplier_item <- supplier_item%>%
+        mutate(covid_item = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
+                                     str_detect(STR_ITEM_DESCRIPTION, "COVID")|
+                                     str_detect(STR_ITEM_DESCRIPTION, "Covid")|
+                                     str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                     str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
+                                     str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0))
+      
+      supplier_item <- as.data.table(supplier_item)
+      
+      market_concentration <- supplier_item[!is.na(YEAR), .N,by = c("covid_item", "YEAR")]
+  
+      market_concentration
+
+```
+
+
+## Product Classification 
+### Whether a firm has increased products code during COVID (selling more than one product)
+### Number of different products (UNSPC codes) supplied by the same firm over 1 year (or 6 months). 
+```{r product code}
+   
+    # [Do firms during covid supply a broader range of different products?]
+    # Besides the shares, explore the number of products sold by the firm before, during and after COVID
+    # Number of different product items (and sectors) sold in one year by the firm
+      
+      firm_item <- supplier_item%>%
+        group_by(ID_PARTY, YEAR)%>%
+        dplyr::summarise(num_unspsc = n_distinct(ID_ITEM_UNSPSC))%>%
+        ungroup()
+      
+      firm_item
+      
+      # flag firms that have increased the product code during COVID
+      firm_uspsc_panel <- firm_item%>%
+        spread(YEAR, num_unspsc)%>%
+        clean_names()%>%
+        select(-x2025, -na, -x2018)%>%
+        replace(is.na(.), 0)%>%
+        mutate(product_increase = case_when(x2020 > x2019 | x2021 > x2019 ~ 1,
+                                            TRUE ~ 0))%>%
+        dplyr::rename("2019" = "x2019",
+                      "2020" = "x2020",
+                      "2021" = "x2021",
+                      "2022" = "x2022")
+      
+      firm_uspsc_panel
+      
+
+```
+
+## Identify Comparison group 
+```{r define treatment group}
+
+    # Construct and index to classify contracts to define comparison group.
+      covid_item_unspsc <- supplier_item%>%
+        filter(covid_item == 1)%>%
+        select(ID, ID_PARTY, NAME_PARTY, ID_ITEM, ID_ITEM_UNSPSC, STR_ITEM_UNSPSC, STR_ITEM_DESCRIPTION, covid_item)
+
+      covid_item_unspsc
+
+    # in UNSPSC code, 42000000 is the segment of Medical Equipment and Accessories and Supplies
+    # extract the first 2 charactors of unspsc and match with 42 
+      supplier_item$ID_ITEM_UNSPSC_SEG = substr(supplier_item$ID_ITEM_UNSPSC, start = 1, stop = 2)
+      
+      supplier_item <- supplier_item%>%
+        mutate(group = ifelse(covid_item == 1 & ID_ITEM_UNSPSC_SEG == 42, "COVID-Medical",
+                               ifelse(covid_item != 1 & ID_ITEM_UNSPSC_SEG == 42, "NonCOVID-Medical", 
+                                      ifelse(covid_item == 1 & ID_ITEM_UNSPSC_SEG != 42, "COVID-NonMedical", "Non-COVID"))))
+      
+      supplier_item <- as.data.table(supplier_item)
+      
+      supplier_item_summary <- supplier_item[!is.na(group),.N,by = "group"]
+      
+      supplier_item_summary
+
+      
+    # covid-medical: identify as covid_item/covid_tender 
+    # covid-non medical
+    # non-covid-medical: 42000000 code 
+    # non-medical: 
+      
+    # check unspsc with item and tender description to see more key words 
+      # note: didn't find any other covid related key words. If we use key words like glove, vaccine, we might flag non-covid related items. 
+    
+
+```
+
+
+## Geographical Analysis 
+### Same location dummy: Whether the firm is from the same municipality, or from the same province or from the same state (we can look at different levels of geographical areas, depending on the country). [Are contracts during covid more likely to be awarded to firms from the same location as the buyer? Are bidders during covid less likely to be from the same location as the buyer?
+```{r location}
+     
+    ## location dummy - no address, need to check original dataset 
+      # Same location dummy: Whether the firm is from the same municipality, or 
+      # from the same province or from the same state (we can look at different 
+      # levels of geographical areas, depending on the country). [Are contracts
+      # during covid more likely to be awarded to firms from the same location as 
+      # the buyer? Are bidders during covid less likely to be from the same location as the buyer?
+      
+      supplier_buyer <- data_parties_merged%>%
+        filter(CAT_PARTY_ROLE == "buyer"|
+                 CAT_PARTY_ROLE == "supplier"|
+                 CAT_PARTY_ROLE == "supplier;tenderer")%>%
+        mutate(role_region_locality = paste0(ID, "___", ID_PARTY, "___", NAME_PARTY, "___", ADDRESS_REGION, "___", ADDRESS_LOCALITY),
+               CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))%>%
+        pivot_wider(names_from = CAT_PARTY_ROLE, 
+                    values_from = role_region_locality)
+      
+      supplier_buyer <- data_parties_merged%>%
+        filter(CAT_PARTY_ROLE == "buyer"|
+                 CAT_PARTY_ROLE == "supplier"|
+                 CAT_PARTY_ROLE == "supplier;tenderer")%>%
+        mutate(CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))
+      
+      supplier_buyer_buyer    <- supplier_buyer%>%
+        filter(CAT_PARTY_ROLE == "buyer")
+      
+      supplier_buyer_supplier <- supplier_buyer%>%
+        filter(CAT_PARTY_ROLE == "supplier")
+      
+      supplier_buyer <- left_join(supplier_buyer_buyer, supplier_buyer_supplier, 
+                                  by = c("ocid", "ID", "ID_PARTY"),
+                                  suffix = c("_BUYER", "_SUPPLIER"))
+      
+      # load a county list 
+      
+
+
+
+```
+
+# Task 2 
+## Processing Time indicators 
+### Total processing time: contract signature - tender inquiry start date
+### Submission time:       tender inquiry end - tender inquiry start date
+### Decision time:         contract signature – tender inquiry end date 
+
+```{r processing time} 
+
+      
+      # check the overlap between contract signature, contract start and end date 
+      check <- contract_tender[,.N, by = "publication_start"] # not consistent 
+      
+      check <- contract_tender[,.N, by = "submission_time"] # consistent: end > start 
+      
+      check <- contract_tender[,.N, by = "processing_time"] # consistent: signature > start 
+      
+      check <- contract_tender[,.N, by = "decision_time"] # consistent: signature > end 
+
+      # construct variables at contract-tender level
+      contract_tender <- contract_tender%>%
+        select(ID, 
+               ID_CONTRACT, 
+               DT_TENDER_PUB, 
+               DT_TENDER_START, 
+               DT_TENDER_END,
+               DT_CONTRACT_SIGNED, 
+               everything())%>%
+        mutate(publication_start = DT_TENDER_PUB - DT_TENDER_START,
+               submission_time = DT_TENDER_END - DT_TENDER_START,
+               processing_time = DT_CONTRACT_SIGNED - DT_TENDER_START,
+               decision_time   = DT_CONTRACT_SIGNED - DT_TENDER_END)
+      
+      contract_tender <- as.data.table(contract_tender)
+      
+```
+
+
+
