@@ -17,6 +17,7 @@
 # Procurement Data Structure: 
 # tender - buyer - contract 
 # tender - buyer - suppliers 
+# tender - buyer - item 
 
 # LOAD DATA -------------------------------------------------------------------
 
@@ -69,247 +70,239 @@
 # CHECK UNIQUE ID ----------------------------------------------------
 
     # data_tenders-------------------------------------------------------------
-    # Tender ID: 1 tender, 1 ID - 138873 
-    length(unique(data_tenders_final$ID))
-    
-    # buyer: 1 buyer ID, 1 buyer (1 buyer could have multiple names)
-    buyer <- data_tenders_final%>%
-      group_by(ID_BUYER)%>%
-      dplyr::summarise(N = n_distinct(NAME_BUYER))%>%
-      ungroup()
-    
-    # Tender_buyer: 1 tender ID, 1 buyer 
-    tender_buyer <- data_tenders_final%>%
-      group_by(ID)%>%
-      dplyr::summarise(N = n_distinct(ID_BUYER))%>%
-      ungroup()
+      # Tender ID: 1 tender, 1 ID - 138873 
+      length(unique(data_tenders_final$ID))
+      
+      # buyer: 1 buyer ID, 1 buyer (1 buyer could have multiple names)
+      buyer <- data_tenders_final%>%
+        group_by(ID_BUYER)%>%
+        dplyr::summarise(N = n_distinct(NAME_BUYER))%>%
+        ungroup()
+      
+      # Tender_buyer: 1 tender ID, 1 buyer 
+      tender_buyer <- data_tenders_final%>%
+        group_by(ID)%>%
+        dplyr::summarise(N = n_distinct(ID_BUYER))%>%
+        ungroup()
 
     # data_participants - "tenderer"  "supplier;tenderer" "supplier"  ------------
-    # note: 1 tender has multiple participants 
-    # 
-    # suppliers related: 
-    suppliers <- data_participants_final%>%
-          filter(CAT_PARTY_ROLE == "supplier"|
-                   CAT_PARTY_ROLE == "supplier;tenderer")%>%
-          relocate(CAT_PARTY_ROLE, .after = ID)
-
-    # whether 1 ID_PARTY is associated with 1 firm? Yes, 5950 supplier ID. Supplier ID is more accurate than supplier name 
-    suppliers_duplicate <- suppliers%>%
-      group_by(ID_PARTY)%>%
-      dplyr::summarise(N = n_distinct(NAME_PARTY))%>%
-      ungroup()
-    
-    # the number of tender that has suppliers/winners: 85722 (88653)
-    length(unique(suppliers$ID))
-    
-    # some tenders have multiple suppliers 
-    tender_supplier <- suppliers%>%
-      group_by(ID)%>%
-      dplyr::summarise(num_suppliers = n_distinct(ID_PARTY))%>%
-      ungroup()
-
+      # note: 1 tender has multiple participants 
+        
+      # suppliers related: 
+      suppliers <- data_participants_final%>%
+            filter(CAT_PARTY_ROLE == "supplier"|
+                     CAT_PARTY_ROLE == "supplier;tenderer")%>%
+            relocate(CAT_PARTY_ROLE, .after = ID)
+  
+      # whether 1 ID_PARTY is associated with 1 firm? Yes, 5950 supplier ID. Supplier ID is more accurate than supplier name 
+      suppliers_duplicate <- suppliers%>%
+        group_by(ID_PARTY)%>%
+        dplyr::summarise(N = n_distinct(NAME_PARTY))%>%
+        ungroup()
+      
+      # the number of tender that has suppliers/winners: 85722 (88653)
+      length(unique(suppliers$ID))
+      
+      # some tenders have multiple suppliers 
+      tender_supplier <- suppliers%>%
+        group_by(ID)%>%
+        dplyr::summarise(num_suppliers = n_distinct(ID_PARTY))%>%
+        ungroup()
     
     # data_contracts ---------------------------------------------------------
-    # Tender ID: 1 tender, multiple contracts 
-    tender_contract <- data_contracts_final%>%
-      group_by(ID)%>%
-      dplyr::summarise(num_contract = n_distinct(ID_CONTRACT))%>%
-      ungroup()
-    
-    # how to link contract with participants? 
-    
+      # Tender ID: 1 tender, multiple contracts 
+      tender_contract <- data_contracts_final%>%
+        group_by(ID)%>%
+        dplyr::summarise(num_contract = n_distinct(ID_CONTRACT))%>%
+        ungroup()
+  
     
     # data_item --------------------------------------------------------------
-    # Tender ID: 1 tender, multiple items  
-    tender_item <- data_items_final%>%
-      group_by(ID)%>%
-      dplyr::summarise(num_item = n_distinct(ID_ITEM))%>%
-      ungroup()
+      # Tender ID: 1 tender, multiple items  
+      tender_item <- data_items_final%>%
+        group_by(ID)%>%
+        dplyr::summarise(num_item = n_distinct(ID_ITEM))%>%
+        ungroup()
       
-    # how to link item with contracts and participants? 
-
     
 # PREPARE DATASETS -----------------------------------------------------------
 
-    # Contract and Supplier Data  --------------------------------------------
-    
-      # check the overlap between contract signature, contract start and end date 
-    
-      # DATA PARTIES & DATA PAR MEMBER OF
-    drop <- c( # List of variables we want to drop from the dataset
+# Contract and Supplier Data-------------------------------------------------
+
+    # Cleaning Raw Data 
       
-      "parties/0/contactPoint/faxNumber"   ,
-      "parties/0/identifier/id"            ,
-      "parties/0/contactPoint/name"        ,
-      "parties/0/contactPoint/url"         ,
-      "parties/0/identifier/scheme"        ,
-      "parties/0/contactPoint/email"       ,
-      "parties/0/contactPoint/telephone"  
-      
-    )
-    
-    data_parties_new <- data_parties[,!colnames(data_parties) %in% drop] 
-    
-    data_parties_new <- data_parties_new %>% 
-      
-      dplyr::rename(
-        ID                       = `id`                              ,
-        ID_PARTY                 = `parties/0/id`                    ,
-        CAT_PARTY_ROLE           = `parties/0/roles`                 ,
-        NAME_PARTY               = `parties/0/name`                  ,
-        ADDRESS_REGION           = `parties/0/address/region`        ,
-        ADDRESS_LOCALITY         = `parties/0/address/locality`      ,
-        ADDRESS_ST               = `parties/0/address/streetAddress`
-        
-      )
-    
-    rm(data_parties)
-    
-    # general data cleaning for data_par_member
-    
-    drop <- c( # List of variables we want to drop from the dataset
-      
-      "ocid"                   ,
-      "id"                     ,
-      "parties/0/id"
-      
-    )
-    
-    data_par_member_new <- data_par_member[,!colnames(data_par_member) %in% drop] 
-    
-    data_par_member_new <- data_par_member_new %>% 
-      
-      dplyr::rename(
-        
-        ID_PARTY_MEMBEROF              = `parties/0/memberOf/0/id`        ,
-        NAME_PARTY_MEMBEROF            = `parties/0/memberOf/0/name`    
-        
-      )
-    
-    rm(data_par_member)
-    
-    # drop observations that are redundant. 
-    # Every buyer has another observation to describe the "member of", 
-    # we can get that from the other dataset so that we can drop all 
-    # these observations now. But we will add them like variables 
-    # later on (extracting them from "data_par_member_of")
-    
-    data_parties_new <- data_parties_new[!(nchar(data_parties_new$ID_PARTY) == 6 & 
-                                             data_parties_new$CAT_PARTY_ROLE == "buyer"),]
-    
-    data_parties_new <- data_parties_new %>% 
-      mutate(
-        # only buyers have a parties_member_id 
-        # when there is a department the lenght of the string is 13
-        ID_PARTY_MEMBEROF = ifelse(CAT_PARTY_ROLE != "buyer", NA,   
-                                   ifelse(nchar(ID_PARTY) == 6, NA, 
-                                          substr(ID_PARTY,8,13))))
-    
-    # Merge the dataset with all the parties with the name of the departments 
-    # (only for buyers)
-    data_parties_merged <- left_join(data_parties_new, 
-                                     data_par_member_new %>% distinct(), by = "ID_PARTY_MEMBEROF")
-    
-    fwrite(data_parties_merged, file = paste0(intermediate, "/Data_Parties_Merged.csv"))
-    
-    # We remove the two datasets that have been merged together
-    rm(data_par_member_new, data_parties_new)
-    
-    # DATA CONTRACTS 
-    drop <- c( # List of variables we want to drop from the dataset
-      
-      "contracts/0/title"                    ,
-      "contracts/0/buyer/id"                 ,
-      "contracts/0/buyer/name"               ,
-      "contracts/0/localProcurementCategory" 
-      
-    )
-    
-    data_contracts_new <- data_contracts[,!colnames(data_contracts) 
-                                         %in% drop] 
-    
-    data_contracts_new <- data_contracts_new %>% 
-      
-      dplyr::rename(
-        
-        ID                        = `id`                          ,
-        ID_CONTRACT               = `contracts/0/id`              , 
-        AMT_CONTRACT_VALUE        = `contracts/0/value/amount`    ,
-        CAT_CONTRACT_CURRENCY     = `contracts/0/value/currency`  ,
-        STR_CONTRACT_DESCRIPTION  = `contracts/0/description` 
-        
-      )
-    
-    data_contracts_new <- data_contracts_new %>% 
-      mutate(
-        
-        DT_CONTRACT_SIGNED = as.Date(substr(`contracts/0/dateSigned`,
-                                            0,
-                                            10)),
-        AMT_CONTRACT_VALUE = ifelse(AMT_CONTRACT_VALUE <= 0, NA, AMT_CONTRACT_VALUE)
-        
-      )
-    
-    data_contracts_new <- data_contracts_new %>% 
-      
-      mutate(
-        DT_CONTRACT_SIGNED = dplyr::if_else(substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2049" | substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2219",
-                                            paste0("2019", substr(data_contracts_new$DT_CONTRACT_SIGNED, 5, 12)), 
-                                            as.character(data_contracts_new$DT_CONTRACT_SIGNED)
+      # DATA PARTIES 
+        drop <- c( # List of variables we want to drop from the dataset
+          
+          "parties/0/contactPoint/faxNumber"   ,
+          "parties/0/identifier/id"            ,
+          "parties/0/contactPoint/name"        ,
+          "parties/0/contactPoint/url"         ,
+          "parties/0/identifier/scheme"        ,
+          "parties/0/contactPoint/email"       ,
+          "parties/0/contactPoint/telephone"  
+          
         )
-      )
-
-    currency_matrix <- WDI(
+        
+        data_parties_new <- data_parties[,!colnames(data_parties) %in% drop] 
+        
+        data_parties_new <- data_parties_new %>% 
+          
+          dplyr::rename(
+            ID                       = `id`                              ,
+            ID_PARTY                 = `parties/0/id`                    ,
+            CAT_PARTY_ROLE           = `parties/0/roles`                 ,
+            NAME_PARTY               = `parties/0/name`                  ,
+            ADDRESS_REGION           = `parties/0/address/region`        ,
+            ADDRESS_LOCALITY         = `parties/0/address/locality`      ,
+            ADDRESS_ST               = `parties/0/address/streetAddress`
+            
+          )
+        
+        rm(data_parties)
+        
+      #  DATA PAR MEMBER OF
+        drop <- c( # List of variables we want to drop from the dataset
+          
+          "ocid"                   ,
+          "id"                     ,
+          "parties/0/id"
+          
+        )
+        
+        data_par_member_new <- data_par_member[,!colnames(data_par_member) %in% drop] 
+        
+        data_par_member_new <- data_par_member_new %>% 
+          
+          dplyr::rename(
+            
+            ID_PARTY_MEMBEROF              = `parties/0/memberOf/0/id`        ,
+            NAME_PARTY_MEMBEROF            = `parties/0/memberOf/0/name`    
+            
+          )
+        
+        rm(data_par_member)
+        
+        # drop observations that are redundant. 
+        # Every buyer has another observation to describe the "member of", 
+        # we can get that from the other dataset so that we can drop all 
+        # these observations now. But we will add them like variables 
+        # later on (extracting them from "data_par_member_of")
+        
+        data_parties_new <- data_parties_new[!(nchar(data_parties_new$ID_PARTY) == 6 & 
+                                                 data_parties_new$CAT_PARTY_ROLE == "buyer"),]
+        
+        data_parties_new <- data_parties_new %>% 
+          mutate(
+            # only buyers have a parties_member_id 
+            # when there is a department the lenght of the string is 13
+            ID_PARTY_MEMBEROF = ifelse(CAT_PARTY_ROLE != "buyer", NA,   
+                                       ifelse(nchar(ID_PARTY) == 6, NA, 
+                                              substr(ID_PARTY,8,13))))
+        
+        # Merge the dataset with all the parties with the name of the departments 
+        # (only for buyers)
+        data_parties_merged <- left_join(data_parties_new, 
+                                         data_par_member_new %>% distinct(), by = "ID_PARTY_MEMBEROF")
+        
+        fwrite(data_parties_merged, file = paste0(intermediate, "/Data_Parties_Merged.csv"))
+        
+        # Remove the two datasets that have been merged together
+        rm(data_par_member_new, data_parties_new)
+        
+      # DATA CONTRACTS 
+        drop <- c( # List of variables we want to drop from the dataset
+          
+          "contracts/0/title"                    ,
+          "contracts/0/buyer/id"                 ,
+          "contracts/0/buyer/name"               ,
+          "contracts/0/localProcurementCategory" 
+          
+        )
+        
+        data_contracts_new <- data_contracts[,!colnames(data_contracts) 
+                                             %in% drop] 
+        
+        data_contracts_new <- data_contracts_new %>% 
+          
+          dplyr::rename(
+            
+            ID                        = `id`                          ,
+            ID_CONTRACT               = `contracts/0/id`              , 
+            AMT_CONTRACT_VALUE        = `contracts/0/value/amount`    ,
+            CAT_CONTRACT_CURRENCY     = `contracts/0/value/currency`  ,
+            STR_CONTRACT_DESCRIPTION  = `contracts/0/description` 
+            
+          )
+        
+        data_contracts_new <- data_contracts_new %>% 
+          mutate(
+            
+            DT_CONTRACT_SIGNED = as.Date(substr(`contracts/0/dateSigned`,
+                                                0,
+                                                10)),
+            AMT_CONTRACT_VALUE = ifelse(AMT_CONTRACT_VALUE <= 0, NA, AMT_CONTRACT_VALUE)
+            
+          )
+        
+        data_contracts_new <- data_contracts_new %>% 
+          
+          mutate(
+            DT_CONTRACT_SIGNED = dplyr::if_else(substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2049" | substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2219",
+                                                paste0("2019", substr(data_contracts_new$DT_CONTRACT_SIGNED, 5, 12)), 
+                                                as.character(data_contracts_new$DT_CONTRACT_SIGNED)
+            )
+          )
       
-      country   = "HN"                              ,
-      indicator = c("exchange_rate" = "PA.NUS.FCRF"),
-      start     = 2005                              ,
-      end       = 2019             
-    )
-    
-    data_contracts_new_usd <- data_contracts_new %>% 
+        currency_matrix <- WDI(
+          
+          country   = "HN"                              ,
+          indicator = c("exchange_rate" = "PA.NUS.FCRF"),
+          start     = 2005                              ,
+          end       = 2022             
+        )
+        
+        data_contracts_new_usd <- data_contracts_new %>% 
+          
+          mutate(YEAR = as.numeric(substr(DT_CONTRACT_SIGNED, 0, 4))) 
       
-      mutate(YEAR = as.numeric(substr(DT_CONTRACT_SIGNED, 0, 4))) 
-
-    currency_matrix <- as.data.frame(currency_matrix[,c(3,4)])
-    
-    colnames(currency_matrix) <- c("EXCHANGE_RATE", "YEAR")
-    
-    data_contracts_new_usd <- left_join(data_contracts_new_usd, currency_matrix, by = "YEAR")
-    
-    data_contracts_new_usd <- data_contracts_new_usd %>% 
-      mutate(AMT_CONTRACT_VALUE    = AMT_CONTRACT_VALUE/EXCHANGE_RATE) %>% 
-      mutate(CAT_CONTRACT_CURRENCY = "USD")
-    
-    drop <- c( # List of variables we want to drop from the dataset
-      
-      "contracts/0/dateSigned" 
-      
-    )
-    
-    # we drop the list of vars
-    data_contracts_new_usd <- data_contracts_new_usd[,!colnames(data_contracts_new_usd) 
-                                                     %in% drop] 
-    
-    # 
+        currency_matrix <- as.data.frame(currency_matrix[,c(3,4)])
+        
+        colnames(currency_matrix) <- c("EXCHANGE_RATE", "YEAR")
+        
+        data_contracts_new_usd <- left_join(data_contracts_new_usd, currency_matrix, by = "YEAR")
+        
+        data_contracts_new_usd <- data_contracts_new_usd %>% 
+          mutate(AMT_CONTRACT_VALUE    = AMT_CONTRACT_VALUE/EXCHANGE_RATE) %>% 
+          mutate(CAT_CONTRACT_CURRENCY = "USD")
+        
+        drop <- c( # List of variables we want to drop from the dataset
+          
+          "contracts/0/dateSigned" 
+          
+        )
+        
+        # we drop the list of vars
+        data_contracts_new_usd <- data_contracts_new_usd[,!colnames(data_contracts_new_usd) 
+                                                         %in% drop] 
+        
     # set up contract_participants data set 
-    contract_participants <- left_join(data_contracts_new_usd, data_parties_merged, 
-                                       by = "ocid",
-                                       suffix = c("", "_y"))
+      contract_participants <- left_join(data_contracts_new_usd, data_parties_merged, 
+                                         by = "ocid",
+                                         suffix = c("", "_y"))
+      
+
+      contract_participants <- contract_participants%>%
+        filter(CAT_PARTY_ROLE!= "funder")
+      
+      fwrite(contract_participants, file = paste0(intermediate, "/Contract_Participants.csv"))
     
-    contract_participants <- clean_names(contract_participants)
+  # Year variable ---------------------------------------------------------
     
-    contract_participants <- contract_participants%>%
-      filter(cat_party_role != "funder")
+    tender_date <- data_contracts_new_usd%>%
+      select(ID, DT_CONTRACT_SIGNED)
     
-    fwrite(contract_participants, file = paste0(intermediate, "/Contract_Participants.csv"))
-    
-    # Year variable ---------------------------------------------------------
-    
-    tender_year <- data_contracts_new_usd%>%
-      select(ID, YEAR)
-    
-    # Supplier - Item Data ---------------------------------------------------
+  # Supplier - Item Data ---------------------------------------------------
       # market concentration: number of winners per sector
       # firms that have increased the product code during COVID. Number of different products (UNSPC codes) supplied by the same firm over 1 year (or 6 months) [Do firms during covid supply a broader range of products?]
       # Construct a market concentration (at sector level - number of winners per sector). 
@@ -317,33 +310,31 @@
       # Note: sector level means by product sector// medical/non-medical, covid/non-covid 
     
       # single out suppliers between 2018 and 2022   
-    data_supplier <- data_parties_merged%>%
-      filter(CAT_PARTY_ROLE == "supplier"|
-               CAT_PARTY_ROLE == "supplier;tenderer")%>%
-      mutate(CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))
-    
-    supplier_item <- left_join(data_supplier, data_items_final,
-                               by = "ID")
+      data_supplier <- data_parties_merged%>%
+        filter(CAT_PARTY_ROLE == "supplier"|
+                 CAT_PARTY_ROLE == "supplier;tenderer")%>%
+        mutate(CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))
+      
+      supplier_item <- left_join(data_supplier, data_items_final,
+                                 by = "ID")
     
       # merge UNSPSC code 
-    data_unspsc_commodity <- data_unspsc_commodity%>%
-      dplyr::rename(ID_ITEM_UNSPSC = Commodity,
-                    STR_ITEM_UNSPSC = Description)
-    
-    supplier_item <- supplier_item%>% 
-      left_join(data_unspsc_commodity, by = "ID_ITEM_UNSPSC")%>%
-      dplyr::relocate(STR_ITEM_UNSPSC, .after = ID_ITEM_UNSPSC)
-    
-      # merge year variable to supplier-item
-    supplier_item <- left_join(supplier_item, tender_year,
-                               by = "ID")
-    
-    
-    fwrite(supplier_item, file = paste0(intermediate, "/Supplier_Item.csv"))
-    
+      data_unspsc_commodity <- data_unspsc_commodity%>%
+        dplyr::rename(ID_ITEM_UNSPSC = Commodity,
+                      STR_ITEM_UNSPSC = Description)
+      
+      supplier_item <- supplier_item%>% 
+        left_join(data_unspsc_commodity, by = "ID_ITEM_UNSPSC")%>%
+        dplyr::relocate(STR_ITEM_UNSPSC, .after = ID_ITEM_UNSPSC)
+      
+      # merge contract signature date variable to supplier-item
+      supplier_item <- left_join(supplier_item, tender_date,
+                                 by = "ID")
+      
+      fwrite(supplier_item, file = paste0(intermediate, "/Supplier_Item.csv"))
     
   
-    # Contract - Tender data -------------------------------------------------
+  # Contract - Tender data -------------------------------------------------
       # Total processing time: contract signature - tender initiation
       # Delivery time: delivery date - contract signature
       # check if tender_end is always after contract_signature to confirm whether
@@ -355,9 +346,12 @@
     fwrite(contract_tender, file = paste0(intermediate, "/Contract_Tender.csv"))
     
     
-    # Tender - Item Data ---------------------------------------------------
+# Tender - Item Data ---------------------------------------------------
     
     tender_item <- left_join(data_tenders_final, data_items_final,
+                             by = "ID")
+    
+    tender_item <- left_join(tender_item, tender_date,
                              by = "ID")
 
     fwrite(tender_item, file = paste0(intermediate, "/Tender_Item.csv"))
