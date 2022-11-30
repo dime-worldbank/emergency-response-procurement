@@ -20,10 +20,12 @@
 	gen log_covid_purchase = log(N_covid_purchases)
 	gen log_covid_value    = log(total_covid)
 	
-	export delim using "${path_project}/1_data/covid_test.csv", delim(",")
+	* export delim using "${path_project}/1_data/covid_test.csv", delim(",")
 
 	cap drop probab
-	logit D_covid_tag log_covid_value log_covid_purchase  
+	* logit D_covid_tag log_covid_value log_covid_purchase  
+	logit d_covid_adjust log_covid_value log_covid_purchase  
+
 	estimate store logit_est
 	predict probab,p
 
@@ -73,9 +75,9 @@
 		(scatter log_covid_purchase log_covid_value  if Covid_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
 		/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || ///
  		, legend(order( 1 "Covid Taged"  2 "High Covid" 3 "Medium Covid" 4 "low Covid" 5 "No Covid")  col(3)) ///
-		graphregion(color(white)) xtitle("log(total expenses on covid tender)") ///		
-		 ytitle("log(total item purchases on covid tender)")  
-	 
+		graphregion(color(white))xtitle("Log(Covid Expenses) vs Log(Covid Purchases)") ///		
+	 ytitle("Log(Covid Expenses)")  xtitle("Log(Covid Purchases)")   	///
+	 note("Tenders opened in [2020,2021,2022]")	
 	 
 	graph export "${path_project}/4_outputs/3-Figures/06-Covid_group_estimation.png", replace as(png)
 	

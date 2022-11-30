@@ -75,10 +75,10 @@
 	
 	* Final Criteria
 	twoway  /// 
-	(function y= 0  						,range(0              25) recast(area)  color("233 149 144")  base(10) )  ///
+	(function y= 0  						,range(0            25) recast(area)  color("233 149 144")  base(10) )  ///
 	(function y= 1/(x+ log( 2e6))+log( 250) ,range(`=log( 2e6)' 25) recast(area)  color("104 172 32")  base(10) )  ///
-	(function y= 1/(x+ log( 6e6))+log( 400) ,range(`=log(6e6)' 25) recast(area)  color("180 182 26")  base(10) )  ///
-	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)' 25) recast(area) color("98 190 121")  base(10) )   ///
+	(function y= 1/(x+ log( 6e6))+log( 400) ,range(`=log(6e6)'  25) recast(area)  color("180 182 26")  base(10) )  ///
+	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)'  25) recast(area)  color("98 190 121")  base(10) )   ///
  	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==3, m(c)  mc( gs7) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
@@ -244,6 +244,18 @@
 	tab Covid_item_level	
 	
 	tab Covid_group_level Covid_item_level
+	
+	 
+	* Final Criteria
+	twoway  /// 
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==1, m(x)  mc( gs2)    msize(small))  	///
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==0,       mc( pink)   msize(tiny)) 	///	
+	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
+	, legend(order( 1  "D Covid =1"  2  "D Covid =0")  col(4)) ///
+	graphregion(color(white)) xtitle("Log(Covid Expenses) vs Log(Covid Purchases)") ///		
+	 ytitle("Log(Covid Expenses)")  xtitle("Log(Covid Purchases)")   	///
+	 note("Tenders opened in [2020,2021,2022]")
+	
  
 	* Final Criteria
 	twoway  /// 

@@ -1,6 +1,7 @@
 
 require(data.table)
 require(tidyverse)
+library("factoextra")
 
 setwd("C:/Users/leand/Dropbox/3-Profissional/07-World BANK/04-procurement/06-Covid_Brazil/1_data")
 
@@ -17,8 +18,8 @@ glimpse(data_test)
 aux_scale     <- scale(data_test)
 kmeansClusters<- kmeans(aux_scale, 5, nstart = 25)
 
+x11()
 #Visualisation of resuls using fviz_cluster from factoextra
-library("factoextra")
 fviz_cluster(kmeansClusters,data_test, stand = FALSE, geom = "point")
 
 
