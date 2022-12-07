@@ -32,7 +32,7 @@ label define lab_method ///
 	3 "03-unenforce"  ///
 	4 "04-others" ,replace
 
-label val methods
+label val methods lab_method
 	
 * Creating covid dummy tender
 gen D_covid = 	  regex(bidding_object,"(covid)([^8]*)(19)") ///
@@ -52,7 +52,24 @@ gen D_law_926_2020 = regex(bidding_object,"(926)([^0-9]*)(2020)") ///
 					| regex(bidding_object,"(13)([^0-9]*)(979)")  
 
 label var D_law_926_2020 "Dummy COVID emergence law 13.979"
-					
+
+* tempfile to merge
+tempfile merge_data
+save `merge_data'
+
+* Including value estimated
+use  id_bidding  value_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-item-panel",clear
+gcollapse (sum) volume_tender = value_item, by(id_bidding)
+	
+merge 1:1 id_bidding  using `merge_data', keep(3) nogen
+		
+* Labeling data
+label data  "Brazil tender data - 01/2013-06/2022"
+
+* Ordering
+order year_month id_bidding methods purchase_method volume_tender D_covid D_law_926_2020
+sort  year_month id_bidding
+
 * Saving
 compress
 save "${path_project}/1_data/01-tender_data",replace		
