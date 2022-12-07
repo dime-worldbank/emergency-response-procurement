@@ -65,7 +65,7 @@
  	, ${graph_option} legend(order(${order_legend_g1})  col(3))  		///
 	xlabel(`=yq(2018,1)'(2)`=yq(2022,2)', angle(90))  ///
 		ytitle("") ylabel( , angle(0))  ${covid_shadow} ///
-		note("Other methods has less than 1% of tenders") title("Number Covid tenders tenders")		
+		note("Other methods has less than 1% of tenders") title("Total estimated volume by tenders")		
 		
 	* Graphing export
 	graph export "${path_project}/4_outputs/3-Figures/01-overview-N_tender-covid.png", replace as(png)

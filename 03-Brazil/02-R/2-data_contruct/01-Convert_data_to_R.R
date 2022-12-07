@@ -10,7 +10,7 @@
         # 01: Classic packages for data manipulation
         "tidyverse",
         "data.table",
-        "haven",
+        "haven"
       ) 
     
     # Leitura dos pacotes e dependencias
