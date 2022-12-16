@@ -195,8 +195,14 @@
 	replace N_participants = . if methods!=1
 	replace SME			   = . if methods!=1
 
+	* Extra
+	gegen total_volume = sum(value_item)  , by(D_post type_item item_5d_code    )
+	gen share = value_item/total_volume
+	gen shannon_entropy  = -share*ln(share)	
+	gen HHI = share*share	
+	
 	* Collapse
-	gcollapse (sum)  volume = value_item  					///
+	gcollapse (sum)  volume = value_item  	HHI				///
 			  (mean) avg_n_participants = N_participants 	///
 					 avg_n_win_SME = SME, 					///
 			  freq(N_lots ) 								///
@@ -218,10 +224,11 @@
 			keepusing(type_item type_item item_5d_code item_5d_name*)  keep(3) nogen
 	}
 	.
-
+	
+	
 	* lag vars
 	gen log_volume = log(volume)
-	foreach vars of varlist volume avg_n_participants avg_n_win_SME N_lots log_volume  {
+	foreach vars of varlist volume avg_n_participants avg_n_win_SME N_lots log_volume   HHI {
 		bys aux_id (D_post): gen L_`vars' = `vars'[1] 		 if _n==2
 		gen delta_`vars' = `vars' - L_`vars'
 	}	
@@ -232,13 +239,15 @@
 	
 	* Formating
 	format %15.0fc L_*
+	
+
 }
 .
 
 * 04: Graph pre post pandemic
-foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "log_volume avg_n_win_SME"   "avg_n_win_SME volume" {
+foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "log_volume avg_n_win_SME"   "avg_n_win_SME volume" "HHI volume" {
 	preserve	 
-  		* Materials and High covid products
+   		* Materials and High covid products
 		keep if Covid_item_level==3
 		keep if type_item	== 1	
 
