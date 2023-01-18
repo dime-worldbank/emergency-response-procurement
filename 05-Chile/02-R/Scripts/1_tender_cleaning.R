@@ -82,7 +82,7 @@
   {
     
     # Load COVID-19 data
-    item_covid   <- readxl::read_xlsx(file.path(raw_data, "Auxiliary Files/covid_label_table.xlsx"))
+    item_covid   <- readxl::read_xlsx(file.path(raw_data, "Auxiliary files/covid_label_table.xlsx"))
     
   }
   
@@ -96,29 +96,24 @@
   item_covid_list <- item_covid %>% select(ID_ITEM_UNSPSC, CAT_MEDICAL, COVID_LABEL)
   
   # Loop of cleaning procedures for each dataset in the list of datasets
-  for(i in 2:length(datalist)) {
+  for(i in 1:length(datalist)) {
     
     print(paste0(i, " out of ", length(datalist)))
     
     # 3.1: select only relevant variables 
     datalist[[i]] <- datalist[[i]] %>% 
       select(
-        Codigo,
         Codigoitem,
-        Link,
         CodigoExterno,
-        Nombre,
-        Descripcion,
-        `Tipo de Adquisicion`,
         Estado,
         CodigoOrganismo,
-        NombreOrganismo,
-        RutUnidad,
-        CodigoUnidad,
-        NombreUnidad,
+        sector,
         ComunaUnidad,
         RegionUnidad,
-        Tipo,
+        RutUnidad,
+        CodigoUnidad,
+        ComunaUnidad,
+        RegionUnidad,
         CodigoMoneda,
         FechaCreacion,
         FechaCierre,
@@ -130,9 +125,6 @@
         FechaPublicacion,
         FechaAdjudicacion,
         Modalidad,
-        TipoPago,
-        TipoAprobacion,
-        NumeroAprobacion,
         FechaAprobacion,
         RutProveedor,
         `Cantidad Ofertada`,
@@ -147,10 +139,9 @@
         `Estado Oferta`
       ) %>% 
       filter(
-        (`Estado Oferta` == "Aceptada" & Estado == "Adjudicada") | 	
-          Estado == "Desierta (o art. 3 ó 9 Ley 19.886)"
+        (`Estado Oferta` == "Aceptada" & Estado == "Adjudicada")
       ) %>% # therefore we exclude offers that have not been accepted and tenders that were "Cerrada", "Suspendida", "Revocada"
-      select(-c("Estado Oferta", "Estado"))
+      select(-c("Estado Oferta", "Estado", "sector"))
     
     # 3.2: format dates
     datalist[[i]] <- datalist[[i]] %>% 
@@ -178,16 +169,30 @@
       ) %>% 
       rename(
         ID_RUT_FIRM = var
-      ) 
-      
+      ) %>% 
+      mutate(
+        ID_RUT_FIRM = gsub("\\.", "", ID_RUT_FIRM)
+      )
+    
     # 3.6: reformat RUT for buyers
-    datalist[[i]] <- rut_check(datalist[[i]], ID_BUYER_RUT) %>% 
+    datalist[[i]] <- rut_check(datalist[[i]], ID_RUT_BUYER) %>% 
       select(
-        - c("ID_BUYER_RUT")
+        - c("ID_RUT_BUYER")
       ) %>% 
       rename(
-        ID_BUYER_RUT = var
-      ) 
+        ID_RUT_BUYER = var
+      ) %>% 
+      mutate(
+        ID_RUT_BUYER = gsub("\\.", "", ID_RUT_BUYER)
+      )
+    
+    # 3.7: filtering out the intermediary cenabast R.U.T.: 61608700-2
+    datalist[[i]] <- datalist[[i]] %>% 
+      filter(ID_RUT_BUYER != "61608700-2")
+    
+    # 3.8: convert the string for selected offer into dummy
+    datalist[[i]] <- datalist[[i]] %>% 
+      mutate(CAT_OFFER_SELECT = ifelse(CAT_OFFER_SELECT == "Seleccionada", 1, 0))
     
   }
   
@@ -195,7 +200,10 @@
   tender_data = do.call(rbind, datalist)
   
   # flag covid items
-  tender_data = tender_data %>% left_join(item_covid_list, by = c("ID_ITEM_UNSPSC"))
+  tender_data = tender_data %>% 
+    left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
+    mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 1) == "42", 1, 0)) %>% 
+    mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
   
   # remove list of data
   rm(datalist, data_names)
@@ -208,11 +216,11 @@
 {
   
   # save the intermediate dataset
-  saveRDS(tender_data, 
-          file = file.path(int_data, "tenders.rds"))
+  fwrite(tender_data, 
+          file = file.path(int_data, "tenders.csv"))
   
   # clean the workspace from the dataframe
-  rm(data_names, tender_data)
+  rm(item_covid, item_covid_list, tender_data)
   
   # free unused memory usage
   gc()

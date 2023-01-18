@@ -5,10 +5,13 @@
     {
       
       # Load cleaned tender data
-      data_offer_sub <- readRDS(file = file.path(int_data, "tenders.rds"))
+      data_offer_sub <- fread(file = file.path(int_data, "tenders.csv"))
       
       # Load firm data
       data_firms <- read_dta(file = file.path(fin_data, "SII_2015_2020.dta"))
+      
+      # Load PO data
+      data_po <- fread(file = file.path(int_data, "purchase_orders.csv"))
       
       }
     
@@ -26,61 +29,63 @@
 
   {
     
-    { # Checking values
-      
-      {# Negative values
-        
-        n_negative_amount_awarded <- format(nrow(data_offer_sub %>% filter(AMT_VALUE_AWARDED < 0)), nsmall = 0, digits = 2)
-        
-      }
-      
-      {# Very large numbers
-        
-        # I checked 10 randoms and they all have the same issue. They all offer 1 item but then the ATM_QUANTITY_AWARD is equal to AMT_VALUE_OFFER_TOT
-        # I believe that this is a classic mistype
-        View(test_1 <- data_offer_sub %>% 
-               filter((AMT_QUANTITY_AWARDED == AMT_VALUE_OFFER_TOT) & (AMT_VALUE_AWARDED == (AMT_VALUE_OFFER_TOT*AMT_QUANTITY_AWARDED))) %>% 
-               filter(AMT_QUANTITY_AWARDED != 1) %>% 
-               filter(CAT_OFFER_SELECT == "Seleccionada"))
-        
-        # Number of these cases
-        n_case_check_1 <- format(nrow(test_1), nsmall = 0, digits = 2)
-        
-        # Display URL of these cases
-        check_1 <- left_join(test_1, data_offer_sub %>% select(ID_TENDER, URL_TENDER))
-        
-      }
-      
-      {# Very odd numbers: they are all 1
-        
-        # They are all 1
-        View(test_2 <- data_offer_sub %>% 
-               filter((AMT_QUANTITY_AWARDED == AMT_VALUE_OFFER_TOT) & (AMT_VALUE_AWARDED == (AMT_VALUE_OFFER_TOT*AMT_QUANTITY_AWARDED))) %>% 
-               filter(AMT_QUANTITY_AWARDED == 1) %>% 
-               filter(CAT_OFFER_SELECT == "Seleccionada"))
-        
-        # Number of these cases
-        n_case_check_2 <- format(nrow(test_2), nsmall = 0, digits = 2)
-        
-        # Display URL of these cases
-        check_2 <- left_join(test_2[sample(nrow(test_2), 10)], data_offer_sub %>% select(ID_TENDER, URL_TENDER))
-        
-      }
-      
-      {# Inconsistent values: if the offer did not win then the awarded value needs to be coded as 0
-        
-        # Number of these cases
-        n_case_check_3 <- format(nrow(data_offer_sub %>% filter((CAT_OFFER_SELECT != "Seleccionada") & ((AMT_VALUE_AWARDED != 0) | (AMT_QUANTITY_AWARDED != 0)))), nsmall = 0, digits = 2)
-        
-        n_case_check_3
-        
-      }
+    # { # Checking values
+    #   
+    #   {# Negative values
+    #     
+    #     n_negative_amount_awarded <- format(nrow(data_offer_sub %>% filter(AMT_VALUE_AWARDED < 0)), nsmall = 0, digits = 2)
+    #     
+    #   }
+    #   
+    #   {# Very large numbers
+    #     
+    #     # I checked 10 randoms and they all have the same issue. They all offer 1 item but then the ATM_QUANTITY_AWARD is equal to AMT_VALUE_OFFER_TOT
+    #     # I believe that this is a classic mistype
+    #     View(data_offer_sub %>% 
+    #            filter((AMT_QUANTITY_AWARDED == AMT_VALUE_OFFER_TOT) & (AMT_VALUE_AWARDED == (AMT_VALUE_OFFER_TOT*AMT_QUANTITY_AWARDED))) %>% 
+    #            filter(AMT_QUANTITY_AWARDED != 1) %>% 
+    #            filter(CAT_OFFER_SELECT == 1))
+    #     
+    #     # Number of these cases
+    #     n_case_check_1 <- format(nrow(test_1), nsmall = 0, digits = 2)
+    #     
+    #     # Display URL of these cases
+    #     check_1 <- left_join(test_1, data_offer_sub %>% select(ID_TENDER, URL_TENDER))
+    #     
+    #   }
+    #   
+    #   {# Very odd numbers: they are all 1
+    #     
+    #     # They are all 1
+    #     View(test_2 <- data_offer_sub %>% 
+    #            filter((AMT_QUANTITY_AWARDED == AMT_VALUE_OFFER_TOT) & (AMT_VALUE_AWARDED == (AMT_VALUE_OFFER_TOT*AMT_QUANTITY_AWARDED))) %>% 
+    #            filter(AMT_QUANTITY_AWARDED == 1) %>% 
+    #            filter(CAT_OFFER_SELECT == "Seleccionada"))
+    #     
+    #     # Number of these cases
+    #     n_case_check_2 <- format(nrow(test_2), nsmall = 0, digits = 2)
+    #     
+    #     # Display URL of these cases
+    #     check_2 <- left_join(test_2[sample(nrow(test_2), 10)], data_offer_sub %>% select(ID_TENDER, URL_TENDER))
+    #     
+    #   }
+    #   
+    #   {# Inconsistent values: if the offer did not win then the awarded value needs to be coded as 0
+    #     
+    #     # Number of these cases
+    #     n_case_check_3 <- format(nrow(data_offer_sub %>% filter((CAT_OFFER_SELECT != "Seleccionada") & ((AMT_VALUE_AWARDED != 0) | (AMT_QUANTITY_AWARDED != 0)))), nsmall = 0, digits = 2)
+    #     
+    #     n_case_check_3
+    #     
+    #   }
 
     }
     
     { # Convert values based on aforementioned issues
       
       data_offer_sub <- data_offer_sub %>% 
+        
+        mutate(across(starts_with("AMT"), as.numeric)) %>% 
         
         mutate(
           AMT_VALUE_AWARDED = ifelse(AMT_VALUE_AWARDED < 0, NA, AMT_VALUE_AWARDED)
@@ -98,8 +103,8 @@
         ) %>% 
         
         mutate( # there is 1 wrong case
-          AMT_VALUE_AWARDED    = ifelse(CAT_OFFER_SELECT != "Seleccionada", NA, AMT_VALUE_AWARDED   ),
-          AMT_QUANTITY_AWARDED = ifelse(CAT_OFFER_SELECT != "Seleccionada", NA, AMT_QUANTITY_AWARDED)
+          AMT_VALUE_AWARDED    = ifelse(CAT_OFFER_SELECT != 1, NA, AMT_VALUE_AWARDED   ),
+          AMT_QUANTITY_AWARDED = ifelse(CAT_OFFER_SELECT != 1, NA, AMT_QUANTITY_AWARDED)
         ) 
       
     }
@@ -170,11 +175,16 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
 
     }
     
-  }
 
 # DATA CLEANING: dates ---------------------------------------------------
 
 {
+  
+  # We add the submission date from the PO dataset
+  data_offer_sub <- data_offer_sub %>% 
+    left_join(
+      data_po, by = c("ID_RUT_FIRM", "ID_TENDER")
+    ) 
   
   # Add trimmed values 
   data_offer_sub <- data_offer_sub %>%
@@ -216,6 +226,18 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
         if_else(DT_Y == 2018, 0,
                 if_else(DT_Y == 2019, 4,
                         if_else(DT_Y == 2020, 8, 12)))
+    )
+  
+  data_offer_sub <- data_offer_sub %>% 
+    mutate(
+      DD_TOT_PROCESS = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
+      DD_SUBMISSION  = difftime(DT_OFFER_END, DT_OFFER_START, units = "days"),
+      DD_DECISION    = difftime(DT_ACCEPT_OC, DT_OFFER_END, units = "days") 
+    ) %>% 
+    mutate(
+      DD_TOT_PROCESS = ifelse(CAT_OFFER_SELECT == 1, DD_TOT_PROCESS, NA),
+      DD_SUBMISSION  = ifelse(CAT_OFFER_SELECT == 1, DD_SUBMISSION, NA),
+      DD_DECISION    = ifelse(CAT_OFFER_SELECT == 1, DD_DECISION, NA)
     )
   
 }
@@ -227,7 +249,7 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
   # adjust the rut code for the firm-level data
   data_firms_clean <- rut_check(data_firms, rut, without_dots = FALSE, SII = TRUE) %>% 
     rename(
-      ID_FIRM_RUT = rut
+      ID_FIRM_RUT = var
     ) %>% 
     group_by(ID_FIRM_RUT) %>% 
     dplyr::summarise(
@@ -238,8 +260,8 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
   
   # merge sme information to main dataset
   data_offer_sub <- data_offer_sub %>% 
-    mutate(ID_FIRM_RUT = gsub('[^[:alnum:] ]','', ID_FIRM_RUT)) %>% 
-    left_join(data_firms_clean, by = "ID_FIRM_RUT")
+    mutate(ID_FIRM_RUT = gsub('[^[:alnum:] ]','', ID_RUT_FIRM)) %>% 
+    left_join(data_firms_clean, by = c("ID_FIRM_RUT"))
 
 }
 
@@ -306,7 +328,7 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
   {
   
     # Save data frames
-    saveRDS(data_offer_sub , file.path(fin_data, "data_offer_sub.rds" ))
+    fwrite(data_offer_sub , file.path(fin_data, "data_offer_sub.csv" ))
     
     # Remove data frames to free RAM
     rm(data_offer_sub)
