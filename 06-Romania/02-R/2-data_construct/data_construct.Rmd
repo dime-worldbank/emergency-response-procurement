@@ -8,13 +8,16 @@ output: pdf_document
 
 ```{r}
 
+rm(list = ls(all = TRUE))
 # 1) Set working directory
-#if (Sys.info()['user'] == "vgamarra" ) {   
-#  setwd("C:/Users/vgamarra/Documents/GitHub/emergency-response-procurement/02-R/2-data_construct")
-#} else {  
-# setwd("C:/Users/wb554125/Documents/GitHub/ie-dr-endline/IE_DR_endline/1. Data cleaning")
-#}
-#Maria enter path to data here}
+if (Sys.info()['user'] == "Victo" ) {   
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+} else {  
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+}
+# Maria enter path to data here}
 
 ```
 

@@ -8,20 +8,23 @@ output: pdf_document
 
 ```{r}
 
+rm(list = ls(all = TRUE))
 # 1) Set working directory
-#if (Sys.info()['user'] == "vgamarra" ) {   
-#  setwd("C:/Users/vgamarra/Documents/GitHub/emergency-response-procurement/02-R/2-data_construct")
-#} else {  
-# setwd("C:/Users/wb554125/Documents/GitHub/ie-dr-endline/IE_DR_endline/1. Data cleaning")
-#}
-#Maria enter path to data here}
+if (Sys.info()['user'] == "Victo" ) {   
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+} else {  
+  root_path="//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/"
+  path_data = "C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/"
+}
+# Maria enter path to data here}
 
 ```
 
 
 # Setup packages
 
-```{r setup, include=FALSE}
+```{r}
 packages <-
 	c(
 		"ggplot2",
@@ -45,7 +48,6 @@ packages <-
 		"BBmisc"
 		)
   
-
 pacman::p_load(packages,
                character.only = TRUE, # So we can list all packages in a single vector
                dependencies = TRUE)   # Install packages that are required by the packages we listed
@@ -56,16 +58,14 @@ pacman::p_load(packages,
 
 ```{r}
 
-#awards.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/awards-constructed.rds")
-awards.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/awards-constructed.rds")
+# Awards data
+awards.final <- read_rds(here(path_data, "Final", "awards-constructed.rds")) 
 
-bids.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/bids-constructed.rds")
+# Complaints data
+complaints.final <- read_rds(here(path_data, "Final", "complaints-constructed.rds")) 
 
-#complaints.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/complaints-constructed.rds")
-complaints.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/complaints-constructed.rds")
-
-#initiation.final <- readRDS("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/romania-procurement-data-analytics/DataWork/Data/Final/initiation-constructed.rds")
-initiation.final <- readRDS("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania-Justicia/Dashboard/Data/Final/initiation-constructed.rds")
+# Initiation data
+initiation.final <- read_rds(here(path_data, "Final", "initiation-constructed.rds")) 
 
 ```
 
@@ -101,8 +101,8 @@ covid.TED.codes <- covid.TED.codes %>%
   select(Description, type_TED)
 
 # importing and cleaning CPV data
-CPV.data <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/1-raw/cpv_codes.xlsx")
-CPV.data.classified <- read_excel("//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/1-raw/cpv-product classification.xlsx")
+CPV.data <- read_excel(here(root_path, "4-datasets", "1-raw", "cpv_codes.xlsx"))
+CPV.data.classified <- read_excel(here(root_path, "4-datasets", "1-raw", "cpv-product classification.xlsx"))
 
 CPV.data <- CPV.data %>% 
   mutate(Description = gsub("\\.", "", Description))
@@ -129,7 +129,7 @@ CPV.data.export <- CPV.data.classified %>%
          type_final = ifelse(type_final=="Covid related", "medical_covid",type_final)) %>% 
   select(-c(level, D_most_disaggregated_level, description))
 
-write_xlsx(CPV.data.export,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/2-clean/cpv_codes_classified.xlsx")
+write_xlsx(CPV.data.export, here(root_path, "4-datasets", "2-clean", "cpv_codes_classified.xlsx"))
 
 # Codes for future merge with the other datasets
 codes.initiation <- initiation.final %>% 
@@ -149,16 +149,7 @@ initiation.final.complete <- initiation.final %>%
   mutate(type_wb = case_when(type_TED=="Covid related" ~ type_TED, TRUE ~ type_wb),
          type_wb = ifelse(type_wb=="Covid related", "medical_covid",type_wb),
          month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
-         year=as.numeric(initiation_year),
          init_year_number=as.numeric(initiation_year))
-
-# cleaning bids dataset
-bids.final.complete <- bids.final %>% 
-  filter(bidder_cui!="NA")
-bids.final.complete <- left_join(bids.final.complete , codes.initiation , by  = 'initiation_notice_id')
-bids.final.complete <- bids.final.complete %>% 
-  filter(type_wb!="NA" | cpv_code!="NA") %>% 
-  mutate(init_year_number=as.numeric(initiation_year))
 
 # cleaning awards dataset
 awards.final.complete <- left_join(awards.final , codes.initiation , by  = 'initiation_notice_id')
@@ -169,6 +160,39 @@ awards.final.complete <- awards.final.complete %>%
   mutate(init_year_number=as.numeric(initiation_year))
 awards.final.complete <- awards.final.complete %>% 
   filter(winner_sme!="NA")
+
+# Modifying dates variables
+awards.final.complete <- awards.final.complete %>% 
+  mutate(month_yr_contract = format_ISO8601(contract_date, precision = "ym"),
+         month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
+         init_year_number=as.numeric(initiation_year),
+         contract_year_number = case_when(
+           contract_year==2018 ~ 1,
+           contract_year==2019 ~ 2,
+           contract_year==2020 ~ 3,
+           contract_year==2021 ~ 4)) %>% 
+  filter(month_yr_contract!="NA" | month_yr_init!="NA")
+
+# Filtering mount of tenders and keeping only two types of procedure type
+awards.final.complete <- awards.final.complete %>% 
+  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_contract_ron<1000000000)
+
+initiation.final.complete <- initiation.final.complete %>% 
+  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
+
+```
+
+## Cleaning bids dataset (Not available for 2022)
+
+```{r eval = FALSE, echo = FALSE}
+
+# cleaning bids dataset
+bids.final.complete <- bids.final %>% 
+  filter(bidder_cui!="NA")
+bids.final.complete <- left_join(bids.final.complete , codes.initiation , by  = 'initiation_notice_id')
+bids.final.complete <- bids.final.complete %>% 
+  filter(type_wb!="NA" | cpv_code!="NA") %>% 
+  mutate(init_year_number=as.numeric(initiation_year))
 
 # Obtaining dates from other datasets
 dates.contracts <- awards.final.complete %>% 
@@ -185,21 +209,6 @@ bids.final.complete <- left_join(bids.final.complete , dates.initiation , by  = 
 bids.final.complete <- bids.final.complete %>% 
   mutate(month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"))
 
-# Modifying dates variables
-awards.final.complete <- awards.final.complete %>% 
-  mutate(month_yr_contract = format_ISO8601(contract_date, precision = "ym"),
-         month_yr_init = format_ISO8601(initiation_notice_date, precision = "ym"),
-         contract_year_number=as.numeric(contract_year),
-         init_year_number=as.numeric(initiation_year)) %>% 
-  filter(month_yr_contract!="NA" | month_yr_init!="NA")
-
-# Filtering mount of tenders and keeping only two types of procedure type
-awards.final.complete <- awards.final.complete %>% 
-  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_contract_ron<1000000000)
-
-initiation.final.complete <- initiation.final.complete %>% 
-  filter(procedure_type=="Licitatie deschisa" | procedure_type=="Procedura simplificata", value_est_ron<1000000000)
-
 ```
 
 
@@ -211,7 +220,7 @@ Number of bidders is defined as the number of firms who bid within an initiation
 
 Data then is collapsed at the monthly level to produce a graph.
 
-```{r}
+```{r eval = FALSE, echo = FALSE}
 
 # calculating number of bidders in total
 bids.final.complete <- bids.final.complete %>% 
@@ -252,19 +261,15 @@ bids.monthly2 <- bids.monthly %>%
 # Number of bidders
 ggplot(bids.monthly, aes(x=date, y=N_bidders)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Total number of bidders", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders.png")
 
 ggplot(bids.monthly, aes(x=date, y=N_bidders_tender)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Average number of bidders per lot", caption = "Number of bidders is defined as the number of firms who bid for a lot.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders_per_tender.png")
 
 ggplot(bids.monthly2, aes(x=date, y=N_bidders_nocontractbefore)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Total number of bidders with no  previous award", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year \n that did not have a previous contract.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders_nocontract.png")
 
 ggplot(bids.monthly2, aes(x=date, y=share_bidders_not_awarded)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Share of bidders with no previous award", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year \n that did not have a previous contract.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/share_number_bidders_nocontract.png")
 
 ## Number of bidders by sector 
 bids.monthly <- bids.final.complete %>% 
@@ -281,19 +286,15 @@ bids.monthly2 <- bids.monthly %>%
 
 ggplot(bids.monthly, aes(x=date, y=N_bidders, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Total number of bidders, by sector", caption = "Number of bidders is defined as the number of firms who bid within an award and lot in a year.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders_type.png")
 
 ggplot(bids.monthly, aes(x=date, y=N_bidders_tender, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Average number of bidders per tender, by sector", caption = "Number of bidders is defined as the number of firms who bid within an award and lot in a year.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders_per_tender_type.png")
 
 ggplot(bids.monthly2, aes(x=date, y=N_bidders_nocontractbefore, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Total number of bidders with not previous award, by sector", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year \n that did not have a previous contract.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_bidders_per_tender_type.png")
 
 ggplot(bids.monthly2, aes(x=date, y=share_bidders_not_awarded, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Share of bidders with no previous award", caption = "Number of bidders is defined as the number of firms who bid within a contract and lot in a year \n that did not have a previous contract.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/share_number_bidders_per_tender_type.png")
 
 ```
 
@@ -306,6 +307,8 @@ An alternative *new winner* definition can be added: a winner that has been awar
 A *new bidder* is defined as a bidder that has no bids or an existing bid older than 12 months. The initiation date allows to calculate the number of days between contracts.
 
 The data then is aggregated at the monthly level to produce graphical representations.
+
+### New winner
 
 ```{r}
 
@@ -329,8 +332,7 @@ awards.final.complete <- awards.final.complete %>%
 
 # New definition of winner: difference between initiation date-contract date (pendant)
 
-
-# shares of new winners
+# New Winners and shares of new winners
 awards.monthly <- awards.final.complete %>% 
   filter(contract_year_number>1) %>% 
   group_by(month_yr_contract) %>% 
@@ -340,7 +342,51 @@ awards.monthly <- awards.final.complete %>%
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep="")),
          share_new_winner = (new_winner_month)/total_contracts,
          share_new_winner_sector = (new_winner_sector_month)/total_contracts) 
- 
+
+# Plots
+
+## New bidders and new winners
+ggplot(awards.monthly, aes(date)) + 
+  geom_line(aes(y = new_winner_month, colour = "new winners")) + 
+   ylab(" ") + xlab("Year") + labs(title = "Number of new winners", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months.") + theme(plot.caption = element_text(hjust = 0))
+
+## share of contracts won by a new winner (no contracts more than one year)
+ggplot(awards.monthly, aes(date)) + 
+  geom_line(aes(y = share_new_winner, colour = "Share new winners")) + 
+  geom_line(aes(y = share_new_winner_sector, colour = "Share new Winners - sector")) + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months. New winner - sector defines a winner as an awarded firm that has no existing \n contract or an existing contract older than 12 months in the same sector (CPV code)") + theme(plot.caption = element_text(hjust = 0))
+
+
+## New Winners  and share of contracts with a new winner, by sectors
+awards.monthly <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
+  group_by(month_yr_contract, type_wb) %>% 
+  summarise(new_winner_month = sum(new_winner),
+            new_winner_sector_month = sum(new_winner_sector),
+            total_contracts = n(),
+            share_new_winner = mean(new_winner) ,
+            share_new_winner_sector = mean(new_winner_sector),
+            date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) %>% 
+  filter(type_wb!="non_medical")
+
+# Plots
+
+## New Winners, by sectors
+ggplot(awards.monthly, aes(x=date, y=new_winner_month, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new winners", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract older than 12 months.") + theme(plot.caption = element_text(hjust = 0))
+
+## Share of contracts won by a new winner (no contracts more than one year)
+ggplot(awards.monthly, aes(x=date, y=share_new_winner, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner, by type", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months.")
+
+ggplot(awards.monthly, aes(x=date, y=share_new_winner_sector, col = type_wb)) +
+  geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner within sectors, by type", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months.")
+
+```
+
+### New Bidder (Still in construction)
+
+```{r eval = FALSE, echo = FALSE}
+
 # New Bidders
 bids.final.complete <- bids.final.complete %>% 
   group_by(bidder_cui) %>%
@@ -364,13 +410,6 @@ bids.winners.monthly <- left_join(bids.monthly, awards.monthly, by='date')
 ggplot(bids.winners.monthly, aes(date)) + 
   geom_line(aes(y = new_winner_month, colour = "new winners")) + 
   geom_line(aes(y = new_bidder_month, colour = "new bidders")) + ylab("") + xlab("Year") + labs(title = "Number of new winners and new bidders", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months. A new bidder is defined as a bidder that has no bids or an existing bid older than \n 12 months.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/new_winners_and_bidders.png")
-
-## share of contracts won by a new winner (no contracts more than one year)
-ggplot(bids.winners.monthly, aes(date)) + 
-  geom_line(aes(y = share_new_winner, colour = "Share new winners")) + 
-  geom_line(aes(y = share_new_winner_sector, colour = "Share new Winners - sector")) + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months. New winner - sector defines a winner as an awarded firm that has no existing \n contract or an existing contract older than 12 months in the same sector (CPV code)") + theme(plot.caption = element_text(hjust = 0))
-
 
 ## New Bidders, by sectors
 bids.monthly <- bids.final.complete %>% 
@@ -381,39 +420,22 @@ bids.monthly <- bids.final.complete %>%
   mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) %>%
   filter(type_wb!="non_medical")
 
-## New Winners  and share of contracts with a new winner, by sectors
-awards.monthly <- awards.final.complete %>% 
-  filter(contract_year_number>1) %>% 
-  group_by(month_yr_contract, type_wb) %>% 
-  summarise(new_winner_month = sum(new_winner),
-            new_winner_sector_month = sum(new_winner_sector),
-            total_contracts = n(),
-            share_new_winner = mean(new_winner) ,
-            share_new_winner_sector = mean(new_winner_sector),
-            date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) %>% 
-  filter(type_wb!="non_medical")
-
 ## Plots
 
 ## New Winners, by sectors
 ggplot(awards.monthly, aes(x=date, y=new_winner_month, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new winners", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract older than 12 months.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/new_winners_type.png")
 
 ## New Bidders, by sectors
 ggplot(bids.monthly, aes(x=date, y=new_bidder_month, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Number of new bidders", caption = "A new bidder is defined as a bidder if the firm has no existing bid older than 12 months.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/new_bidders_type.png")
 
 ## Share of contracts won by a new winner (no contracts more than one year)
 ggplot(awards.monthly, aes(x=date, y=share_new_winner, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner, by type", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months.")
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/share_contracts_new_winners_type.png")
 
 ggplot(awards.monthly, aes(x=date, y=share_new_winner_sector, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Average monthly share of contracts won by a new winner within sectors, by type", caption = "A new winner is defined as an awarded firm that has no existing contract or an existing contract \n older than 12 months.")
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/share_contracts_new_winners_sector_type.png")
-# type of new winner instead of color 
 
 ```
 
@@ -434,20 +456,6 @@ Then the data is aggregated at the monthly level to produce graphical representa
 
 ```{r}
 
-# number of bidders and winners per sector (4 digits of CPV codes)
-#number.winners <- awards.final.complete %>% 
-#  filter(cpv_4d!="NA") %>% 
-#  group_by(cpv_4d) %>% 
-#  summarise(number_winners = n()) %>% 
-#  arrange(-number_winners)
-
-#number.bidders <- bids.final.complete %>% 
-#  filter(cpv_4d!="NA") %>% 
-#  group_by(cpv_4d) %>% 
-#  summarise(number_bidders = n()) %>% 
-#  arrange(-number_bidders)
-
-
 ## number of contracts per sector (3 digits of CPV codes)
 number.winners <- awards.final.complete %>% 
   filter(cpv_group!="NA") %>% 
@@ -460,37 +468,20 @@ number.winners.table <- number.winners[1:20,]
 ## plot:
 ggplot(data=number.winners.table, aes(x= reorder(cpv_group,-number_winners),number_winners)) +
   geom_bar(stat="identity") + ylab(" ") + xlab("CPV codes") + labs(title = "Number of contracts per sector", caption = "CPV codes: 336 - Pharmaceutical products, 331 - Medical equipments, 452 - Construction work, 150 - Food and \n beverages, 158 - Miscellaneous food products, 504 - Repair of medical products.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/Number_winners_perCPV.png")
-write_xlsx(number.winners.table,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Tables/winners_sector.xlsx")
-
-## number of winners per sector (3 digits of CPV codes)
-number.bidders <- bids.final.complete %>% 
-  filter(cpv_group!="NA") %>% 
-  group_by(cpv_group, cpv_group_name) %>% 
-  summarise(number_bidders = n()) %>% 
-  arrange(-number_bidders)
-
-number.bidders.table <- number.bidders[1:20,]
-
-## Plot
-ggplot(data=number.bidders.table, aes(x= reorder(cpv_group,-number_bidders),number_bidders)) +
-  geom_bar(stat="identity") + ylab(" ") + xlab("CPV codes") + labs(title = "Number of bidders per sector", caption = "CPV codes: 336 - Pharmaceutical products, 331 - Medical equipments, 452 - Construction work, 158 - Miscellaneous \n food products, 150 - Food and  beverages, 343 - Vehicle parts, 713 - engeneering services.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/Number_bidders_perCPV.png")
-write_xlsx(number.bidders.table,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Tables/bidders_sector.xlsx")
 
 
 # top 5 market share in a 3 digit sector-year (market concentration)
 sector.total <- awards.final.complete %>% 
   filter(cpv_group!="NA") %>%
   group_by(cpv_group, cpv_group_name, contract_year) %>% 
-  summarise(total_sector=sum(value_ron, na.rm = TRUE),
-            bids_sector = n())
+  summarise(total_sector=sum(value_contract_ron, na.rm = TRUE),
+            contracts_sector = n())
 
 firms.total <- awards.final.complete %>% 
   filter(cpv_group!="NA") %>%
-  group_by(winner_cui_id, cpv_group, cpv_group_name, contract_year) %>% 
-  summarise(total_firm=sum(value_ron, na.rm = TRUE),
-            bids_firm = n())
+  group_by(winner_cui, cpv_group, cpv_group_name, contract_year) %>% 
+  summarise(total_firm=sum(value_contract_ron, na.rm = TRUE),
+            contracts_firm = n())
 
 firm.sector.total <- left_join(firms.total, sector.total, by = c('cpv_group', 'cpv_group_name', 'contract_year'))
 
@@ -507,11 +498,33 @@ firm.sector.total.top5 <- firm.sector.total %>%
 
 
 # Plot
-ggplot(firm.sector.total.top5, aes(x=total_share, color=contract_year)) +
-geom_histogram(position="identity", fill = NA) + labs(title = "Average top 5 firms' market share per sector", caption = "The total value of firms' contracts per sector is calculated by obtaining the total value of the firm's contract \n  at the sector level (3 digits of CPV code), divided by the total value from all contracts at the sector level") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/Firms_share_yearly.png")
+firm.sector.total.top5%>%
+  ggplot(aes(x=total_share, color=contract_year, fill=contract_year)) +
+  geom_density(alpha=0.3,size=1)+ 
+  scale_x_log10()+
+  labs(x= "Total share", title="Average top 5 firms' market share per sector",
+       caption = "The total value of firms' contracts per sector is calculated by obtaining the total value of the firm's contract \n  at the sector level (3 digits of CPV code), divided by the total value from all contracts at the sector level") + theme(plot.caption = element_text(hjust = 0))
 
-## ver grafico en lines (density)
+```
+
+## Graphs for bidders
+
+```{r eval = FALSE, echo = FALSE}
+
+## number of bidders per sector (3 digits of CPV codes)
+number.bidders <- bids.final.complete %>% 
+  filter(cpv_group!="NA") %>% 
+  group_by(cpv_group, cpv_group_name) %>% 
+  summarise(number_bidders = n()) %>% 
+  arrange(-number_bidders)
+
+number.bidders.table <- number.bidders[1:20,]
+
+## Plot
+ggplot(data=number.bidders.table, aes(x= reorder(cpv_group,-number_bidders),number_bidders)) +
+  geom_bar(stat="identity") + ylab(" ") + xlab("CPV codes") + labs(title = "Number of bidders per sector", caption = "CPV codes: 336 - Pharmaceutical products, 331 - Medical equipments, 452 - Construction work, 158 - Miscellaneous \n food products, 150 - Food and  beverages, 343 - Vehicle parts, 713 - engeneering services.") + theme(plot.caption = element_text(hjust = 0))
+ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/Number_bidders_perCPV.png")
+write_xlsx(number.bidders.table,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Tables/bidders_sector.xlsx")
 
 ```
 
@@ -521,6 +534,7 @@ ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/F
 
 # filtering and plots
 initiation.final.cpv.month <- initiation.final.complete %>% 
+  filter(init_year_number>1) %>% 
   group_by(month_yr_init, type_wb) %>% 
   summarise(total_value = sum(value_est_ron, na.rm = TRUE),
             avg_value = mean(value_est_ron, na.rm = TRUE),
@@ -536,21 +550,19 @@ initiation.final.cpv.month2 <- initiation.final.cpv.month %>%
 # Total value of tenders
 ggplot(initiation.final.cpv.month2, aes(x = date, y = total_value, col = type_wb)) +
   geom_line() + ylab("") + xlab("Year") + labs(title = "Total contract monetary value", caption = "Total amount is calculated by adding individual contract values per type of sector") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/total_value_tenders.png")
 
 # Average value of tenders
 ggplot(initiation.final.cpv.month, aes(x = date, y = avg_value, col = type_wb)) +
   geom_line()+ ylab("") + xlab("Year") + labs(title = "Average monetary contract value", caption = "Average amount is calculated by averaging individual monetary contract values per type of sector.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/average_value_tenders_type.png")
 
 # Number of tenders
 ggplot(initiation.final.cpv.month2, aes(x = date, y = number_tenders, col = type_wb)) +
   geom_line()+ ylab("") + xlab("Year") + labs(title = "Number of contracts", caption = "Number of contracts is the sum of the number of contracts per sector.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_tenders_type.png")
 
 
 # filtering and plots for type of procedure
 initiation.final.cpv.month <- initiation.final.complete %>% 
+  filter(init_year_number>1) %>% 
   group_by(month_yr_init, type_wb, procedure_type) %>% 
   summarise(total_value = sum(value_est_ron, na.rm = TRUE),
             avg_value = mean(value_est_ron, na.rm = TRUE),
@@ -563,8 +575,7 @@ initiation.final.cpv.month2 <- initiation.final.cpv.month %>%
 
 # Number of tenders for simplified procedures only
 ggplot(initiation.final.cpv.month2, aes(x = date, y = number_tenders, col = type_wb)) +
-  geom_line()+ ylab("") + xlab("Year") + labs(title = "Number of contracts, simplified procedure only", caption = "Number of conctracts is the sum of the contracts per sector.") + theme(plot.caption = element_text(hjust = 0))
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/number_tenders_type_simplified_only.png")
+  geom_line()+ ylab("") + xlab("Year") + labs(title = "Number of contracts, simplified procedure only", caption = "Number of contracts is the sum of the contracts per sector.") + theme(plot.caption = element_text(hjust = 0))
 
 ```
 
@@ -581,10 +592,11 @@ procedures <- complaints.final %>%
   select(procedure_name, appeal_id) %>% 
   distinct()
 
-write_xlsx(appeals,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/datasets/2-clean/appeals.xlsx")
+write_xlsx(appeals,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/appeals.xlsx")
+write_xlsx(procedures,"//gess-fs.d.ethz.ch/home$/vgamarra/Documents/GitHub/emergency-response-procurement/06-Romania/4-datasets/procedures.xlsx")
 
-write_xlsx(procedures,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/datasets/2-clean/procedures.xlsx")
-
+write_xlsx(appeals, here(root_path, "4-datasets", "appeals.xlsx"))
+write_xlsx(procedures, here(root_path, "4-datasets", "procedures.xlsx"))
 
 # translating variables that are translated in R
 complaints.final <- complaints.final %>% 
@@ -610,11 +622,9 @@ awards.final.complete <- awards.final.complete %>%
       procedure_type == "Licitatie deschisa" ~ "Open auction",
       procedure_type == "Procedura simplificata" ~ "Simplified procedure"))
   
-
 # Importing translated Data
-appeals.en <- read_excel("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/datasets/2-clean/appeals_en.xlsx")
-
-procedures.en <- read_excel("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/datasets/2-clean/procedures_en.xlsx")
+appeals.en <- read_excel(here(root_path, "4-datasets", "2-clean", "appeals_en.xlsx"))
+procedures.en <- read_excel(here(root_path, "4-datasets", "2-clean", "procedures_en.xlsx"))
 
 # Joining translated data and exporting
 complaints.final <- left_join(complaints.final, appeals.en , by = 'appeal_id')
@@ -623,7 +633,7 @@ complaints.final <- left_join(complaints.final, procedures.en , by = 'appeal_id'
 complaints.final.export <- complaints.final %>% 
   select(procedure_name, procedure_name_en, appellant_name, contested_en, outcome_en, outcome_method_en, appeal_id, appeal_object,  appeal_object_en)
     
-write_xlsx(complaints.final.export,"C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/datasets/2-clean/complaints_translated.xlsx")
+write_xlsx(complaints.final.export, here(root_path, "4-datasets", "2-clean", "complaints_translated.xlsx"))
 
 ```
 
@@ -652,47 +662,18 @@ awards.final.complete <- awards.final.complete %>%
 
 # Average mount of tenders
 awards.monthly <- awards.final.complete %>% 
-  filter(init_year_number>8) %>% 
+  filter(init_year_number>1) %>% 
   group_by(month_yr_init, procedure_type_en) %>% 
-  summarise(total = sum(value_est_ron),
-            avg = mean(value_est_ron)) %>% 
+  summarise(total = sum(value_contract_ron),
+            avg = mean(value_contract_ron)) %>% 
   mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) 
 
 ggplot(awards.monthly, aes(x=date, y=avg, col=procedure_type_en)) + geom_line() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) + labs(title = "Average monetary value of contracts", caption = "Average amount is calculated by averaging individual tender values per type of sector.")
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/average_tenders_contract.png")
 
 awards.monthly2 <- awards.monthly %>% 
   filter(procedure_type_en=="Simplified procedure")
 
 ggplot(awards.monthly2, aes(x=date, y=avg)) + geom_line() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) + labs(title = "Average monetary value of contracts - simplified procedure only", caption = "Average amount is calculated by averaging individual tender values per type of sector.")
-ggsave("C:/Users/vgamarra/Dropbox/RA-UChicago/DIME-WB/Romania/analysis/Figures/average_tenders_simplified.png")
-
-
-# Scatterplot graphs of values of tenders
-graph <- awards.final.complete %>% 
-  filter(init_year_number > 8) %>%
-  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = procedure_type_en)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Monetary Value of individual contracts")
-graph
-
-# only simplified procedures
-awards.final.complete.simp <- awards.final.complete %>% 
-  filter(procedure_type=="Procedura simplificata")
-
-graph <- awards.final.complete.simp %>% 
-  filter(init_year_number > 8) %>%
-  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = type_wb)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Monetary Value of individual contracts, simplified procedure only by type of product")
-graph
-
-graph <- awards.final.complete.simp %>% 
-  filter(init_year_number > 8 & type_wb!="non_medical" ) %>%
-  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = type_wb)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Monetary value of individual contracts, simplified procedure only by type of product")
-graph
-
-graph <- awards.final.complete.simp %>% 
-  filter(init_year_number > 8 & type_wb!="non_medical" ) %>%
-  ggplot(aes(x = initiation_notice_date, y = value_est_ron, colour = ca_central)) + geom_point() + geom_hline(yintercept=900400, linetype="dashed", color = "black") + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7)  +  labs(title = "Monetary value of individual contracts, simplified procedure only by type of purchase")
-graph
-
 
 ```
 
@@ -700,68 +681,25 @@ graph
 
 ```{r}
 
-# calculate number of different entities that purchase a given product code (CPV) in a month, plot number, group by type_wb 
-
-awards.final.complete2 <- awards.final.complete %>% 
-  filter(init_year_number > 8) %>%
-  group_by(cpv_code, month_yr_init,type_wb) %>% 
-  mutate(number_purchases_month = n()) %>% 
-  summarise(purchases_month=sum(number_purchases_month))
-awards.final.complete2 <- awards.final.complete2 %>% 
-  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
-
-graph <- awards.final.complete2 %>% 
-  ggplot(aes(x = date, y = purchases_month,col=type_wb)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of entities that purchase a given product (CPV code), by type of product")
-graph
-
-# Number of purchases by entity
-awards.final.complete2 <- awards.final.complete %>% 
-  filter(init_year_number > 8) %>%
-  group_by(ca_name, month_yr_init) %>% 
-  mutate(number_purchases_month = n()) %>% 
-  summarise(purchases_month=sum(number_purchases_month))
-
-awards.final.complete2 <- awards.final.complete2 %>% 
-  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
-
-graph <- awards.final.complete2 %>% 
-  ggplot(aes(x = date, y = purchases_month)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of purchases by entity")
-graph
-
-# Number of purchases by entity and type of purchase
-awards.final.complete2 <- awards.final.complete %>% 
-  filter(init_year_number > 8) %>%
-  group_by(ca_name, month_yr_init, ca_central) %>% 
-  mutate(number_purchases_month = n()) %>% 
-  summarise(purchases_month=sum(number_purchases_month))
-
-awards.final.complete2 <- awards.final.complete2 %>% 
-  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep="")))
-
-graph <- awards.final.complete2 %>% 
-  ggplot(aes(x = date, y = purchases_month,col=ca_central)) + geom_point() + geom_vline(xintercept = as.numeric(as.Date("2020-03-16")), linetype="dashed", color = "red", size=0.7) + geom_vline(xintercept = as.numeric(as.Date("2020-04-16")), linetype="dashed", color = "red", size=0.7) +  labs(title = "Number of purchases by entity, by type of purchase")
-graph
-
-
 ## Average monthly central purchases share
 awards.month1 <- awards.final.complete %>% 
   filter(contract_year_number>1) %>% 
-  group_by(cpv_group, month_yr_init) %>% 
-  summarise(contract_value_cpv_month_tot = sum(value_est_ron)) 
+  group_by(cpv_group, month_yr_contract) %>% 
+  summarise(contract_value_cpv_month_tot = sum(value_contract_ron)) 
 
 awards.month2 <- awards.final.complete %>% 
   filter(contract_year_number>1) %>% 
-  group_by(cpv_group, month_yr_init, ca_central) %>% 
-  summarise(contract_value_cpv_month = sum(value_est_ron)) 
+  group_by(cpv_group, month_yr_contract, ca_central) %>% 
+  summarise(contract_value_cpv_month = sum(value_contract_ron)) 
 
-other <- left_join(awards.month1, awards.month2, by = c('cpv_group','month_yr_init'))
+other <- left_join(awards.month1, awards.month2, by = c('cpv_group','month_yr_contract'))
 
 other_central <- other %>% 
   filter(ca_central=="Central") %>% 
   mutate(central_share = contract_value_cpv_month/contract_value_cpv_month_tot) %>% 
-  group_by(month_yr_init) %>% 
+  group_by(month_yr_contract) %>% 
   summarise(avg_central_shr = mean(central_share)) %>% 
-  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) 
+  mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) 
 
 ggplot(data=other_central, aes(x=date, y=avg_central_shr)) +
   geom_bar(stat="identity") + ylab("") + xlab("Year") + labs(title = "Average monthly central purchases share", caption = "The share is defined as the total contract value of tenders at the 3 digit of CPV code purchased by central entities \n divided by the total contract value of all tenders at the 3 digit of CPV code.") + theme(plot.caption = element_text(hjust = 0))
@@ -769,22 +707,22 @@ ggplot(data=other_central, aes(x=date, y=avg_central_shr)) +
 ## Average monthly central purchases share, at the sector level
 awards.month1 <- awards.final.complete %>% 
   filter(contract_year_number>1) %>% 
-  group_by(cpv_group, month_yr_init, type_wb) %>% 
-  summarise(contract_value_cpv_month_tot = sum(value_est_ron)) 
+  group_by(cpv_group, month_yr_contract, type_wb) %>% 
+  summarise(contract_value_cpv_month_tot = sum(value_contract_ron)) 
 
 awards.month2 <- awards.final.complete %>% 
   filter(contract_year_number>1) %>% 
-  group_by(cpv_group, month_yr_init, ca_central, type_wb) %>% 
-  summarise(contract_value_cpv_month = sum(value_est_ron)) 
+  group_by(cpv_group, month_yr_contract, ca_central, type_wb) %>% 
+  summarise(contract_value_cpv_month = sum(value_contract_ron)) 
 
-other <- left_join(awards.month1, awards.month2, by = c('cpv_group','month_yr_init', 'type_wb'))
+other <- left_join(awards.month1, awards.month2, by = c('cpv_group','month_yr_contract', 'type_wb'))
 
 other_central <- other %>% 
   filter(ca_central=="Central") %>% 
   mutate(central_share = contract_value_cpv_month/contract_value_cpv_month_tot) %>% 
-  group_by(month_yr_init, type_wb) %>% 
+  group_by(month_yr_contract, type_wb) %>% 
   summarise(avg_central_shr = mean(central_share)) %>% 
-  mutate(date = as.Date.character(paste(month_yr_init,"-01",sep=""))) 
+  mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep=""))) 
 
 ggplot(other_central, aes(x = date, y = avg_central_shr, col = type_wb)) +
   geom_line()+ ylab("") + xlab("Year") + labs(title = "Average monthly central purchases share", caption = "The share is defined as the total contract value of tenders at the 3 digit of CPV code purchased by central entities \n divided by the total contract value of all tenders at the 3 digit of CPV code.") + theme(plot.caption = element_text(hjust = 0))
@@ -795,28 +733,31 @@ ggplot(other_central, aes(x = date, y = avg_central_shr, col = type_wb)) +
 
 # filtering and plots for type of procedure
 awards.final.complete.month <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
   mutate(type_proc_simplified = if_else(procedure_type_en=="Simplified procedure",1,0),
          winner_firm_sme = if_else(winner_sme=="SME",1,0)) %>% 
   group_by(month_yr_contract) %>% 
-  summarise(total_value = sum(value_est_ron, na.rm = TRUE),
-            avg_value = mean(value_est_ron, na.rm = TRUE),
+  summarise(total_value = sum(value_contract_ron, na.rm = TRUE),
+            avg_value = mean(value_contract_ron, na.rm = TRUE),
             number_tenders = n(),
             share_simplified = mean(type_proc_simplified),
             share_firm_sme = mean(winner_firm_sme)) %>% 
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep="")))
 
 awards.final.complete.month2 <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
   group_by(month_yr_contract, winner_sme) %>% 
-  summarise(total_value = sum(value_est_ron, na.rm = TRUE),
-            avg_value = mean(value_est_ron, na.rm = TRUE),
+  summarise(total_value = sum(value_contract_ron, na.rm = TRUE),
+            avg_value = mean(value_contract_ron, na.rm = TRUE),
             number_tenders = n()) %>% 
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep="")))
 
 awards.final.complete.month3 <- awards.final.complete %>% 
+  filter(contract_year_number>1) %>% 
   filter(procedure_type_en == "Simplified procedure") %>% 
   group_by(month_yr_contract, winner_sme) %>% 
-  summarise(total_value = sum(value_est_ron, na.rm = TRUE),
-            avg_value = mean(value_est_ron, na.rm = TRUE),
+  summarise(total_value = sum(value_contract_ron, na.rm = TRUE),
+            avg_value = mean(value_contract_ron, na.rm = TRUE),
             number_tenders = n()) %>% 
   mutate(date = as.Date.character(paste(month_yr_contract,"-01",sep="")))
 

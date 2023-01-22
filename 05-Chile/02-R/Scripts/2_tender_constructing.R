@@ -5,13 +5,16 @@
     {
       
       # Load cleaned tender data
-      data_offer_sub <- fread(file = file.path(int_data, "tenders.csv"))
+      data_offer_sub <- fread(file = file.path(int_data, "tenders.csv"), encoding = "Latin-1")
+
       
       # Load firm data
       data_firms <- read_dta(file = file.path(fin_data, "SII_2015_2020.dta"))
       
       # Load PO data
-      data_po <- fread(file = file.path(int_data, "purchase_orders.csv"))
+
+      data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
+
       
       }
     
@@ -186,24 +189,6 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
       data_po, by = c("ID_RUT_FIRM", "ID_TENDER")
     ) 
   
-  # Add trimmed values 
-  data_offer_sub <- data_offer_sub %>%
-    
-    # create month and year date
-    mutate(
-      DT_Y = year(DT_TENDER_START),
-      DT_M = month(DT_TENDER_START)) %>% 
-  
-    # compute quarter for each year
-    mutate(
-      DT_Q = if_else(DT_M < 4, 1, 
-                     if_else(DT_M < 7, 2,
-                             if_else(DT_M < 10, 3, 4))) + 
-        if_else(DT_Y == 2018, 0,
-                if_else(DT_Y == 2019, 4,
-                        if_else(DT_Y == 2020, 8, 12)))
-    )
-  
 }
 
 # DATA CLEANING: dates ---------------------------------------------------
@@ -223,11 +208,12 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
       DT_Q = if_else(DT_M < 4, 1, 
                      if_else(DT_M < 7, 2,
                              if_else(DT_M < 10, 3, 4))) + 
-        if_else(DT_Y == 2018, 0,
-                if_else(DT_Y == 2019, 4,
-                        if_else(DT_Y == 2020, 8, 12)))
-    )
-  
+        if_else(DT_Y == 2016, 0,
+                if_else(DT_Y == 2017, 4,
+                        if_else(DT_Y == 2018, 8, 
+                                if_else(DT_Y == 2019, 12, 
+                                        if_else(DT_Y == 2020, 16, 20))))))
+    
   data_offer_sub <- data_offer_sub %>% 
     mutate(
       DD_TOT_PROCESS = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
@@ -301,16 +287,16 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
   data_offer_sub <- data_offer_sub %>% 
     mutate(region = as.character(region)) %>% 
     mutate(
-      STR_FIRM_REGION = ifelse(region == 1, "Región de Tarapacá  ",
-                      ifelse(region == 2, "Región de Antofagasta ",
-                             ifelse(region == 3, "Región de Atacama ",
+      STR_FIRM_REGION = ifelse(region == 1, "Región de Tarapacá",
+                      ifelse(region == 2, "Región de Antofagasta",
+                             ifelse(region == 3, "Región de Atacama",
                                     ifelse(region == 4, "Región de Coquimbo ",
                                            ifelse(region == 5, "Región de la Araucanía ",
-                                                  ifelse(region == 7,"Región de Valparaíso ",
+                                                  ifelse(region == 7,"Región de Valparaíso",
                                                          ifelse(region == 8, "Región del Libertador General Bernardo O´Higgins",
-                                                                ifelse(region == 9, "Región del Maule ",
+                                                                ifelse(region == 9, "Región del Maule",
                                                                        ifelse(region == 10, "Región del Biobío ",
-                                                                              ifelse(region == 11, "Región de los Lagos ",
+                                                                              ifelse(region == 11, "Región de los Lagos",
                                                                                      ifelse(region == 12,"Región Aysén del General Carlos Ibáñez del Campo",
                                                                                             ifelse(region == 13, "Región de Magallanes y de la Antártica",
                                                                                                    ifelse(region == 14, "Región Metropolitana de Santiago",
@@ -318,10 +304,29 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
                                                                                                                  ifelse(region == 16,"Región de Arica y Parinacota",
                                                                                                                         ifelse(region == 17, "Región del Ñuble", NA))))))))))))))))) %>% 
     select(-region)
-
-  
+ 
 }
 
+
+  
+  data_offer_sub <- data_offer_sub %>% 
+    
+    # One dummy for bidder being from the same municipality
+    mutate(same_municipality_bidder = ifelse(STR_BUYER_CITY == STR_FIRM_CITY, 1, 0)) %>% 
+    
+    # One dummy for bidder being from the same region
+    mutate(same_region_bidder       = ifelse(STR_BUYER_REGION == STR_FIRM_REGION, 1, 0)) %>% 
+    
+    # One dummy for winner being an SME
+    mutate(sme_winner               = ifelse(CAT_OFFER_SELECT == 1, sme, NA)) %>% 
+    
+    # One dummy for the winner being from the same municipality
+    mutate(same_municipality_winner = ifelse(CAT_OFFER_SELECT == 1, same_municipality_bidder, NA)) %>% 
+    
+    # One dummy for the winner being from the same region
+    mutate(same_region_winner = ifelse(CAT_OFFER_SELECT == 1, same_region_bidder, NA))
+    
+}
 
 # SAVE DATA --------------------------------------------------------------------
 
