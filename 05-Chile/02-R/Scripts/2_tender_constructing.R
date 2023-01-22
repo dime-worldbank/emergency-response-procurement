@@ -6,12 +6,15 @@
       
       # Load cleaned tender data
       data_offer_sub <- fread(file = file.path(int_data, "tenders.csv"), encoding = "Latin-1")
+
       
       # Load firm data
       data_firms <- read_dta(file = file.path(fin_data, "SII_2015_2020.dta"))
       
       # Load PO data
+
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
+
       
       }
     
@@ -211,7 +214,6 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
                                 if_else(DT_Y == 2019, 12, 
                                         if_else(DT_Y == 2020, 16, 20))))))
     
-  
   data_offer_sub <- data_offer_sub %>% 
     mutate(
       DD_TOT_PROCESS = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
@@ -302,6 +304,10 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
                                                                                                                  ifelse(region == 16,"Región de Arica y Parinacota",
                                                                                                                         ifelse(region == 17, "Región del Ñuble", NA))))))))))))))))) %>% 
     select(-region)
+ 
+}
+
+
   
   data_offer_sub <- data_offer_sub %>% 
     

@@ -59,8 +59,8 @@
       # load the dataset
       data <- fread(file         = file.path(raw_data, paste0("Tender/lic_", year, "-", month, ".csv")), 
                     showProgress = TRUE,
-                    encoding     = 'Latin-1')
-      
+                    encoding     = "Latin-1")
+                    
       # Append the loaded dataset to the list 
       datalist[[i]] <- data 
       
