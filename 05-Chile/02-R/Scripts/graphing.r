@@ -1271,16 +1271,6 @@ ggsave(
   device   = 'jpeg'
 )
 
-table_sector_firms_bid <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015) %>% 
-  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
-  distinct(ID_FIRM_RUT, DT_Y, sector) %>% 
-  group_by(ID_FIRM_RUT, DT_Y) %>% 
-  dplyr::summarise(n_sectors = n()) %>% 
-  group_by(DT_Y) %>% 
-  dplyr::summarise(n_sectors = mean(n_sectors, na.rm = TRUE))
-  
 table_product_firms_bid <- data_offer_sub %>% 
   
   filter(DT_Y > 2015) %>% 
@@ -1292,15 +1282,27 @@ table_product_firms_bid <- data_offer_sub %>%
   group_by(DT_Y) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
-table_sector_firms_win <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
-  distinct(ID_FIRM_RUT, DT_Y, sector) %>% 
-  group_by(ID_FIRM_RUT, DT_Y) %>% 
-  dplyr::summarise(n_sectors = n()) %>% 
-  group_by(DT_Y) %>% 
-  dplyr::summarise(n_sectors = mean(n_sectors, na.rm = TRUE))
+plot <- graph_trend_no_treat(
+  data = table_product_firms_bid, 
+  variable = n_product, 
+  title = "Market Concentration",
+  subtitle = "Number of different products bidded, per firm",
+  caption = "Source: Chile Compra",
+  limit_lower = 4,
+  limit_upper = 6,
+  interval_limits_y = 0.2,
+  legend_upper = 5.8,
+  percentage = FALSE
+)
+ggsave(
+  filename = file.path(dropbox_dir, "Outputs/n_products_bid_.jpeg"),
+  plot = plot                                                 ,
+  width    = 9                                            ,
+  height   = 5.75                                             ,
+  dpi      = 600                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
 
 table_product_firms_win <- data_offer_sub %>% 
   
@@ -1312,6 +1314,147 @@ table_product_firms_win <- data_offer_sub %>%
   dplyr::summarise(n_product = n()) %>% 
   group_by(DT_Y) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
+
+plot <- graph_trend_no_treat(
+  data = table_product_firms_win, 
+  variable = n_product, 
+  title = "Market Concentration",
+  subtitle = "Number of different products awarded, per firm",
+  caption = "Source: Chile Compra",
+  limit_lower = 3,
+  limit_upper = 4.5,
+  interval_limits_y = 0.2,
+  legend_upper = 4.5,
+  percentage = FALSE
+)
+ggsave(
+  filename = file.path(dropbox_dir, "Outputs/n_products_win_.jpeg"),
+  plot = plot                                                 ,
+  width    = 9                                            ,
+  height   = 5.75                                             ,
+  dpi      = 600                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
   
+n_bidders_sector <- data_offer_sub %>% 
   
+  filter(DT_Y > 2015) %>% 
+  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
+  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
+  distinct(ID_FIRM_RUT, DT_Y, sector, CAT_MEDICAL) %>% 
+  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
+  dplyr::summarise(n_bidders_sector = n()) %>% 
+  group_by(DT_Y, CAT_MEDICAL) %>% 
+  dplyr::summarise(n_bidders_sector = mean(n_bidders_sector, na.rm = TRUE))
+
+plot <- graph_trend(
+  data = n_bidders_sector, 
+  treatment = CAT_MEDICAL,
+  variable = n_bidders_sector, 
+  title = "Market Concentration",
+  subtitle = "Total Number of bidders, per sector",
+  caption = "Source: Chile Compra",
+  limit_lower = 1000,
+  limit_upper = 4000,
+  interval_limits_y = 500,
+  legend_upper = 4100,
+  percentage = FALSE,
+  yearly = TRUE,
+  label_treatment_legend = "Medical",
+  label_control_legend = "Non-medical"
+)
+ggsave(
+  filename = file.path(dropbox_dir, "Outputs/n_bid_sector.jpeg"),
+  plot = plot                                                ,
+  width    = 9                                            ,
+  height   = 5.75                                             ,
+  dpi      = 600                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
+
+n_winners_sector <- data_offer_sub %>% 
+  
+  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
+  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
+  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
+  distinct(ID_FIRM_RUT, DT_Y, sector, CAT_MEDICAL) %>% 
+  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
+  dplyr::summarise(n_winner_sector = n()) %>% 
+  group_by(DT_Y, CAT_MEDICAL) %>% 
+  dplyr::summarise(n_winner_sector = mean(n_winner_sector, na.rm = TRUE))
+
+plot <- graph_trend(
+  data = n_winners_sector, 
+  treatment = CAT_MEDICAL,
+  variable = n_winner_sector, 
+  title = "Market Concentration",
+  subtitle = "Number of Suppliers, per sector",
+  caption = "Source: Chile Compra",
+  limit_lower = 800,
+  limit_upper = 2400,
+  interval_limits_y = 200,
+  legend_upper = 2400,
+  percentage = FALSE,
+  yearly = TRUE,
+  label_treatment_legend = "Medical",
+  label_control_legend = "Non-medical"
+)
+ggsave(
+  filename = file.path(dropbox_dir, "Outputs/n_win_sector.jpeg"),
+  plot = plot                                                ,
+  width    = 9                                            ,
+  height   = 5.75                                             ,
+  dpi      = 600                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
+
+concentration <- data_offer_sub %>% 
+  
+  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
+  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
+  na.omit() %>% 
+  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
+  group_by(ID_FIRM_RUT, sector, DT_Y, CAT_MEDICAL) %>% 
+  dplyr::summarise(firm_sum = sum(AMT_VALUE_AWARDED, na.rm = TRUE)) %>% 
+  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
+  mutate(tot_sum = sum(firm_sum, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  mutate(concentration = ((firm_sum/tot_sum)*100)^2) %>% 
+  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
+  summarise(concentration = sum(concentration, na.rm = TRUE)) %>% 
+  group_by(CAT_MEDICAL, DT_Y) %>% 
+  summarise(concentration = mean(concentration, na.rm = TRUE))
+
+# Yearly - Medicine
+
+plot <- graph_trend(
+  data = concentration, 
+  treatment = CAT_MEDICAL,
+  variable = concentration, 
+  title = "Market Concentration",
+  subtitle = "HERFINDAHL-HIRSCHMAN INDEX, per sector",
+  caption = "Source: Chile Compra",
+  limit_lower = 50,
+  limit_upper = 400,
+  interval_limits_y = 50,
+  legend_upper = 380,
+  percentage = FALSE,
+  yearly = TRUE,
+  label_treatment_legend = "Medical",
+  label_control_legend = "Non-medical"
+)
+ggsave(
+  filename = file.path(dropbox_dir, "Outputs/hhi_year_medic.jpeg"),
+  plot = plot                                                ,
+  width    = 9                                            ,
+  height   = 5.75                                             ,
+  dpi      = 600                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
+
+
   

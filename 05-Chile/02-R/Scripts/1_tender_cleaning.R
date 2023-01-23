@@ -200,7 +200,7 @@
   # flag covid items
   tender_data = tender_data %>% 
     left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
-    mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 1) == "42", 1, 0)) %>% 
+    mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0)) %>% 
     mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
   
   # remove list of data

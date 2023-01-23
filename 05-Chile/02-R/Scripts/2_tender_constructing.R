@@ -326,7 +326,7 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
     # One dummy for the winner being from the same region
     mutate(same_region_winner = ifelse(CAT_OFFER_SELECT == 1, same_region_bidder, NA))
     
-}
+
 
 # SAVE DATA --------------------------------------------------------------------
 
