@@ -4,14 +4,14 @@
 #                                                                              # 
 #                             Construct Variables                              #
 #                                                                              #
-#        Author: Hao Lyu (RA - DIME3)            Last Update:  Oct 31 2022     #
+#        Author: Hao Lyu (RA - DIME3)            Last Update:  Jan 1/18 2023   #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
 # **************************************************************************** #
 #       This script aims to clean Honduras data downloaded from the standard
 #       portal         
-#                                                                              ##                                                                              #
+#                                                                              ##                                                                              
 # **************************************************************************** #
 
 # Procurement Data Structure: 
@@ -22,154 +22,341 @@
 # LOAD DATA -------------------------------------------------------------------
 
     # aggregated data from 2018 to 2021
-      data_participants_final   <- readRDS(file.path(raw_oncae, "DATA_PARTICIPANTS.RDS"))
-      data_documents_final      <- readRDS(file.path(raw_oncae, "DATA_DOCUMENTS.RDS"   ))
-      data_items_final          <- readRDS(file.path(raw_oncae, "DATA_ITEMS.RDS"       )) # 136882 unique tenders that have items 
-      data_contracts_final      <- readRDS(file.path(raw_oncae, "DATA_CONTRACTS.RDS"   )) # 35930 unique tenders that have contracts 
-      data_tenders_final        <- readRDS(file.path(raw_oncae, "DATA_TENDERS.RDS"     )) # 138873 unique tenders
+      data_participants_final   <- as.data.frame(fread(file.path(intermediate, "Data_Participants_Final.csv")))
+      data_items_final          <- as.data.frame(fread(file.path(intermediate, "Data_Items_Final.csv")))
+      data_contracts_final      <- as.data.frame(fread(file.path(intermediate, "Data_Contracts_Final.csv")))
+      data_tenders_final        <- as.data.frame(fread(file.path(intermediate, "Data_Tenders_Final.csv")))
 
-    # intermediate datasets from cleaning file 
-      tender_contract       <- as.data.frame(fread(file.path(intermediate,"Contract_Tender.csv"))) 
+    # intermediate datasets obtained after data cleaning 
+      # contract level 
+      tender_contract       <- as.data.frame(fread(file.path(intermediate,"Contract_Tender.csv"))) # 2018 - 2022
       
-      tender_item           <- as.data.frame(fread(file.path(intermediate,"Tender_Item.csv"))) # add contract signature date 
+      contract_supplier     <- as.data.frame(fread(file.path(intermediate,"Contract_Supplier.csv")))
+      
+      # item level 
+      tender_item           <- as.data.frame(fread(file.path(intermediate,"Tender_Item.csv"))) # add contract signature date  
       
       supplier_item         <- as.data.frame(fread(file.path(intermediate,"Supplier_Item.csv"))) # add contract signature date 
       
-      contract_participants <- as.data.frame(fread(file.path(intermediate,"Contract_Participants.csv"))) 
-      
+      # participant level 
       data_parties_merged   <- as.data.frame(fread(file.path(intermediate,"Data_Parties_Merged.csv"))) 
       
+    # UNSPSC 
+      data_unspsc_commodity       <- read_xlsx(file.path(raw_data,"unspsc.xlsx"), sheet = 5)
       
-# COVID DUMMY ---------------------------------------------------------
+      data_unspsc_class           <- read_xlsx(file.path(raw_data,"unspsc.xlsx"), sheet = 4)
       
-      # Count COVID related item, contracts, and tenders  
-      covid_item <- data_items_final%>%
-        mutate(covid = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
+      data_unspsc_family          <- read_xlsx(file.path(raw_data,"unspsc.xlsx"), sheet = 3)
+      
+    # administrative divisions 
+      municipality                <- read_xlsx(file.path(raw_data,"Honduras_admin.xlsx"))
+
+      
+# 0.0 filter out outliers that have the top 1% contract values and appear as mistake 
+      
+      tender_contract$outliers <- ifelse(tender_contract$AMT_CONTRACT_VALUE > quantile(tender_contract$AMT_CONTRACT_VALUE, probs = 0.99, na.rm = T),
+                                         "FLAG", NA)
+      # selected 138 observations
+      outlier_detail <- tender_contract%>%filter(outliers == "FLAG")
+      
+      # this seems too many. Thus, we find another way, plot a boxplot 
+      # boxplot(tender_contract$AMT_CONTRACT_VALUE_USD,  ylab = "Contract Value (USD)", na.rm = TRUE)
+      # need confirmation
+      
+      outlier <- tender_contract%>%
+        filter(outliers == "FLAG")
+      
+      fwrite(outlier, file = paste0(cleaned, "/Outlier.CSV"))
+      
+      outlier <- outlier %>%
+        select(ID, ID_CONTRACT)
+      
+      # delete outliers from all intermediate files 
+      tender_contract     <- tender_contract[!tender_contract$ID %in% outlier$ID, ]
+      
+      contract_supplier   <- contract_supplier[!contract_supplier$ID %in% outlier$ID, ]
+      
+      tender_item         <- tender_item[!tender_item$ID %in% outlier$ID, ]
+
+      supplier_item       <- supplier_item[!supplier_item$ID %in% outlier$ID, ]
+      
+      data_parties_merged <- data_parties_merged[!data_parties_merged$ID %in% outlier$ID, ]
+      
+
+# 1.0 Identify COVID items --------------------------------------------------------      
+      
+  # 1.1 flag COVID observations by detecting COVID key words in items, contracts, tenders descriptions, and IDs  
+        
+  # at tender_item level 
+      covid_tender_item <- tender_item%>%
+              # item level detection 
+        mutate(covid_item = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
                                      str_detect(STR_ITEM_DESCRIPTION, "COVID")|
                                      str_detect(STR_ITEM_DESCRIPTION, "Covid")|
                                      str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
                                      str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
-                                     str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0))%>%
-        mutate_at(c("covid"), ~replace_na(., 0))%>%
-        group_by(covid)%>%
-        dplyr::summarise(covid_item = n_distinct(ID_ITEM))%>%
-        ungroup()
-      
-      covid_contracts <- data_contracts_final%>%
-        mutate(covid = ifelse(str_detect(STR_CONTRACT_DESCRIPTION, "covid")|
-                                         str_detect(STR_CONTRACT_DESCRIPTION, "COVID")|
-                                         str_detect(STR_CONTRACT_DESCRIPTION, "Covid")|
-                                         str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                         str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                         str_detect(STR_CONTRACT_DESCRIPTION, "sars-cov-2"),1,0))%>%
-        mutate_at(c("covid"), ~replace_na(., 0))%>%
-        group_by(covid)%>%
-        dplyr::summarise(covid_contracts = n_distinct(ID_CONTRACT))%>%
-        ungroup()
-      
-      covid_tenders <- data_tenders_final%>%
-        mutate(covid = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
-                                       str_detect(STR_TENDER_DESCRIPTION, "COVID")|
-                                       str_detect(STR_TENDER_DESCRIPTION, "Covid")|
-                                       str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
-                                       str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
-                                       str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0))%>%
-        mutate_at(c("covid"), ~replace_na(., 0))%>%
-        group_by(covid)%>%
-        dplyr::summarise(covid_tenders = n_distinct(ID))%>%
-        ungroup()
-      
-      covid_counts <- covid_tenders%>%
-        left_join(covid_contracts, by = "covid")%>%
-        left_join(covid_item, by = "covid")
-      
-      covid_counts
-      
-      # flag all COVID related items, contracts, tenders in intermediate datasets 
-      covid_tender_item <- tender_item%>%
-        mutate(covid_item = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
-                                str_detect(STR_ITEM_DESCRIPTION, "COVID")|
-                                str_detect(STR_ITEM_DESCRIPTION, "Covid")|
-                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
-                                str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
-                                str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0),
-               covid_contract = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
-                                str_detect(STR_TENDER_DESCRIPTION, "COVID")|
-                                str_detect(STR_TENDER_DESCRIPTION, "Covid")|
-                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
-                                str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
-                                str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0),
-               covid = case_when(covid_item == 1 ~ 1,
-                                 covid_contract == 1 ~ 1))%>%
-        mutate_at(c("covid"), ~replace_na(., 0))%>%
-        select(ID, covid)%>%
-        distinct()
-      
-      covid_tender_contract <- tender_contract%>%
-        mutate(covid_contract = ifelse(str_detect(STR_CONTRACT_DESCRIPTION, "covid")|
-                                     str_detect(STR_CONTRACT_DESCRIPTION, "COVID")|
-                                     str_detect(STR_CONTRACT_DESCRIPTION, "Covid")|
-                                     str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                     str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                     str_detect(STR_CONTRACT_DESCRIPTION, "sars-cov-2"),1,0),
+                                     str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0),
+               # tender level detection 
                covid_tender = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
                                          str_detect(STR_TENDER_DESCRIPTION, "COVID")|
                                          str_detect(STR_TENDER_DESCRIPTION, "Covid")|
                                          str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
                                          str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
                                          str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0),
-               covid = case_when(covid_tender == 1 ~ 1,
-                                 covid_contract == 1 ~ 1))%>%
+               # detect by IDS 
+               covid_id = ifelse(str_detect(ID_ITEM, "covid")|
+                                   str_detect(ID_ITEM, "COVID")|
+                                   str_detect(ID_ITEM, "Covid")|
+                                   str_detect(ID_ITEM, "coronavirus")|
+                                   str_detect(ID_ITEM, "coronavirus")|
+                                   str_detect(ID_ITEM, "sars-cov-2")|
+                                   str_detect(ID, "covid")|
+                                   str_detect(ID, "COVID")|
+                                   str_detect(ID, "Covid")|
+                                   str_detect(ID, "coronavirus")|
+                                   str_detect(ID, "coronavirus")|
+                                   str_detect(ID, "sars-cov-2"), 1,0))
+      
+        # single out COVID by ID 
+      covid_tender_item_ID <- covid_tender_item%>%
+        filter(covid_item == 0 &
+                 covid_tender == 0 &
+                 covid_id == 1) 
+        # identified 2 entries 
+      covid_tender_item_ID
+          
+      # generate covid dummy from tender and item descriptions 
+      covid_tender_item <- covid_tender_item%>%
+        mutate( covid = case_when(covid_item == 1 ~ 1,
+                                  covid_tender == 1 ~ 1))%>%
         mutate_at(c("covid"), ~replace_na(., 0))%>%
-        select(ID, covid)%>%
+        select(ID, ID_ITEM, year, covid, covid_item, covid_tender, covid_id)%>%
         distinct()
       
-      covid_tender <- covid_tender_item%>%
-        left_join(covid_tender_contract,
-                  by = "ID", suffix = c("_tender_item", "_tender_contract"))%>%
-        mutate_at(c("covid_tender_contract"), ~replace_na(., 0))
+      # generate a summary statistics about covid items 
+      stats_covid_item <- covid_tender_item %>%
+        group_by(covid_item, year)%>%
+        dplyr::summarise(n_item = n_distinct(ID_ITEM))%>%
+        ungroup()
+            
+      stats_covid_item
+      
+      # generate a summary statistics about covid tender (for the tenders that have item level data )
+      stats_covid_tender <- covid_tender_item %>%
+        group_by(covid_tender, year)%>%
+        dplyr::summarise(n_tender = n_distinct(ID))%>%
+        distinct()
+      
+      stats_covid_tender
+      
+      
+  # at tender_contract level 
+      covid_tender_contract <- tender_contract%>%
+               # contract level detection 
+        mutate(covid_contract = ifelse(str_detect(STR_CONTRACT_DESCRIPTION, "covid")|
+                                         str_detect(STR_CONTRACT_DESCRIPTION, "COVID")|
+                                         str_detect(STR_CONTRACT_DESCRIPTION, "Covid")|
+                                         str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
+                                         str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
+                                         str_detect(STR_CONTRACT_DESCRIPTION, "sars-cov-2"),1,0),
+               # tender level detection 
+               covid_tender = ifelse(str_detect(STR_TENDER_DESCRIPTION, "covid")|
+                                       str_detect(STR_TENDER_DESCRIPTION, "COVID")|
+                                       str_detect(STR_TENDER_DESCRIPTION, "Covid")|
+                                       str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                       str_detect(STR_TENDER_DESCRIPTION, "coronavirus")|
+                                       str_detect(STR_TENDER_DESCRIPTION, "sars-cov-2"),1,0),
+               # detect by IDS 
+               covid_id = ifelse(str_detect(ID_CONTRACT, "covid")|
+                                   str_detect(ID_CONTRACT, "COVID")|
+                                   str_detect(ID_CONTRACT, "Covid")|
+                                   str_detect(ID_CONTRACT, "coronavirus")|
+                                   str_detect(ID_CONTRACT, "coronavirus")|
+                                   str_detect(ID_CONTRACT, "sars-cov-2")|
+                                   str_detect(ID, "covid")|
+                                   str_detect(ID, "COVID")|
+                                   str_detect(ID, "Covid")|
+                                   str_detect(ID, "coronavirus")|
+                                   str_detect(ID, "coronavirus")|
+                                   str_detect(ID, "sars-cov-2"), 1,0))
+      # single out COVID by ID 
+      covid_tender_contract_ID <- covid_tender_contract%>%
+        filter(covid_contract == 0 &
+                 covid_tender == 0 &
+                 covid_id == 1)
+        # identified 6 entries 
+      
+      covid_tender_contract_ID
+      
+      # generate a COVID dummy 
+      covid_tender_contract <- covid_tender_contract%>%
+        mutate(covid = case_when(covid_tender == 1 ~ 1,
+                                 covid_contract == 1 ~ 1))%>%
+        mutate_at(c("covid"), ~replace_na(., 0))%>%
+        select(ID, ID_CONTRACT, year, covid, covid_contract, covid_tender)%>%
+        distinct()
+      
+      # generate a summary statistics about covid contracts 
+      stats_covid_contract <- covid_tender_contract %>%
+        group_by(covid_contract, year)%>%
+        dplyr::summarise(n_contract = n_distinct(ID_CONTRACT))%>%
+        ungroup()
+      
+      stats_covid_contract
+      
+      # generate a summary statistics about covid tenders (the tenders that have contract level data )
+      stats_covid_tender_2 <- covid_tender_contract%>%
+        group_by(covid_tender, year)%>%
+        dplyr::summarise(n_tender = n_distinct(ID))%>%
+        ungroup()
+      
+      stats_covid_tender_2 # note: more tenders have contract information compared to item information 
+      
+
+  # 1.2 Generate a list of tenders that contain COVID key words in contracts', items', and tenders' descriptions
+      
+          # collapse item level information to tender level 
+      covid_tender_item <- covid_tender_item%>%
+        mutate(covid = case_when(covid_item == 1 ~ 1,
+                                 covid_tender == 1 ~ 1))%>%
+        mutate_at(c("covid"), ~replace_na(., 0))%>%
+        select(ID, year, covid)%>%
+        distinct()
+      
+           # collapse contract level information to tender level 
+      covid_tender_contract <- covid_tender_contract%>%
+        mutate(covid = case_when(covid_tender == 1 ~ 1,
+                                 covid_contract == 1 ~ 1))%>%
+        mutate_at(c("covid"), ~replace_na(., 0))%>%
+        select(ID, year, covid)%>%
+        distinct()
         
-      covid_tender <- covid_tender%>%
+      length(unique(covid_tender_item$ID))      # 23458 tenders have item level data 
+      length(unique(covid_tender_contract$ID))  # 23622 tenders have contract level data 
+      
+          # note: should merge tender-item data to tender-contract data because contracts are related to more unique tenders
+          # in other words, all tenders have contracts, but not all tenders have items. It's because of the quality of the data 
+          # rather than mistakenly merging. Already checked the raw data many times. 
+      
+      covid_tender_item_contract <- covid_tender_contract%>%
+        left_join(covid_tender_item,
+                  by = "ID", suffix = c("_tender_contract", "_tender_item"))%>%  
+        mutate_at(c("covid_tender_contract", "covid_tender_item"), ~replace_na(., 0))%>%
         mutate(covid = case_when(covid_tender_item == 1 ~ 1,
                                  covid_tender_contract == 1 ~ 1))%>%
-        mutate_at(c("covid"), ~replace_na(., 0))
+        mutate_at(c("covid"), ~replace_na(., 0))%>%
+        select(-c("year_tender_item"))%>%
+        dplyr::rename(year = year_tender_contract)
+      
+          # a list of COVID tender ID 
+      covid_tender <- covid_tender_item_contract%>%
+        distinct(ID, covid)
+      
+      # 1.3 Summary statistics about the number of COVID/non-COVID item, contracts, and tenders each year 
         
-      table(covid_tender[c("covid_tender_item", "covid_tender_contract")])
-    
-      covid_tender <- covid_tender%>%select(ID, covid)
-
+          # the overlap between COVID item and contract 
+      table(covid_tender_item_contract[c("covid_tender_item", "covid_tender_contract", "year")])
+        
+          # summary statistics of all the COVID and non-COVID tenders each year (the union of COVID item, contract, and tender)
+      stats_covid_union  <- covid_tender_item_contract%>%
+        group_by(covid, year)%>%
+        dplyr::summarise(n_union = n_distinct(ID))%>%
+        ungroup()
+        
+      stats_covid_union
       
-# Identify Comparison Group ------------------------------------
+          # merge the summary statistics of tender, item, and contracts data together
+      stats_covid <- stats_covid_union%>%
+        left_join(stats_covid_item, by = c("covid" = "covid_item", "year"))%>%
+        left_join(stats_covid_contract, by = c("covid" = "covid_contract", "year"))%>%
+        left_join(stats_covid_tender_2, by = c("covid" = "covid_tender", "year"))
       
-      # add COVID dummy to supplier_item data 
+      stats_covid
+      # note: @team, the number of supplies in 2019 is extremely high compared to the supplies during COVID. 
+      # Why is that? My hypothesis is that supply chain crisis hit Honduras in 2020. 
+      # Does this affect our understandings of the change in supplies during COVID? 
+      # How to tease out the impact of supply chain crisis from the impact of 'COVID'? 
+      # This also leads to our definition of 'COVID'. How should we define the impact of COVID? It's not a usual economic crisis like 2008. 
+      # The pandemic might have changed governments' preferred public good, leading to the change in market and firm behavior. 
+      # Supply chain crisis and lockdown also changed firms behavior through increasing the cost of production. 
+      # Thus, how to define the impact of treatment 'COVID'? What does 'COVID' mean to government and firm interaction? 
+      
+      
+# 2.0 Identify Comparison Groups in Intermediate Data --------------------------
+      
+    # Definition: 
+      # treatment item: the item that has a UNSPSC code that is related to COVID before and during COVID 
+      # treatment firm: the firm that supplied items with COVID related UNSPSC code before and during COVID 
+      
+    # 2.1 flag COVID items and generate a list of UNSPSC code 
+      
+        # add COVID dummy to item level data 
       supplier_item <- supplier_item%>%
-        left_join(covid_tender, by = "ID")  
-          # note: 474 participants that cannot link to any items i.e. ocds-lcuori-grxXEr-COT. NÂ°10-2019-1/3
-      
-      supplier_item <- supplier_item%>%
-        mutate(covid_item = ifelse(str_detect(STR_ITEM_DESCRIPTION, "covid")|
-                                         str_detect(STR_ITEM_DESCRIPTION, "COVID")|
-                                         str_detect(STR_ITEM_DESCRIPTION, "Covid")|
-                                         str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
-                                         str_detect(STR_ITEM_DESCRIPTION, "coronavirus")|
-                                         str_detect(STR_ITEM_DESCRIPTION, "sars-cov-2"),1,0),
-               covid = case_when(covid == 1 ~ 1,
-                                 covid_item == 1 ~ 1))%>%
+        
+        left_join(covid_tender, by = "ID")  %>%
+            # note: 306 participants cannot link to any items. Cannot find their tender ID in contract level or item level. 
+            # i.e. ocds-lcuori-grxXEr-COT. NÂ°10-2019-1/3 and ocds-lcuori-gGyD4L-COVID 19-CONTRATACIÃ"N DIRECTA No. 17-2021-HE-AME -2/3
+        
         mutate_at(c("covid"), ~replace_na(., 0))
       
-      # Construct and index to classify contracts to define comparison group.
-      covid_item_unspsc <- supplier_item%>%
-        filter(covid == 1)%>%
-        select(ID, ID_PARTY, NAME_PARTY, ID_ITEM, ID_ITEM_UNSPSC, STR_ITEM_UNSPSC, STR_ITEM_DESCRIPTION, covid)
+        # construct UNSPSC list at commodity level (the most nuanced level, and the originally reported UNSPSC code) 
+      unspsc_commodity <- supplier_item%>%
+        select(ID_ITEM_UNSPSC, STR_ITEM_UNSPSC, STR_ITEM_DESCRIPTION, covid)%>%
+        distinct()
       
-        # Question: should we use this list to construct 'medical' or just Segment 420000? Suggest using this list to flag medical products 
+        # construct UNSPSC list at class level  
+      unspsc_commodity$ID_ITEM_UNSPSC_CLASS = substr(unspsc_commodity$ID_ITEM_UNSPSC, start = 1, stop = 6)
       
-      # Construct Medical related dummy 
+      unspsc_commodity$ID_ITEM_UNSPSC_CLASS = as.numeric(paste0(unspsc_commodity$ID_ITEM_UNSPSC_CLASS, "00"))
+      
+      unspsc_commodity <- unspsc_commodity %>%
+            # merge in UNSPSC class level description by the first 6 digits of the code 
+        left_join(data_unspsc_class, 
+                  by = c("ID_ITEM_UNSPSC_CLASS" = "Class"))%>%
+        dplyr::rename(STR_CLASS_UNSPSC = Description,
+                      STR_COMMODITY_UNSPSC = STR_ITEM_UNSPSC)
+    
+          # construct UNSPSC list at family level
+      unspsc_commodity$ID_ITEM_UNSPSC_FAMILY = substr(unspsc_commodity$ID_ITEM_UNSPSC, start = 1, stop = 4)
+      
+      unspsc_commodity$ID_ITEM_UNSPSC_FAMILY = as.numeric(paste0(unspsc_commodity$ID_ITEM_UNSPSC_FAMILY, "0000"))
+      
+      unspsc_commodity <- unspsc_commodity%>%
+            # merge in UNSPSC family level description by the first 4 digits of the code 
+        left_join(data_unspsc_family, 
+                  by = c("ID_ITEM_UNSPSC_FAMILY" = "Family"))%>%
+        dplyr::rename(STR_FAMILY_UNSPSC = Description)
+      
+          # save UNSPSC lists at 3 levels 
+      unspsc_family <- unspsc_commodity%>%
+        select(ID_ITEM_UNSPSC_FAMILY, STR_FAMILY_UNSPSC, ID_ITEM_UNSPSC, STR_ITEM_DESCRIPTION, covid)
+      
+      fwrite(unspsc_family, file = paste0(cleaned, "/UNSPSC_FAMILY.CSV"))
+      
+      
+      unspsc_class <- unspsc_commodity%>%
+        select(ID_ITEM_UNSPSC_CLASS, STR_CLASS_UNSPSC, ID_ITEM_UNSPSC, STR_ITEM_DESCRIPTION, covid)
+      
+      fwrite(unspsc_class, file = paste0(cleaned, "/UNSPSC_CLASS.CSV"))
+      
+      
+      unspsc_commodity <- unspsc_commodity%>%
+        select(ID_ITEM_UNSPSC, STR_COMMODITY_UNSPSC, STR_ITEM_DESCRIPTION, covid)
+      
+      fwrite(unspsc_commodity, file = paste0(cleaned, "/UNSPSC_COMMODITY.CSV"))
+      
+                                                            # 27027 unique items 
+      length(unique(unspsc_commodity$ID_ITEM_UNSPSC))       # 3755 unique commodity code  
+      length(unique(unspsc_class$ID_ITEM_UNSPSC_CLASS))     # 1219 unique item code 
+      length(unique(unspsc_family$ID_ITEM_UNSPSC_FAMILY))   # 306  unique family code 
+      
+      
+    # 2.2 Construct Medical related dummies 
         # in UNSPSC code, 42000000 is the segment of Medical Equipment and Accessories and Supplies
         #                 41000000 is the segment of Laboratory and Measuring and Observing and Testing Equipment
         #                 51000000 is the segment of Drugs and Pharmaceutical Products
       
-      # extract the first 2 charactors of unspsc and match with 42, 41, and 51  
+        #  extract the first 2 characters of UNSPSC and match with 42, 41, and 51  
       supplier_item$ID_ITEM_UNSPSC_SEG = substr(supplier_item$ID_ITEM_UNSPSC, start = 1, stop = 2)
       
       supplier_item <- supplier_item%>%
@@ -178,46 +365,95 @@
                                        ifelse(ID_ITEM_UNSPSC_SEG == 51, 1, 0))),
                sector = ifelse(covid == 1 & medical == 1, "Medical-COVID",
                               ifelse(covid != 1 &  medical == 1, "Medical-NonCOVID", 
-                                     ifelse(covid == 1 & medical != 1, "NonMedical-COVID", "Non-Medical"))))
+                                     ifelse(covid == 1 & medical != 1, "NonMedical-COVID", "NonMedical-NonCOVID"))))
       
-      supplier_item <- as.data.table(supplier_item)
-      
-      supplier_item_summary <- supplier_item[!is.na(sector),.N,by = "sector"]
-      
-      supplier_item_summary
-      
-      supplier_item <- as.data.frame(supplier_item)
+        # summary statistics of the number of tenders each sectors each year 
+      supplier_item_summary <- supplier_item%>%
+        group_by(sector, year)%>%
+        dplyr::summarise(N = n_distinct(ID))%>%
+        ungroup()%>%
+        spread(sector, N)
+        
+      supplier_item_summary # number of tenders 
       
       covid_sector <- supplier_item%>%
         # drop 474 observations that does not have item information 
         filter(!is.na(sector))%>%
         select(ID, covid, sector)%>%
-        distinct()
-      
-      # identified sector for 85422 tenders 
+        distinct()                         # identified sectors for 85422 tenders 
       
       
+    # 2.3 assign to comparison groups 
+      # A COVID contract/tender means from 2020 to 2022, at least one item in a contract/tender has an UNSPSC code that is on the COVID product UNSPSC list. 
+      # A firm that is in the COVID group means from 2020 to 2022, that firm has supplied COVID items (the item that has an UNSPSC code that is on the COVID product UNSPSC list)
       
-## NEW WINNERS - construct with contract signature ---------------------------
+      # generate a COVID/nonCOVID UNSPSC dictionary
+      covid_unspsc  <- unspsc_commodity %>% 
+        select(ID_ITEM_UNSPSC, covid)%>%
+        distinct()%>%
+        # alert: some UNSPSC was related to both COVID and non-COVID items, as long as that UNSPSC has related to COVID product, I am marking it as COVID UNSPSC
+        group_by(ID_ITEM_UNSPSC)%>%
+        dplyr::summarise(covid = sum(covid))%>%
+        ungroup()
+          # identified 64 COVID UNSPSC, 3691 non-COVID UNSPSC
+          # 3755 unique commodity UNSPSC total - matched with section 2.1 result!
+      
+      # create a covid firm list 
+      supplier_item <- supplier_item%>%
+        select(-c("covid"))%>%
+        left_join(covid_unspsc,
+                  by = c("ID_ITEM_UNSPSC" = "ID_ITEM_UNSPSC"))%>%
+        dplyr::rename(covid_item = covid)
+      
+      covid_firm <- supplier_item%>%
+        group_by(ID_PARTY)%>%
+        dplyr::summarise(covid = sum(covid_item, na.rm = T))%>%
+        ungroup()%>%
+        mutate(covid_firm = case_when(covid >= 1 ~ 1))%>%
+        mutate_at(c("covid_firm"), ~replace_na(., 0))%>%
+        select(-c("covid"))    
+          # identified 3446 unique suppliers, 3446 unique obs, uniqueness check passed!
+      
+      # create a covid tender list 
+      covid_tender <- supplier_item%>%
+        group_by(ID)%>%
+        dplyr::summarise(covid = sum(covid_item, na.rm = T))%>%
+        ungroup()%>%
+        mutate(covid_tender = case_when(covid >= 1 ~ 1))%>%
+        mutate_at(c("covid_tender"), ~replace_na(., 0))%>%
+        select(-c("covid"))
+          # identified 23458 tenders, 23458 obs, uniqueness check passed!
+          # matched with the number of suppliers in the other item level data - tender_item!
+      
+      # create a covid item list 
+      covid_item <- supplier_item%>%
+        group_by(ID_ITEM)%>%
+        dplyr::summarise(covid = sum(covid_item, na.rm = T))%>%
+        ungroup()%>%
+        mutate(covid_item = case_when(covid >= 1 ~ 1))%>%
+        mutate_at(c("covid_item"), ~replace_na(., 0))%>%
+        select(-c("covid"))
+      
+      
+## 3.0 NEW WINNERS - construct with contract signature ---------------------------
+      
+      # New winner: tender publication date and contract signature date for previous contracts 
+      # x: tender publication date 
+      # y: number of new winners 
+      # the share of new winners: new winners// all contracts 
+      
       
       # Identify new winners 
       
-          # single out suppliers between 2018 and 2022   
-          contract_supplier <- contract_participants%>%
-            filter(CAT_PARTY_ROLE == "supplier"|
-                     CAT_PARTY_ROLE == "supplier;tenderer"&
-                     YEAR <= 2022)%>%
-            arrange(ID_PARTY, DT_CONTRACT_SIGNED)
-          
           # calculate time lag 
           contract_supplier <- as.data.table(contract_supplier)
           
-          contract_supplier = contract_supplier[, lag_date:= shift(DT_CONTRACT_SIGNED, 1, type="lag"), by="ID_PARTY"]
+          contract_supplier = contract_supplier[order(DT_TENDER_PUB), lag_date:= shift(DT_CONTRACT_SIGNED, n=1, type="lag"), by="ID_SUPPLIER"]
           
-          # calculate how many days between the 2 contracts a firm has won 
+          # calculate how many days between previous contract signature date and tender publication date 
           contract_supplier$lag_date <- as_datetime(contract_supplier$lag_date, tz = lubridate::tz(contract_supplier$lag_date))
           
-          contract_supplier$diff_days_contract <- interval(contract_supplier$lag_date, contract_supplier$DT_CONTRACT_SIGNED) %/% days(1)
+          contract_supplier$diff_days_contract <- interval(contract_supplier$lag_date, contract_supplier$DT_TENDER_PUB) %/% days(1)
           
           # calculate the number of months from the previous contract by the same firm 
           contract_supplier$diff_months_contract <- interval(contract_supplier$lag_date, contract_supplier$DT_CONTRACT_SIGNED) %/% months(1)
@@ -229,67 +465,91 @@
             mutate(new_winner = case_when(is.na(diff_days_contract) ~ 1 ,
                                           diff_days_contract > 365 ~ 1 ,
                                           TRUE ~ 0 ))
-          # summary statistics by year 
-          new_winner_year <- contract_supplier%>%
-            group_by(YEAR)%>%
-            dplyr::summarise(num_new_winner = sum(new_winner))%>%
-            ungroup()
           
           # summary statistics by month 
-          contract_supplier$month <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%m")
+          contract_supplier$month <- strftime(contract_supplier$DT_TENDER_PUB, "%m")
           
-          contract_supplier$year_month <- paste0(contract_supplier$YEAR, contract_supplier$month)
+          contract_supplier$year <- strftime(contract_supplier$DT_TENDER_PUB, "%Y")
+          
+          contract_supplier$tender_pub_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
           
           new_winner_month <- contract_supplier%>%
-            filter(year_month >= 201901)%>%
-            group_by(year_month)%>%
+            filter(tender_pub_month >= "2019-01-01")%>%
+            group_by(tender_pub_month)%>%
             dplyr::summarise(num_new_winner = sum(new_winner))%>%
             ungroup()
-          
-          # Visualization for new winners 
-          ggplot(new_winner_month, aes(x = year_month, y = num_new_winner, group = 1))+
-            geom_line()+
-            theme_classic()+
-            theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))
-      
-      # Add Groups 
-          contract_supplier <- left_join(contract_supplier, covid_tender,
-                                         by = "ID")
-          # note: 329 contracts that do not exist in tender data i.e. ocds-lcuori-MLQnAG-LPNÂº047-2019-HGS-2/6
-          
-          contract_supplier <- contract_supplier%>%
-            mutate(covid_contract = ifelse(str_detect(STR_CONTRACT_DESCRIPTION, "covid")|
-                                             str_detect(STR_CONTRACT_DESCRIPTION, "COVID")|
-                                             str_detect(STR_CONTRACT_DESCRIPTION, "Covid")|
-                                             str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                             str_detect(STR_CONTRACT_DESCRIPTION, "coronavirus")|
-                                             str_detect(STR_CONTRACT_DESCRIPTION, "sars-cov-2"),1,0),
-                   covid = case_when(covid == 1 ~ 1,
-                                     covid_contract == 1 ~ 1))%>%
-            mutate_at(c("covid"), ~replace_na(., 0))
-    
-          new_winner_month_group <- contract_supplier%>%
-            filter(year_month >= 201901)%>%
-            group_by(year_month, covid)%>%
-            dplyr::summarise(num_new_winner = sum(new_winner))%>%
-            ungroup()
-          
-          new_winner_month_group$covid <- replace(new_winner_month_group$covid, new_winner_month_group$covid == 0, "Non-COVID")
 
-          new_winner_month_group$covid <- replace(new_winner_month_group$covid, new_winner_month_group$covid == 1, "COVID")
+          new_winner_month
           
-          ggplot(new_winner_month_group, aes(x = year_month, y = num_new_winner, group = covid, color = covid))+
+          # summary statistics by year 
+          new_winner_year <- contract_supplier%>%
+            filter(year >= 2019 & 
+                     year <= 2022)%>%
+            group_by(YEAR)%>%
+            dplyr::summarise(num_new_winner = sum(new_winner),
+                             num_contract   = n_distinct(ID_CONTRACT))%>%
+            mutate(share_new_winner = num_new_winner/num_contract)%>%
+            ungroup()
+          
+          new_winner_year     
+          
+          # YEAR num_new_winner
+          # <int>          <dbl>
+          # 1  2018          13060
+          # 2  2019          13558
+          # 3  2020           3694
+          # 4  2021           7352
+          # 5  2022            866
+          # 6  2025              1
+        
+          
+      # add Group dummy (merge covid firm ID to firm level data)
+          contract_supplier <- left_join(contract_supplier, covid_firm,
+                                         by = c("ID_SUPPLIER" = "ID_PARTY"))          # note: 100% merge 
+          
+          new_winner_month_group <- contract_supplier%>%
+            dplyr::rename(Group = covid_firm)%>%
+            filter(tender_pub_month >= "2019-01-01" &
+                     tender_pub_month <= "2022-08-01")%>%
+            filter(!is.na(Group))%>%
+            group_by(tender_pub_month, Group)%>%
+            dplyr::summarise(num_new_winner = sum(new_winner),
+                             num_contract   = n_distinct(ID_CONTRACT))%>%
+            mutate(share_new_winner = num_new_winner/num_contract)%>%
+            ungroup()
+          
+          new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 0, "Non-COVID")
+
+          new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 1, "COVID")
+          
+          ggplot(new_winner_month_group, aes(x = tender_pub_month, y = share_new_winner, group = Group, color = Group))+
             geom_line()+
             theme_classic()+
             theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-            labs(x = "Month", y = "Number of New Winners", title = "New Winners")
-
-      
-# Time Related Variables --------------------------------------------------------- 
+            geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+            # annotate(geom = "text", x= as.Date("2020-9-01"), y = 50, label = "Dec 2020")+
+            # annotate("segment", x = as.Date("2020-11-01"), xend = as.Date("2020-12-01"), y = 50, yend = 50, colour = "darkgray", size=1, alpha=1)+
+            # annotate(geom = "text", x= as.Date("2021-06-01"), y = 147, label = "Sept 2021")+
+            # annotate("segment", x = as.Date("2021-08-01"), xend = as.Date("2021-09-01"), y = 147, yend = 147, colour = "darkgray", size=1, alpha=1)+
+            labs(x = "Tender Publication Date (aggregate by Month)", y = "Share of New Winners", title = "Share of New Winners Jan 2019 - Aug 2022",
+                 caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+            theme(legend.position = "bottom")+
+            theme(plot.caption = element_text(hjust = 0))
+          
+          ggsave(filename = paste0(output, "/New_winner_per_month.jpeg"),
+                 width = 10,
+                 height = 8,
+                 units = c("in"),
+                 dpi = 300)
+ 
+          
+# 4.0 Time Related Variables --------------------------------------------------------- 
       
       # Total processing time: contract signature - tender initiation
       # Submission time: submission deadline - tender initiation
       # Decision time: contract signature - submission deadline
+          
+      # calculate variables at contract level 
       tender_contract <- tender_contract%>%
         select(ID, 
                ID_CONTRACT, 
@@ -303,74 +563,134 @@
                processing_time = DT_CONTRACT_SIGNED - DT_TENDER_START,
                decision_time   = DT_CONTRACT_SIGNED - DT_TENDER_END)
       
-      tender_contract <- as.data.table(tender_contract)
       
       # check the overlap between contract signature, contract start and end date 
+      tender_contract <- as.data.table(tender_contract)
+          
       check <- tender_contract[,.N, by = "publication_start"] # not consistent 
       
-      check <- tender_contract[,.N, by = "submission_time"] # consistent: end > start 
+      check <- tender_contract[,.N, by = "submission_time"]   # consistent: end > start 
       
-      check <- tender_contract[,.N, by = "processing_time"] # consistent: signature > start 
+      check <- tender_contract[,.N, by = "processing_time"]   # consistent: signature > start 
       
-      check <- tender_contract[,.N, by = "decision_time"] # consistent: signature > end 
+      check <- tender_contract[,.N, by = "decision_time"]     # consistent: signature > end 
       
-      # Create month dummy
-      tender_contract$month <- strftime(tender_contract$DT_CONTRACT_SIGNED, "%m")
-      
-      tender_contract$year <- strftime(tender_contract$DT_CONTRACT_SIGNED, "%Y")
-      
-      tender_contract$year_month <- paste0(tender_contract$year, tender_contract$month)
-      
-      tender_contract <- tender_contract%>%
-        filter(year_month >= 201901 &
-                 year_month <= 202208)
-      
-      # Add covid dummy 
+      # add group dummy 
       tender_contract <- left_join(tender_contract, covid_tender,
                                    by = "ID")
+          # 221 observations are not in item level data (covid tender was created from supplier item data as we use UNSPSC to identify COVID related or not)
       
-      tender_contract$covid <- replace(tender_contract$covid, tender_contract$covid == 0, "Non-COVID")
+      tender_contract <- tender_contract%>%
+        dplyr::rename(Group = covid_tender)%>%
+        # drop contracts that cannot link to item level data (in other words, those tenders only have contract data but don't have item data)
+        filter(!is.na(Group))
       
-      tender_contract$covid <- replace(tender_contract$covid, tender_contract$covid == 1, "COVID")
+      tender_contract$Group <- replace(tender_contract$Group, tender_contract$Group == 0, "Non-COVID")
       
-      # submission time 
+      tender_contract$Group <- replace(tender_contract$Group, tender_contract$Group == 1, "COVID")
+      
+      # formalize month dummy 
+      tender_contract$year_month <- as.Date(paste0(tender_contract$year, "-", tender_contract$month, "-01"))
+      
+      # submission time: submission deadline - tender initiation in relation to tender inquiry start
+      tender_contract$tender_start_month <- strftime(tender_contract$DT_TENDER_START, "%m")
+      
+      tender_contract$tender_start_year <- strftime(tender_contract$DT_TENDER_START, "%Y")
+      
+      tender_contract$tender_start_year_month <- as.Date(paste0(tender_contract$tender_start_year, "-", tender_contract$tender_start_month, "-01"))
+      
       submission_time <- tender_contract%>%
-        group_by(year_month, covid)%>%
+        filter(tender_start_year >= 2019 &
+                 tender_start_year <= 2022)%>%
+        group_by(tender_start_year_month , Group)%>%
         dplyr::summarise(submission_time_avg = mean(submission_time))%>%
         ungroup()
       
-      ggplot(submission_time, aes(x = year_month, y = submission_time_avg, group = covid, color = covid))+
+      ggplot(submission_time, aes(x = tender_start_year_month , y = submission_time_avg, group = Group, color = Group))+
         geom_line()+
         theme_classic()+
         theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Month", y = "Submission Time (days)", title = "Submission Time (Number of Days from Tender Inquiry Start to Tender Inquiry End)")
+        labs(x = "Tender Inquiry Start Date (Month)", y = "Submission Time (days)", 
+             title = "Submission Time",
+             subtitle = "Average Number of Days from Tender Inquiry Start to Tender Inquiry End from Jan 2019 to Aug 2022",
+             caption = "Note: data retrieved from ONCAE in Aug 2022.the peak in COVID submission time was a contract signed in May 2022. The reason is that there was only 1 contract signed in May 2022.
+                        \nAs the other months have many contracts with extremely low submission time (below 10 days), the impact of outliers (100+days) was cancelled out.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
       
-      # process time 
+          # @team: check the caption - there should be a way to improve this graph. It would be misleading if we are trying to tell whether submission time increase or decrease from this graph.
+          # there are large outliers in 2019 and 2020, but this graph cannot show that 
+      
+      ggsave(filename = paste0(output, "/Submission_time.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+      
+      # process time: contract signature - tender initiation // tender inquiry start
       processing_time <- tender_contract%>%
-        group_by(year_month, covid)%>%
+        filter(tender_start_year >= 2019 &
+                 tender_start_year <= 2022)%>%
+        group_by(tender_start_year_month , Group)%>%
         dplyr::summarise(processing_time_avg = mean(processing_time))%>%
         ungroup()
       
-      ggplot(processing_time, aes(x = year_month, y = processing_time_avg, group = covid, color = covid))+
+      ggplot(processing_time, aes(x = tender_start_year_month, y = processing_time_avg, group = Group, color = Group))+
         geom_line()+
         theme_classic()+
         theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Month", y = "Processing Time (days)", title = "Processing Time (Number of Days from Tender Inquiry Start to Contract Signature Date)")
+        labs(x = "Tender Inquiry Start Date (Month)", y = "Processing Time (days)", 
+             title = "Processing Time",
+             subtitle = " Average Number of Days from Tender Inquiry Start to Contract Signature Date from Jan 2019 to Aug 2022",
+             caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
       
-      # decision time 
+      ggsave(filename = paste0(output, "/Processing_time.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+      
+      # decision time: contract signature - submission deadline in relation to submission deadline 
+      
+      tender_contract$tender_end_month <- strftime(tender_contract$DT_TENDER_END, "%m")
+      
+      tender_contract$tender_end_year <- strftime(tender_contract$DT_TENDER_END, "%Y")
+      
+      tender_contract$tender_end_year_month <- as.Date(paste0(tender_contract$tender_end_year, "-", tender_contract$tender_end_month, "-01"))
+      
       decision_time <- tender_contract%>%
-        group_by(year_month, covid)%>%
+        filter(tender_end_year >= 2019 &
+                 tender_end_year <= 2022)%>%
+        group_by(tender_end_year_month, Group)%>%
         dplyr::summarise(decision_time_avg = mean(decision_time))%>%
         ungroup()
       
-      ggplot(decision_time, aes(x = year_month, y = decision_time_avg, group = covid, color = covid))+
+      ggplot(decision_time, aes(x = tender_end_year_month, y = decision_time_avg, group = Group, color = Group))+
         geom_line()+
         theme_classic()+
         theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Month", y = "Decision Time (days)", title = "Decision Time (Number of Days from Tender Inquiry End to Contract Signature Date)")
+        labs(x = "Tender Submission End Date (Month)", y = "Decision Time (days)", 
+             title = "Decision Time",
+             subtitle = "Number of Days from Tender Inquiry End to Contract Signature Date from Jan 2019 to Aug 2022",
+             caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      # @team: it seems the surge in processing and decision times after Jan 2022 was not driven by outliers. Why is that? 
+      # Is it true that it takes longer time to process and make decisions on both COVID and non-COVID procurements in 2022?
+      
+      ggsave(filename = paste0(output, "/Decision_time.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
       
 
-# Geographical Analysis ------------------------------------------------------------
+# 5.0 Geographical Analysis ------------------------------------------------------------
       ## location dummy - no address, need to check original dataset 
       # Same location dummy: Whether the firm is from the same municipality, or 
       # from the same province or from the same state (we can look at different 
@@ -378,137 +698,560 @@
       # during covid more likely to be awarded to firms from the same location as 
       # the buyer? Are bidders during covid less likely to be from the same location as the buyer?
       
-      supplier_buyer <- data_parties_merged%>%
-        filter(CAT_PARTY_ROLE == "buyer"|
-                 CAT_PARTY_ROLE == "supplier"|
-                 CAT_PARTY_ROLE == "supplier;tenderer")%>%
-        mutate(role_region_locality = paste0(ID, "___", ID_PARTY, "___", NAME_PARTY, "___", ADDRESS_REGION, "___", ADDRESS_LOCALITY),
-               CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))%>%
-        pivot_wider(names_from = CAT_PARTY_ROLE, 
-                    values_from = role_region_locality)
+      # note: 1 tender, 1 buyer, multiple suppliers
+      # Thus, we conduct analysis at item level, using supplier_item data 
       
-      supplier_buyer <- data_parties_merged%>%
-        filter(CAT_PARTY_ROLE == "buyer"|
-                 CAT_PARTY_ROLE == "supplier"|
-                 CAT_PARTY_ROLE == "supplier;tenderer")%>%
-        mutate(CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))
+      # supplier_buyer <- data_parties_merged%>%
+      #   filter(CAT_PARTY_ROLE == "buyer"|
+      #            CAT_PARTY_ROLE == "supplier"|
+      #            CAT_PARTY_ROLE == "supplier;tenderer")%>%
+      #   mutate(role_region_locality = paste0(ID, "___", ID_PARTY, "___", NAME_PARTY, "___", ADDRESS_REGION, "___", ADDRESS_LOCALITY),
+      #          CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))%>%
+      #   pivot_wider(names_from = CAT_PARTY_ROLE, 
+      #               values_from = role_region_locality)
+      # 
+      # supplier_buyer <- data_parties_merged%>%
+      #   filter(CAT_PARTY_ROLE == "buyer"|
+      #            CAT_PARTY_ROLE == "supplier"|
+      #            CAT_PARTY_ROLE == "supplier;tenderer")%>%
+      #   mutate(CAT_PARTY_ROLE = replace(CAT_PARTY_ROLE, CAT_PARTY_ROLE == "supplier;tenderer", "supplier"))
+      # 
+      # supplier_buyer_buyer    <- supplier_buyer%>%
+      #   filter(CAT_PARTY_ROLE == "buyer")
+      # 
+      # supplier_buyer_supplier <- supplier_buyer%>%
+      #   filter(CAT_PARTY_ROLE == "supplier")
+      # 
+      # supplier_buyer <- left_join(supplier_buyer_buyer, supplier_buyer_supplier, 
+      #                             by = c("ocid", "ID", "ID_PARTY"),
+      #                             suffix = c("_BUYER", "_SUPPLIER"))
       
-      supplier_buyer_buyer    <- supplier_buyer%>%
-        filter(CAT_PARTY_ROLE == "buyer")
+      # to what percent of the buyers, purchased from the suppliers from the same location? 
       
-      supplier_buyer_supplier <- supplier_buyer%>%
-        filter(CAT_PARTY_ROLE == "supplier")
+      # generate a list of buyers 
+      buyer <- data_parties_merged%>%
+        filter(CAT_PARTY_ROLE == "buyer")%>%
+        distinct()%>%
+        dplyr::rename(ID_BUYER = ID_PARTY) 
       
-      supplier_buyer <- left_join(supplier_buyer_buyer, supplier_buyer_supplier, 
-                                  by = c("ocid", "ID", "ID_PARTY"),
-                                  suffix = c("_BUYER", "_SUPPLIER"))
+      supplier_address <- data_parties_merged%>%
+        filter(CAT_PARTY_ROLE == "supplier;tenderer" |
+                 CAT_PARTY_ROLE == "supplier")%>%
+        distinct()%>%
+        select(ID_PARTY, ADDRESS_ST)%>%
+        dplyr::rename(ID_SUPPLIER      = ID_PARTY,
+                      ADDRESS_SUPPLIER = ADDRESS_ST)
       
-      # load a county list 
+      # merge buyers information to contract-supplier data 
+      supplier_buyer <- contract_supplier%>%
+        left_join(supplier_address, by = "ID_SUPPLIER")%>%
+        left_join(buyer, by = "ID", suffix = c("", "_BUYER"))
+      
+      # normalize admin names 
+      # municipality <- clean_names(municipality)
+      # 
+      # municipality$municipalities <- tolower(municipality$municipalities)
+      
+      # search municipalities names from supplier address data 
+      supplier_buyer$ADDRESS_ST_BUYER <- tolower(supplier_buyer$ADDRESS_ST)
+      
+      supplier_buyer$ADDRESS_LOCALITY_BUYER <- tolower(supplier_buyer$ADDRESS_LOCALITY)
+      
+      supplier_buyer <- supplier_buyer%>%
+        mutate(Flag = c('No', 'Yes')[1+str_detect(ADDRESS_SUPPLIER, as.character(ADDRESS_LOCALITY_BUYER))])
+      
+      # add group dummy 
+      supplier_buyer <- supplier_buyer%>%
+        filter(DT_CONTRACT_SIGNED >= as.Date("2019-01-01")&
+                 DT_CONTRACT_SIGNED <= as.Date("2022-07-31"))%>%
+        dplyr::rename(Group = covid_firm)
+      
+      supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 0 | is.na(supplier_buyer$Group), "Non-COVID")
+      
+      supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 1, "COVID")
+      
+      
+      # calculate statistics by group and municipalities 
+      stats_supplier_buyer <- supplier_buyer%>%
+        group_by(ADDRESS_LOCALITY_BUYER, Flag)%>%
+        dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
+        ungroup()
+      
+      stats_supplier_buyer_wide <- stats_supplier_buyer%>%
+        pivot_wider(names_from = Flag, values_from = count)%>%
+        dplyr::rename(same_locality = Yes,
+                      different_locality = No)%>%
+        replace(is.na(.), 0)%>%
+        mutate(total_firm = same_locality + different_locality)%>%
+        mutate(share_same_locality = same_locality/total_firm)%>%
+        replace(is.na(.), 0)
+
+      stats_supplier_buyer_wide 
+          # it seems a large number of suppliers are in the same district as the buyer 
+          # the evidence is that 19.7% firms have the location that contains the municipality of the buyers 
+          # if we improve the geographical key words, the overlapping rate would be higher 
+          # thus next step should work on the loop to go over all the municipality names of the supplier and buyer 
+          # also, maybe not the same municipality, but the same department 
+      
+      # draw a map 
+      honduras_municipal <- st_read(paste0(raw_data, "/Honduras_admin/polbnda_hnd.shp"))
+      
+      honduras_municipal <- honduras_municipal%>%
+        dplyr::rename("department" = "nam",
+                      "municipal"  = "laa")
+      
+        # convert geometry dimension z to lat and long 
+      honduras_municipal <- st_zm(honduras_municipal)
+      
+      honduras_municipal <- honduras_municipal%>%
+        mutate(Geom = gsub('[()°]', '', geometry)) %>% 
+        separate(col = Geom, into = c('Latitude', 'Longitude '), sep = '\\,')
+      
+      honduras_municipal <- honduras_municipal%>%
+        mutate(Latitude = gsub("listc", "", Latitude))
+      
+      # merging the variable of interests
+      honduras_municipal$municipal <- tolower(honduras_municipal$municipal)
+      
+      honduras_municipal <- left_join(honduras_municipal, stats_supplier_buyer_wide,
+                                      by = c("municipal" = "ADDRESS_LOCALITY_BUYER"))
+      
+      # honduras_municipal[is.na(honduras_municipal$share_same_locality) ] <- ""
+      
+      honduras_municipal_share <- honduras_municipal%>%
+        select(share_same_locality, geometry)
+      
+      honduras_municipal_share <- honduras_municipal_share%>%
+        mutate(Category = ifelse(is.na(share_same_locality), "No Contract",
+                                 ifelse(share_same_locality >= 0 & share_same_locality <0.1, "0 - 10%",
+                                        ifelse(share_same_locality >= 0.1 & share_same_locality < 0.2, "10% - 20%",
+                                               ifelse(share_same_locality >= 0.2 & share_same_locality < 0.3, "20% - 30%",
+                                                      ifelse(share_same_locality >= 0.3, "30% - 40%", ""))))))
+      
+      # generate a capital dataframe 
+      capital <- data.frame(name = "Tegucigalpa",
+                            lat  = "-87.3944015502929",
+                            long = "-87.3946380615234")
+      
+      # draw map 
+      ggplot()+
+        geom_sf(data = honduras_municipal_share, aes(fill = Category))+
+        scale_fill_manual(values = c(
+          "No Contract" = "white",
+          "0 - 10%" = "cornflowerblue",
+          "10% - 20%" = "darkseagreen",
+          "20% - 30%" = "darkgoldenrod1",
+          "30% - 40%" = "coral2"
+        ))+
+        coord_sf()+
+        theme_classic()+
+        labs(x = "", y = "", title = "Geographical Concentration of Buyers and Suppliers",
+             subtitle =  "Share of Contracts that the Buyer and Supplier Locate at the Same Municipality",
+             caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      
+      ggsave(filename = paste0(output, "/Geographical_Concentration.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+
+      honduras_municipal_share_top5 <- stats_supplier_buyer_wide%>%
+        select(ADDRESS_LOCALITY_BUYER, share_same_locality)%>%
+        slice_max(share_same_locality, n= 5)%>%
+        dplyr::rename(Municipal = ADDRESS_LOCALITY_BUYER,
+                      Percentage_of_Contract = share_same_locality)
+      
+      honduras_municipal_share_top5
+      
+      # a list of key words, loop through each in address column 
+      # for (i in 1:length(municipality$municipalities)) {
+      #   
+      #   print(municipality$municipalities[[i]])
+      #   
+      #   supplier_buyer%>%
+      #     mutate(municipality$municipalities[[i]] = c('No', 'Yes')[1+str_detect(ADDRESS_ST, as.character(municipality$municipalities[[i]]))])
+      #     
+      # 
+      # }   
+      # under construction 
+      
+      
+      
+# 6.0 Market concentration ---------------------------------
+    
+      # merging in COVID item 
+      contract_supplier <- left_join(contract_supplier, covid_tender,
+                                     by = "ID")          # note: 100% merge 
+      
+      # definition:the market share of the top 3 suppliers in each sector per month (ranking firms by total market value of their items)
+      # contract_signature, by quarter 
+      
+      # Create month 
+      contract_supplier$month <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%m")
+      
+      contract_supplier$year <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%Y")
+      
+      contract_supplier$contract_sign_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
+      
+      contract_supplier$quarter <- lubridate::quarter(contract_supplier$DT_CONTRACT_SIGNED)
+
+      contract_supplier$quarter <- ifelse(contract_supplier$quarter == 1, "01-01", 
+                                          ifelse(contract_supplier$quarter == 2, "04-01",
+                                                 ifelse(contract_supplier$quarter == 3, "07-01",
+                                                        ifelse(contract_supplier$quarter == 4, "10-01", NA))))
+      
+      contract_supplier$contract_sign_quarter  <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$quarter))
+      
+      # clean contract amount values 
+      contract_supplier$AMT_CONTRACT_VALUE_USD[contract_supplier$AMT_CONTRACT_VALUE_USD == 0] <- NA
+      
+      contract_supplier$AMT_CONTRACT_VALUE_USD <- as.numeric(contract_supplier$AMT_CONTRACT_VALUE_USD)
+      
+
+      # flag the top 3 suppliers in each sector (covid/non-covid)
+      market_concentration <- contract_supplier%>%
+        filter(contract_sign_quarter >= as.Date("2019-01-01")&
+                 contract_sign_quarter < as.Date("2022-08-01"))%>%
+        dplyr::rename(Group = covid_tender)%>%
+        # 191 contracts cannot be identified whether COVID or not 
+        filter(!is.na(Group))
+      
+      check <- market_concentration%>%
+        filter(is.na(AMT_CONTRACT_VALUE_USD))    # 878 out of 35344 contracts has missing contract value 
+      
+      # calculate sector(COVID/nonCOVID) total 
+      sector_total <- market_concentration%>%
+        group_by(Group, contract_sign_quarter)%>%
+        dplyr::summarise(sector_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
+                  num_contract = n())%>%
+        ungroup()
+      
+      # calculate firm total 
+      firm_total <- market_concentration%>%
+        group_by(Group, contract_sign_quarter, ID_SUPPLIER)%>%
+        dplyr::summarise(firm_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
+                         num_contract = n())%>%
+        ungroup()
+          # @team: some suppliers have many contracts in one months, but the value of those contracts is missing. 
+          # Also, check HN-RTN-0107956011840. It is an example of this. And it is a medical-nonCOVID firm. Neglecting firms like this could bias our result. 
+      
+      # aggregate to firm-sector level 
+      firm_sector_total <- firm_total%>%
+        left_join(sector_total, by = c("Group", "contract_sign_quarter"), suffix = c("_firm", "_sector"))
+      
+      # select top 3 firms and calculate their share 
+      firm_sector_total <-firm_sector_total%>%
+        group_by(Group, contract_sign_quarter)%>%
+        arrange(Group, contract_sign_quarter, desc(firm_total))%>%
+        dplyr::mutate(firm_share = (firm_total/sector_total)*100,
+               rank = row_number())%>%
+        ungroup()
+      
+      firm_sector_total_top3 <- firm_sector_total%>%
+        filter(rank <= 3)%>%
+        group_by(Group, contract_sign_quarter)%>%
+        dplyr::summarise(top3_share = sum(firm_share))%>%
+        ungroup()
+          # note: there was only 1 firm in May 2022 and 2 firms in July 2022, should we adjust the time period of interest? 
+          # @team: should we also do an analysis using the number of contracts? As there are a large number of contracts that have missing total value 
+      
+      # plot
+      firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 0, "Non-COVID")
+      
+      firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 1, "COVID")
+      
+        
+      ggplot(firm_sector_total_top3, aes(x = contract_sign_quarter, y = top3_share, group = Group, color = Group))+
+        geom_line()+
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+        # annotate(geom = "text", x= as.Date("2019-09-01"), y = 81, label = "Dec 2019")+
+        # annotate("segment", x = as.Date("2019-11-01"), xend = as.Date("2019-12-01"), y = 81, yend = 81, colour = "darkgray", size=1, alpha=1)+
+        # annotate(geom = "text", x= as.Date("2020-11-01"), y = 86, label = "Feb 2021")+
+        # annotate("segment", x = as.Date("2021-01-01"), xend = as.Date("2021-02-01"), y = 85.3, yend = 85.3, colour = "darkgray", size=1, alpha=1)+
+        # annotate(geom = "text", x= as.Date("2021-07-01"), y = 11, label = "Aug 2021")+
+        # annotate("segment", x = as.Date("2021-08-01"), xend = as.Date("2021-08-01"), y = 12, yend = 18.18, colour = "darkgray", size=1, alpha=1)+
+        # annotate(geom = "text", x= as.Date("2022-07-01"), y = 84.1, label = "Apr 2022")+
+        # annotate("segment", x = as.Date("2022-05-01"), xend = as.Date("2022-04-01"), y = 84.1, yend = 84.1, colour = "darkgray", size=1, alpha=1)+
+        labs(x = "Tender Publication Date (Aggregate by Quarter)", y = "Market Share of Top 3 Firms (%)", title = "Market Concentration",
+             subtitle =  "The Market Share of Top 3 Suppliers from Jan 2019 to Jul 2022",
+             caption = "Note: data retrieved from ONCAE in Aug 2022.The graph excludes the contracts that have top 1% total value as those contracts appears to be mistake.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+        
+      ggsave(filename = paste0(output, "/Market_concentration.jpeg"),
+               width = 10,
+               height = 8,
+               units = c("in"),
+               dpi = 300)
 
       
-# Market concentration (quantity) ---------------------------------
-    
-      # definition: the number of winners per sector 
+# 7.0 Total monetary value, average monetary value, and total number of tenders per month ----------
+     
+      # generate a tender-value dataset 
+      # tender_value <- market_concentration%>%
+      #   group_by(year_month, ID, Group)%>%
+      #   dplyr::summarise(tender_value = sum(AMT_ITEM_TOTAL, na.rm = TRUE))%>%
+      #   ungroup()
+      #   
+      # tender_value$Group <- replace(tender_value$Group, tender_value$Group == 0, "Non-COVID")
+      # 
+      # tender_value$Group <- replace(tender_value$Group, tender_value$Group == 1, "COVID")
+      # 
       
-      # Create month dummy
+      # 7.1 the number of tenders in relation to tender publication dates
+      tender <- tender_contract%>%
+        select(ID, DT_TENDER_PUB, Group)%>%
+        distinct()
+      
+      tender$month <- strftime(tender$DT_TENDER_PUB, "%m")
+      
+      tender$year <- strftime(tender$DT_TENDER_PUB, "%Y")
+      
+      tender$year_month <- as.Date(paste0(tender$year, "-", tender$month, "-01"))
+      
+      tender <- tender %>%
+        group_by(year_month, Group)%>%
+        dplyr::summarise(count = n_distinct(ID))%>%
+        ungroup()%>%
+        filter(year_month >= as.Date("2019-01-01")&
+                 year_month <= as.Date("2022-08-01"))
+      
+      ggplot(tender, aes(x = year_month, y = count, group = Group, color = Group))+
+        geom_line()+
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+        labs(x = "Tender Publication Date (aggregate by Month)", 
+             y = "Number of Tenders", title = "The Number of Tenders Published Per Month",
+             subtitle =  "Jan 2019 - Ang 2022",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      ggsave(filename = paste0(output, "/Total_tender_number.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+      
+      
+      # 7.2 the number of contracts signed in relation to the contract signature date 
+      contract <- tender_contract%>%
+        select(ID_CONTRACT, DT_CONTRACT_SIGNED, Group)%>%
+        distinct()
+      
+      contract$month <- strftime(contract$DT_CONTRACT_SIGNED, "%m")
+      
+      contract$year <- strftime(contract$DT_CONTRACT_SIGNED, "%Y")
+      
+      contract$year_month <- as.Date(paste0(contract$year, "-", contract$month, "-01"))
+      
+      contract <- contract %>%
+        group_by(year_month, Group)%>%
+        dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
+        ungroup()%>%
+        filter(year_month >= as.Date("2019-01-01")&
+                 year_month <= as.Date("2022-08-01"))
+      
+      ggplot(contract, aes(x = year_month, y = count, group = Group, color = Group))+
+        geom_line()+
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+        labs(x = "Contract Signed Date (aggregate by Month)", 
+             y = "Number of Contracts signed", title = "The Number of Contracts Signed per Month ",
+             subtitle =  "Jan 2019 - Ang 2022",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      ggsave(filename = paste0(output, "/Total_contract_number.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+      
+      # 7.3 the value of contracts in relation to contract signature date (also use the contract value data)
+      contract_value <- contract_supplier%>%
+        select(ID_CONTRACT, AMT_CONTRACT_VALUE_USD, DT_CONTRACT_SIGNED, covid_firm)%>%
+        distinct()
+        
+        # add group dummy 
+      contract_value$covid_firm <- replace(contract_value$covid_firm, contract_value$covid_firm == 0 |
+                                        is.na(contract_value$covid_firm), "Non-COVID")
+      
+      contract_value$covid_firm <- replace(contract_value$covid_firm, contract_value$covid_firm == 1, "COVID")
+      
+      
+      contract_value$month <- strftime(contract_value$DT_CONTRACT_SIGNED, "%m")
+      
+      contract_value$year <- strftime(contract_value$DT_CONTRACT_SIGNED, "%Y")
+      
+      contract_value$year_month <- as.Date(paste0(contract_value$year, "-", contract_value$month, "-01"))
+      
+      contract_value_avg <- contract_value%>%
+        dplyr::rename(Group = covid_firm)%>%
+        group_by(year_month, Group)%>%
+        dplyr::summarize(average_value = mean(AMT_CONTRACT_VALUE_USD, na.rm = TRUE))%>%
+        ungroup()%>%
+        filter(year_month >= as.Date("2019-01-01")&
+                 year_month < as.Date("2022-01-01"))
+      
+      ggplot(contract_value_avg, aes(x = year_month, y = average_value, group = Group, color = Group))+
+        geom_line()+
+        theme_classic()+
+        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+        labs(x = "Contract Signed Date (aggregate by Month)", 
+             y = "Average Value of Contracts", title = "Average Contract Value per Month ",
+             subtitle =  "Jan 2019 - Dec 2021",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      ggsave(filename = paste0(output, "/Avg_contract_value.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+      
+      # 
+      # 
+      # # Total number of tenders per month 
+      # tender_number <- tender_value%>%
+      #   group_by(Group, year_month)%>%
+      #   dplyr::summarise(num_tender = n())%>%
+      #   ungroup()
+      # 
+      # 
+      # 
+      # # remove an outlier ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3  
+      # tender_value$tender_value[tender_value$ID == "ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3"] <- NA
+      # 
+      # # total monetary value
+      # tender_value_total <- tender_value%>%
+      #   group_by(year_month, Group)%>%
+      #   dplyr::summarise(total_value = sum(tender_value, na.rm = TRUE))%>%
+      #   ungroup()
+      # 
+      # head(tender_value_total)
+      #     # note: the gap between COVID and nonCOVID is too large such that the two lines cannot fit in one graph 
+      # 
+      # ggplot(tender_value_total, aes(x = year_month, y = total_value, group = Group, color = Group))+
+      #   geom_line()+
+      #   theme_classic()+
+      #   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+      #   geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      #   labs(x = "Month", y = "Total Value of Tenders", title = "Total Tender Monetary Value ",
+      #        subtitle =  "Jan 2019 - Jul 2022",
+      #        caption = "Note: data retrieved from ONCAE in Aug 2022. Tender ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3, signed on January 2022, was removed, 
+      #                   \ndue to the extremely large total tender value. That tender aims to purchase 26,9928 CINTAS Glucometria test strips at a price of
+      #                   \n11,7900 Lempira each.")+
+      #   theme(legend.position = "bottom")+
+      #   theme(plot.caption = element_text(hjust = 0))
+      # 
+      # ggsave(filename = paste0(output, "/Total_tender_value.jpeg"),
+      #        width = 10,
+      #        height = 8,
+      #        units = c("in"),
+      #        dpi = 300)
+      # 
+      # # average monetary value 
+      # tender_value_avg <- tender_value%>%
+      #   group_by(year_month, Group)%>%
+      #   dplyr::summarise(average_value = mean(tender_value, na.rm = TRUE))%>%
+      #   ungroup()
+      # 
+      # ggplot(tender_value_avg, aes(x = year_month, y = average_value, group = Group, color = Group))+
+      #   geom_line()+
+      #   theme_classic()+
+      #   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+      #   geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      #   labs(x = "Month", y = "Average Value per Tender", title = "Average Tender Monetary Value",
+      #        subtitle =  "Jan 2019 - Jul 2022",
+      #        caption ="Note: data retrieved from ONCAE in Aug 2022. Tender ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3, signed on January 2022, was removed, 
+      #                   \ndue to the extremely large total tender value. That tender aims to purchase 26,9928 CINTAS Glucometria test strips at a price of
+      #                   \n11,7900 Lempira each.")+
+      #   theme(legend.position = "bottom")+
+      #   theme(plot.caption = element_text(hjust = 0))
+      # 
+      # ggsave(filename = paste0(output, "/Average_tender_value.jpeg"),
+      #        width = 10,
+      #        height = 8,
+      #        units = c("in"),
+      #        dpi = 300)
+      # 
+        
+# 8.0 Product Classification ------------------------------------------------
+      
+      # 8.1 Do firms during covid supply a broader range of different products?
+          # explore the number of products sold by the firm before, during and after COVID
+          # create half year dummy 
       supplier_item$month <- strftime(supplier_item$DT_CONTRACT_SIGNED, "%m")
       
       supplier_item$year <- strftime(supplier_item$DT_CONTRACT_SIGNED, "%Y")
       
-      supplier_item$year_month <- paste0(supplier_item$year, supplier_item$month)
-      
-      supplier_item <- supplier_item%>%
-        filter(year_month >= 201901 &
-                 year_month <= 202208)
-      
-      # calculate the average number of winners per sector in each month 
-      market_concentration <- supplier_item%>%
-        filter(!is.na(sector))%>%
-        group_by(year_month, sector)%>%
-        dplyr::summarise(winner_number = n_distinct(ID_PARTY))%>%
-        ungroup()
-      
-      
-      ggplot(market_concentration, aes(x = year_month, y = winner_number, group = sector, color = sector))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Month", y = "Number of Winners", title = "Market Concentration (Number of Winners per Sector)")
-      
-      
-
-# Market concentration: the share of winners per sector (sector = covid/non-covid/medical/non-medical) ----------
-      
-      # change market concentration indicator from long to wide 
-      market_concentration_share <- market_concentration%>%
-        spread(sector, winner_number)
-      
-      market_concentration_share <- clean_names(market_concentration_share)
-      
-      market_concentration_share <- market_concentration_share%>%
-        mutate_if(is.numeric, ~replace(., is.na(.), 0))%>%
-        mutate(total         = medical_covid + medical_non_covid + non_medical +non_medical_covid,
-               medical       = medical_covid + medical_non_covid,
-               covid         = medical_covid + non_medical_covid,
-               
-               # the share of medical items in market 
-               medical_share = medical/total,
-               
-               # the share of covid related items in market 
-               covid_share   = covid/total,
-               
-               medical_covid_share = medical_covid/total)
-        
-      market_concentration_share_long <- market_concentration_share%>%
-        select(year_month, medical_share:medical_covid_share)%>%
-        gather(sector, share, medical_share:medical_covid_share, factor_key = TRUE)%>%
-        mutate(sector = str_replace(sector, "medical_share", "Medical"))%>%
-        mutate(sector = str_replace(sector, "covid_share", "COVID"))%>%
-        mutate(sector = str_replace(sector, "medical_covid_share", "Medical-COVID"))%>%
-        mutate(share = share*100)
-
-      # plot 
-      ggplot(market_concentration_share_long, aes(x = year_month, y = share, group = sector, color = sector))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Month", y = "Market Share (%)", title = "Market Concentration (Share of Sectors in Market)")
-          # maybe change this to proportion plot? 
-      
-
-# Product Classification ------------------------------------------------
-      # [Do firms during covid supply a broader range of different products?]
-      # explore the number of products sold by the firm before, during and after COVID
-      # Number of different product items (and sectors) sold in one year by the firm
-      
-      # create half year dummy 
       supplier_item$month <- as.numeric(supplier_item$month)
       
-      firm_item <- supplier_item%>%
-        mutate(half_year = ifelse(month <= 06, "01", "02"))
-
-      firm_item$year_half <- paste0(firm_item$year, firm_item$half_year)
+      supplier_item$year_month <- as.Date(paste0(supplier_item$year, "-", supplier_item$month, "-01"))
       
-      # calculate average UNSPSC code firms have supplied within 6 months 
-      firm_item <- firm_item%>%
-        group_by(ID_PARTY, year_half)%>%
+      
+      firm_item <- supplier_item%>%
+        mutate(semester = ifelse(month <= 06, "01", "07"))
+
+      firm_item$semester <- paste0(firm_item$year, "-", firm_item$semester, "-01")
+      
+      # assign observations to groups (covid firm) 
+      firm_item <- left_join(firm_item, covid_firm, by = "ID_PARTY")
+      
+      # calculate average unique UNSPSC code firms have supplied within 6 months 
+      firm_item_avg <- firm_item%>%
+        dplyr::rename(Group = covid_firm)%>%
+        group_by(ID_PARTY, semester, Group)%>%
         dplyr::summarise(num_unspsc = n_distinct(ID_ITEM_UNSPSC))%>%
         ungroup()
       
-      firm_item_stats <- firm_item%>%
-        group_by(year_half)%>%
+      firm_item_stats <- firm_item_avg%>%
+        group_by(semester, Group)%>%
         dplyr::summarise(num_unspsc_avg = mean(num_unspsc))%>%
         ungroup()
       
+      # revise names 
+      firm_item_stats$Group <- replace(firm_item_stats$Group, firm_item_stats$Group == 0|is.na(firm_item_stats$Group), "Non-COVID")
+      
+      firm_item_stats$Group <- replace(firm_item_stats$Group, firm_item_stats$Group == 1, "COVID")
+      
+      firm_item_stats$semester <- as.Date(firm_item_stats$semester)
+      
       # plot 
-      ggplot(firm_item_stats, aes(x = year_half, y = num_unspsc_avg, group = 1))+
+      ggplot(firm_item_stats, aes(x = semester, y = num_unspsc_avg, group = Group, color = Group))+
         geom_line()+
         theme_classic()+
         theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        labs(x = "Year (every 6 months)", y = "Number of Different UNSPSC Commodity Code", title = "Change of the Number of Items")
+        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+        labs(x = "Contract Signature Date (every 6 months)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
+             subtitle = "Average number of different UNSPSC product codes that firms have supplied from Jan 2019 - Jul 2022",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        theme(legend.position = "bottom")+
+        theme(plot.caption = element_text(hjust = 0))
+      
+      ggsave(filename = paste0(output, "/product_classification.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
 
       
-      # flag firms that have increased the product code during COVID
+      # 8.2 the share of firms that have increased the product code during COVID 
       firm_item_year <- supplier_item%>%
         group_by(ID_PARTY, year)%>%
         dplyr::summarise(num_unspsc = n_distinct(ID_ITEM_UNSPSC))%>%
@@ -530,7 +1273,58 @@
       firm_product <- left_join(supplier_item, firm_uspsc_panel,
                                 by = "ID_PARTY")
       
-      table(firm_product["product_increase"])
+      firm_product_stats <- firm_product%>%
+        dplyr::rename(Group = covid_item)%>%
+        group_by(Group, product_increase)%>%
+        dplyr::summarise(num_firm = n())%>%
+        ungroup()
+        
+      
+      firm_product_stats$Group <- replace(firm_product_stats$Group, firm_product_stats$Group == 0|is.na(firm_product_stats$Group), "Non-COVID")
+      
+      firm_product_stats$Group <- replace(firm_product_stats$Group, firm_product_stats$Group == 1, "COVID")
+      
+      firm_product_stats
+      
+      # 8.3 firms that sold COVID products in 2019, do they sell COVID products in 2020? 
+        
+          # flag firms that sell COVID products in 2019 
+      COVID_firm_2019 <- firm_item %>%
+        filter(year == 2019 &
+                 covid_firm == 1)%>%
+        distinct(ID_PARTY, covid_firm)
+      
+      firm_item_COVID <- firm_item %>%
+        left_join(COVID_firm_2019, by = "ID_PARTY", suffix = c("", "_2019"))%>%
+        mutate_at(c("covid_firm_2019"), ~replace_na(., 0))%>%
+        
+         # whether a firm sells COVID items in 2020 
+        mutate(covid_item_2020 = case_when(year_month >= "2020-01-01" & year_month <= "2020-12-01" & covid_item == 1 ~ 1))%>%
+        mutate_at(c("covid_item_2020"), ~replace_na(., 0))%>%
+        
+        # whether a firm sells COVID items in 2020 and 2021
+        mutate(covid_item_2021 = case_when(year_month >= "2020-01-01" & year_month <= "2021-12-01" & covid_item == 1 ~ 1))%>%
+        mutate_at(c("covid_item_2021"), ~replace_na(., 0))
+      
+      
+      firm_item_covid_2020 <- firm_item_COVID%>%
+        filter(year <= 2020)%>%
+        group_by(covid_firm_2019, covid_item_2020)%>%
+        dplyr::summarise(num_firm = n_distinct(ID_PARTY))%>%
+        ungroup()
+      
+      firm_item_covid_2020
+      
+      firm_item_covid_2021 <- firm_item_COVID%>%
+        filter(year <= 2021)%>%
+        group_by(covid_firm_2019, covid_item_2021)%>%
+        dplyr::summarise(num_firm = n_distinct(ID_PARTY))%>%
+        ungroup()
+      
+      firm_item_covid_2021
+        # thus, there are a good number of firms that sold COVID item in 2019 but did not sell COVID items during COVID. 
+        
+        
     
       
       
