@@ -8,7 +8,7 @@
 
 {
   
-  for (year in seq(2015, 2021)) {
+  for (year in seq(2015, 2022)) {
     
     for (month in seq(1, 12)) {
       
@@ -49,7 +49,7 @@
   i = 1
   
   # load  and clean the data from 2016 to 2021
-  for (year in seq(2015, 2021)) {
+  for (year in seq(2015, 2022)) {
     
     for (month in seq(1, 12)) {
       
@@ -121,6 +121,8 @@
         FechaActoAperturaTecnica,
         FechaActoAperturaEconomica,
         FechaPublicacion,
+        CodigoTipo,
+        Tipo,
         FechaAdjudicacion,
         Modalidad,
         FechaAprobacion,

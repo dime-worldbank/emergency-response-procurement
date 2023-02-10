@@ -12,9 +12,9 @@
       data_firms <- read_dta(file = file.path(fin_data, "SII_2015_2020.dta"))
       
       # Load PO data
-
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
 
+      data_pos_raw <- fread(file = file.path(int_data, "purchase_orders_raw.csv"), encoding = "Latin-1") 
       
       }
     
@@ -153,6 +153,26 @@
         ) %>% 
         select(-VMUSD)
       
+      data_pos_raw <- data_pos_raw %>% 
+        rename(
+          ID_ITEM_UNSPSC = codigoProductoONU 
+        )  %>% 
+        mutate(
+          DT_YEAR  = as.character(DT_YEAR),
+          DT_MONTH = as.character(DT_MONTH),
+          ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)
+        )
+      
+      #
+      data_pos_raw <- left_join(data_pos_raw, conversion_rates, by = c("DT_YEAR" = "DT_TENDER_YEAR","DT_MONTH" = "DT_TENDER_MONTH","CAT_CURRENCY" = "CAT_OFFER_CURRENCY"))
+      
+      #
+      data_pos_raw <- data_pos_raw %>% 
+        mutate(
+          AMT_VALUE    = AMT_VALUE    * VMUSD
+        ) %>% 
+        select(-VMUSD)
+      
     }
     
     { # Other changes
@@ -173,8 +193,20 @@
         
       ) 
       
-data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_99"))
+      data_pos_raw <- data_pos_raw %>% 
+        
+        mutate(
+          AMT_VALUE = ifelse(AMT_VALUE > quantile(AMT_VALUE, 0.99, na.rm = TRUE), NA, ifelse(
+            AMT_VALUE < quantile(AMT_VALUE, 0.01, na.rm = TRUE), NA, AMT_VALUE)
+        ))
       
+      item_covid   <- readxl::read_xlsx(file.path(raw_data, "Auxiliary files/covid_label_table.xlsx"))
+      item_covid_list <- item_covid %>% select(ID_ITEM_UNSPSC, CAT_MEDICAL, COVID_LABEL)
+      
+      data_pos_raw = data_pos_raw %>% 
+        left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
+        mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0)) %>% 
+        mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
 
     }
     
@@ -205,25 +237,44 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
     
     # compute quarter for each year
     mutate(
-      DT_Q = if_else(DT_M < 4, 1, 
-                     if_else(DT_M < 7, 2,
-                             if_else(DT_M < 10, 3, 4))) + 
+      DT_S = if_else(DT_M <= 6, 1, 2) + 
         if_else(DT_Y == 2016, 0,
-                if_else(DT_Y == 2017, 4,
-                        if_else(DT_Y == 2018, 8, 
-                                if_else(DT_Y == 2019, 12, 
-                                        if_else(DT_Y == 2020, 16, 20))))))
+                if_else(DT_Y == 2017, 2,
+                        if_else(DT_Y == 2018, 4, 
+                                if_else(DT_Y == 2019, 6, 
+                                        if_else(DT_Y == 2020, 8,
+                                                if_else(DT_Y == 2021, 10, 12)))))))
+  
+  # Add trimmed values 
+  data_pos_raw <- data_pos_raw %>%
+    
+    # create month and year date
+    mutate(
+      DT_YEAR = as.numeric(DT_YEAR),
+      DT_MONTH = as.numeric(DT_MONTH)) %>% 
+    
+    # compute quarter for each year
+    mutate(
+      DT_S = if_else(DT_MONTH <= 6, 1, 2) + 
+        if_else(DT_YEAR == 2016, 0,
+                if_else(DT_YEAR == 2017, 2,
+                        if_else(DT_YEAR == 2018, 4, 
+                                if_else(DT_YEAR == 2019, 6, 
+                                        if_else(DT_YEAR == 2020, 8,
+                                                if_else(DT_YEAR == 2021, 10, 12)))))))
     
   data_offer_sub <- data_offer_sub %>% 
     mutate(
-      DD_TOT_PROCESS = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
-      DD_SUBMISSION  = difftime(DT_OFFER_END, DT_OFFER_START, units = "days"),
-      DD_DECISION    = difftime(DT_ACCEPT_OC, DT_OFFER_END, units = "days") 
+      DD_TOT_PROCESS    = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
+      DD_SUBMISSION     = difftime(DT_OFFER_END, DT_OFFER_START, units = "days"),
+      DD_DECISION       = difftime(DT_ACCEPT_OC, DT_OFFER_END, units = "days"),
+      DD_AWARD_CONTRACT = difftime(DT_ACCEPT_OC, DT_TENDER_AWARD, units = "days")
     ) %>% 
     mutate(
-      DD_TOT_PROCESS = ifelse(CAT_OFFER_SELECT == 1, DD_TOT_PROCESS, NA),
-      DD_SUBMISSION  = ifelse(CAT_OFFER_SELECT == 1, DD_SUBMISSION, NA),
-      DD_DECISION    = ifelse(CAT_OFFER_SELECT == 1, DD_DECISION, NA)
+      DD_TOT_PROCESS    = ifelse(CAT_OFFER_SELECT == 1, DD_TOT_PROCESS, NA),
+      DD_SUBMISSION     = ifelse(CAT_OFFER_SELECT == 1, DD_SUBMISSION, NA),
+      DD_DECISION       = ifelse(CAT_OFFER_SELECT == 1, DD_DECISION, NA),
+      DD_AWARD_CONTRACT = ifelse(CAT_OFFER_SELECT == 1, DD_DECISION, NA)
     )
   
 }
@@ -335,12 +386,10 @@ data <- summary_table(data_offer_sub, c("AMT_VALUE_AWARDED", "AMT_VALUE_AWARDED_
     # Save data frames
     fwrite(data_offer_sub , file.path(fin_data, "data_offer_sub.csv" ))
     
+    # Save data frames
+    fwrite(data_pos_raw , file.path(fin_data, "purchase_orders_raw.csv" ))
+    
     # Remove data frames to free RAM
     rm(data_offer_sub)
     
-    # Save data for the report
-    save.image(file = file.path(fin_data, "sample_analysis_cleaning.RData"))
-    
   }
-
-

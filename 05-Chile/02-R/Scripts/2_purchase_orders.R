@@ -86,7 +86,7 @@
 {
   
   # Loop of cleaning procedures for each dataset in the list of datasets
-  for (i in 2:length(datalist)) {
+  for (i in 1:length(datalist)) {
     
     print(paste0(i, " out of ", length(datalist)))
     
@@ -95,18 +95,30 @@
       dplyr::select(
         Codigo,
         CodigoLicitacion,
+        codigoProductoONU,
         CodigoAbreviadoTipoOC,
+        EsTratoDirecto, 
+        EsCompraAgil, 
         Estado,
         FechaCreacion,
         FechaEnvio,
         FechaAceptacion,
-        RutSucursal)
+        RutSucursal,
+        RutUnidadCompra,
+        MontoTotalOC,
+        TipoMonedaOC)
     
     # 3.3: format dates
     datalist[[i]] <- datalist[[i]] %>% 
       mutate(across(starts_with("Fecha"), ~ as.Date(.x, format = "%Y-%m-%d"))) %>% 
       mutate(DT_YEAR = year(FechaEnvio)) %>% 
       mutate(DT_MONTH = month(FechaEnvio))
+    
+    # 3.4: format numeric values
+    datalist[[i]] <- datalist[[i]] %>% 
+      mutate(
+        MontoTotalOC = as.numeric(gsub(",", ".", MontoTotalOC))
+      ) 
     
     # 3.5: change names 
     datalist[[i]] <-
@@ -144,9 +156,9 @@
         ID_RUT_FIRM = gsub("\\.", "", ID_RUT_FIRM)
       )
     
-    # 3.11: create a dummy for competitive tenders
+    # 3.9: filtering out the intermediary cenabast R.U.T.: 61608700-2
     datalist[[i]] <- datalist[[i]] %>% 
-      filter(CAT_TYPE_OC == "SE") 
+      filter(ID_RUT_ISSUER != "61608700-2")
     
     # 3.12: drop 3 observations without an ID_PURCHASE_ORDER
     datalist[[i]] <- datalist[[i]] %>% 
@@ -176,12 +188,17 @@
     )
     
   
+  
 }
 
 # 5: Save data ---------------------------------------------------------------
 
 {
 
+  # save the collapsed dataset
+  fwrite(purchase_data, 
+         file = file.path(int_data, "purchase_orders_raw.csv"))
+  
   # save the collapsed dataset
   fwrite(data_po, 
          file = file.path(int_data, "purchase_orders.csv"))
