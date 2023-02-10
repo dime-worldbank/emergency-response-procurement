@@ -4,7 +4,7 @@
 #                                                                              # 
 #                                    MASTER                                    #
 #                                                                              #
-#        Author: Hao Lyu                         Last Update: Oct 27 2022      #
+#        Author: Hao Lyu                         Last Update: Dec 7 2022       #
 #                                                                              #
 # ---------------------------------------------------------------------------- #
 
@@ -43,7 +43,9 @@
     raw_data         <- file.path(projectFolder, "1_Raw"                                            ) # folder for all raw datasets
     raw_oncae_interm <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Intermediate/1 - Panel data" )
     intermediate     <- file.path(projectFolder, "2_Intermediate"                                   ) # all datasets used for variable constructions 
-      
+    cleaned          <- file.path(projectFolder, "3_Cleaned"                                        ) # cleaned datasets 
+    output           <- file.path(projectFolder, "4_Output"                                         ) # cleaned datasets 
+    
     # data_covid  <- file.path(projectFolder, "1_Raw/Data_covid/IAIP_Emergencia_Covid19"         ) # folder for raw data from the covid portal 
     # final_covid <- file.path(projectFolder, "1_Raw/Data_covid"                                 ) # folder for constructed covid data 
     # data_agg    <- file.path(projectFolder, "1_Raw/Data_Aggregate")
