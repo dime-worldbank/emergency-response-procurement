@@ -5,7 +5,7 @@ date: '2022-1-19'
 output:
   word_document: default
   html_document: default
-  pdf_document: default
+always_allow_html: true
 ---
 <!--Global Chunk Settings-->
 ```{r setup, include=FALSE}
@@ -72,9 +72,8 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
               "gdata"            ,
               "WDI"              ,
               "readxl"           ,
-              "sf"               
-
-
+              "sf"               ,
+              "kableExtra"
 
               )
 
@@ -139,32 +138,130 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 # Section 1 Outliers 
 ### remove contracts that have top 1% market value as those contracts seem to be mistakes
 ### also generated an excel sheet of all the contracts 
-```{r outlier, echo = TRUE}
+```{r outlier, echo=FALSE}
 
-      # filter out contrats that have top 1% contract values
-      tender_contract$outliers <- ifelse(tender_contract$AMT_CONTRACT_VALUE > quantile(tender_contract$AMT_CONTRACT_VALUE, probs = 0.99, na.rm = T),
-                                         "FLAG", NA)
+      # step 1 check tender value 
+        
+        # by item * value 
+      # fix exchange rate 
+      currency_matrix <- WDI(
+        
+        country   = "HN"                              ,
+        indicator = "PA.NUS.FCRF"                     ,
+        start     = 2018                              ,
+        end       = 2022             
+      )
+      
+      currency_matrix <- as.data.frame(currency_matrix[,c(4,5)])
+      
+      colnames(currency_matrix) <- c("year", "EXCHANGE_RATE")
+      
+      tender_item_usd <- left_join(tender_item, currency_matrix, by = "year")
+      
+      tender_item_usd <- tender_item_usd %>% 
+        mutate(PRICE_UNIT_ITEM_USD    = PRICE_UNIT_ITEM/EXCHANGE_RATE) %>% 
+        mutate(CAT_CONTRACT_CURRENCY = "USD")
+      
+      tender_item_usd$PRICE_UNIT_ITEM_USD <- as.numeric(formatC(tender_item_usd$PRICE_UNIT_ITEM_USD, 
+                                                               digits = 2, format = "f"))
+      
+      
+      item_amount_value <- tender_item_usd%>%
+        mutate(price_per_item = AMT_ITEM * PRICE_UNIT_ITEM_USD)%>%
+        group_by(ID)%>%
+        dplyr::summarise(tender_value = sum(price_per_item, na.rm = TRUE))%>%
+        ungroup()
+        
+      
+        # by contract value 
+      contract_value <- tender_contract%>%
+        group_by(ID)%>%
+        dplyr::summarise(tender_value = sum(AMT_CONTRACT_VALUE, na.rm = TRUE))%>%
+        ungroup()
+      
+        # compare 
+      tender_value_compare <- contract_value%>%
+        left_join(item_amount_value, by = "ID", suffix = c("_by_contract", "_by_item"))
+          # most of the values seems match 
+      
+      tender_value_compare$match <- tender_value_compare$tender_value_by_contract/tender_value_compare$tender_value_by_item
+      
+      tender_value_compare$not_match <- ifelse(tender_value_compare$match >= 1.5 | tender_value_compare$match <= 0.5 & tender_value_compare$match > 0, "Y", "N")
+      
+      list_not_match <- tender_value_compare%>%
+        filter_all(all_vars(!is.infinite(.)))%>%
+        filter(not_match == "Y")
+      
+        # filter out 420 not match observations 
+      list_not_match
+      
+      
+      # step 2 check num of items per unspsc (items value -> tender value)
+      item_unspsc <- tender_item_usd%>%
+        group_by(ID_ITEM_UNSPSC)%>%
+        dplyr::summarise(num_item = n_distinct(ID_ITEM))%>%
+        ungroup()
+        # the unspsc with the largest number of items is 25191513
+      
+      # step 3 flag quantiles and rank by quantiles 
+      tender_unspsc <- tender_item_usd%>%
+        filter(ID_ITEM_UNSPSC == "25191513")%>%
+        mutate(price_per_item = AMT_ITEM * PRICE_UNIT_ITEM_USD)%>%
+        group_by(ID)%>%
+        dplyr::summarise(tender_value = sum(price_per_item))%>%
+        ungroup()
+      
+      quantile(tender_unspsc$tender_value, probs = c(0.75, 0.8, 0.85, 0.9, 0.95, 1), na.rm = TRUE)
 
-      outlier_detail <- tender_contract%>%filter(outliers == "FLAG")
-        # end up singling out 138 observations
-
-      fwrite(outlier_detail, file = paste0(cleaned, "/Outlier.CSV"))
+      #    75%      80%      85%      90%      95%        100% 
+      #  771.910  939.500  1205.598  1778.232  2815.400  9510.870  
       
-      # generate a list of outliers 
-      outlier <- outlier_detail %>%
-        select(ID, ID_CONTRACT)
       
-      # remove utliers from all intermediate files 
-      tender_contract     <- tender_contract[!tender_contract$ID %in% outlier$ID, ]
+      # step 4 trail & errors 
+        
+          # double the amount of 95%  - suggest using this one 
+      tender_unspsc_outlier <-   tender_unspsc%>%
+        filter(tender_value > 2 * as.vector(
+                                            quantile(tender_unspsc$tender_value, probs = 0.95, na.rm = TRUE)
+                                            )
+               )
+            # filter out 7 obs
       
-      contract_supplier   <- contract_supplier[!contract_supplier$ID %in% outlier$ID, ]
+          # trippled amount of the 95% 
+      tender_unspsc_outlier <-   tender_unspsc%>%
+        filter(tender_value > 8446.2)
+            # filter out 2 obs 
       
-      tender_item         <- tender_item[!tender_item$ID %in% outlier$ID, ]
-
-      supplier_item       <- supplier_item[!supplier_item$ID %in% outlier$ID, ]
+      # step 5 apply this method to the whole sample 
+      tender_unspsc <- tender_item_usd%>%
+        group_by(ID, ID_ITEM_UNSPSC)%>%
+        dplyr::summarise(tender_value = sum(PRICE_UNIT_ITEM_USD, na.rm = TRUE))%>%
+        ungroup()
       
-      data_parties_merged <- data_parties_merged[!data_parties_merged$ID %in% outlier$ID, ]
-
+      quant95 <- tender_item_usd%>%
+        group_by(ID_ITEM_UNSPSC)%>%
+        mutate(price_per_item = AMT_ITEM * PRICE_UNIT_ITEM_USD)%>%
+        dplyr::summarize(quant95 = quantile(PRICE_UNIT_ITEM_USD, probs = 0.95, na.rm = TRUE))%>%
+        ungroup()
+      
+      tender_unspsc_outlier <- tender_unspsc%>%
+        left_join(quant95, by = "ID_ITEM_UNSPSC")%>%
+        mutate(outlier = ifelse(tender_value > 2 * quant95, "Y", "N"))%>%
+        filter(outlier == "Y")
+          # filter out 144 tenders 
+      
+      # remove outliers from all intermediate files 
+      tender_contract     <- tender_contract[!tender_contract$ID %in% tender_unspsc_outlier$ID, ]
+      
+      contract_supplier   <- contract_supplier[!contract_supplier$ID %in% tender_unspsc_outlier$ID, ]
+      
+      tender_item         <- tender_item[!tender_item$ID %in% tender_unspsc_outlier$ID, ]
+      
+      supplier_item       <- supplier_item[!supplier_item$ID %in% tender_unspsc_outlier$ID, ]
+      
+      data_parties_merged <- data_parties_merged[!data_parties_merged$ID %in% tender_unspsc_outlier$ID, ]
+      
+      
 
 ```
 
@@ -175,7 +272,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ### To construct COVID dummy, we search for COVID related key words in the item description, contract description, tender description columns, and IDs.
 
-```{r 2.1 identify COVID, echo=TRUE}
+```{r 2.1 identify COVID, echo=FALSE}
 
   #  flag COVID observations by detecting COVID key words in items, contracts, tenders descriptions, and IDs  
         
@@ -245,7 +342,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```
 
 
-```{r 2.2 identify COVID, echo=TRUE}
+```{r 2.2 identify COVID, echo=FALSE}
 
   # at tender_contract level 
       covid_tender_contract <- tender_contract%>%
@@ -316,7 +413,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ### 2.2 Generate a list of tenders that contain COVID key words in contracts', items', and tenders' descriptions
 
-```{r 2.3 identify COVID, echo=TRUE}
+```{r 2.3 identify COVID, echo=FALSE}
 
   
       # collapse item level information to tender level 
@@ -361,7 +458,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ### 2.3 Summary statistics about the number of COVID/non-COVID item, contracts, and tenders each year 
 
-```{r 2.4 identify COVID, echo=TRUE}
+```{r 2.4 identify COVID, echo=FALSE}
 
 
       # present the overlap between COVID item and contract 
@@ -408,7 +505,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### treatment firm: the firm that supplied items with COVID related UNSPSC code before and during COVID 
 
 
-```{r 3.1 flag COVID item, echo=TRUE}
+```{r 3.1 flag COVID item, echo=FALSE}
       
     # 3.1 flag COVID items and generate a list of UNSPSC code 
       
@@ -478,7 +575,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ```
 
-```{r 3.2 construct medical related dummies, echo=TRUE}
+```{r 3.2 construct medical related dummies, echo=FALSE}
 
     # 3.2 Construct Medical related dummies 
         # in UNSPSC code, 42000000 is the segment of Medical Equipment and Accessories and Supplies
@@ -515,7 +612,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ```
 
-```{r 3.3 assign to comparison group, echo=TRUE}
+```{r 3.3 assign to comparison group, echo=FALSE}
 
     # 3.3 assign to comparison groups 
       # A COVID contract/tender means from 2020 to 2022, at least one item in a contract/tender has an UNSPSC code that is on the COVID product UNSPSC list. 
@@ -584,7 +681,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### the share of new winners: new winners/all contracts 
 
 
-```{r 4.1 construct new winners, echo=TRUE}
+```{r 4.1 construct new winners, echo=FALSE}
 
 ## 4.0 NEW WINNERS - construct with contract signature ---------------------------
       
@@ -643,7 +740,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```
 
 
-```{r 4.2 construct new winners, echo=TRUE}
+```{r 4.2 construct new winners, echo=FALSE}
 
       # add Group dummy (merge covid firm ID to firm level data)
           contract_supplier <- left_join(contract_supplier, covid_firm,
@@ -664,22 +761,68 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
           new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 1, "COVID")
           
-      # visualization 
-          ggplot(new_winner_month_group, aes(x = tender_pub_month, y = share_new_winner, group = Group, color = Group))+
-            geom_line()+
-            theme_classic()+
-            theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-            geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
-            # annotate(geom = "text", x= as.Date("2020-9-01"), y = 50, label = "Dec 2020")+
-            # annotate("segment", x = as.Date("2020-11-01"), xend = as.Date("2020-12-01"), y = 50, yend = 50, colour = "darkgray", size=1, alpha=1)+
-            # annotate(geom = "text", x= as.Date("2021-06-01"), y = 147, label = "Sept 2021")+
-            # annotate("segment", x = as.Date("2021-08-01"), xend = as.Date("2021-09-01"), y = 147, yend = 147, colour = "darkgray", size=1, alpha=1)+
-            labs(x = "Tender Publication Date (aggregate by Month)", y = "Share of New Winners", title = "Share of New Winners Jan 2019 - Aug 2022",
-                 caption = "Note: data retrieved from ONCAE in Aug 2022.")+
-            theme(legend.position = "bottom")+
-            theme(plot.caption = element_text(hjust = 0))
           
-          ggsave(filename = paste0(output, "/New_winner_per_month.jpeg"),
+        # visualization   
+      
+          ggplot(new_winner_month_group, aes(x = tender_pub_month, y = share_new_winner, group = Group))+
+            
+            # draw a line graph for two groups
+            geom_line(aes(color = Group, linetype = Group, size = Group))+
+            
+            # set line type separately 
+            scale_linetype_manual(values=c("solid", "dotted"))+
+            
+            # set color separately 
+            scale_color_manual(values=c('#FF0100','#18466E'))+
+            
+            # set size separately 
+            scale_size_manual(values=c(1, 0.8))+
+            
+            # add point plots and define colors 
+            geom_point(data = new_winner_month_group %>% filter(Group == "COVID"), aes(x = tender_pub_month, y = share_new_winner), shape = 16, size = 3, color = "#FF0100") +
+            geom_point(data = new_winner_month_group %>% filter(Group == "Non-COVID"), aes(x = tender_pub_month, y = share_new_winner), shape = 18, size = 4, color = "#18466E") +
+            
+            # add a vertical line to show treatment 
+            geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+            
+            # set the theme, including background, and present the axis of the line graphs 
+            theme(
+              aspect.ratio = 3.2/7,
+              text = element_text(family = "Roboto"),
+              plot.margin = margin(0, 5, 0, 5),
+              panel.background = element_rect(fill = "white"),
+              panel.grid.major.x = element_blank(),
+              panel.grid.major.y = element_line(color = "darkgrey"),
+              axis.ticks.length = unit(.25, "cm"),
+              # legend.text = element_blank(),
+              # legend.title = element_blank(),
+              legend.key.width = unit(25,"pt"),
+              legend.key.height = unit(15, "pt"),
+              axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+              axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+              axis.line.x  = element_line(color = "gray8"),
+              axis.ticks.y = element_blank(),
+              plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+              plot.caption = element_text(hjust = 0, size = 9),
+              plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+            
+            # change title and subtitles 
+            labs(x = "Tender Publication Date (aggregate by Month)", y = "Share of New Winners (%)", title = "Share of New Winners Jan 2019 - Aug 2022",
+                 caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+            
+            # add legend to the middle of the graph 
+            theme(legend.position = c(0.2, 0.85),
+                  legend.background = element_rect(fill = "white"))+
+            theme(plot.caption = element_text(hjust = 0))+
+            
+            # set the background of the legend as blank. ps. you have to add this for line graphs 
+            theme(legend.key=element_blank())+
+            
+            # add percent to x axis, if needed 
+            scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
+            
+          
+          ggsave(paste0(output, "/New_winner_per_month.jpeg"),
                  width = 10,
                  height = 8,
                  units = c("in"),
@@ -695,7 +838,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### Decision time: contract signature - submission deadline
 ### Total processing time: contract signature - tender initiation
 
-```{r 5.1 time, echo=TRUE, warning=FALSE} 
+```{r 5.1 time, echo=FALSE, warning=FALSE} 
 
     # conduct calculation 
 
@@ -746,7 +889,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```
 
 ### Submission time:       tender inquiry end - tender inquiry start date
-```{r 5.2 submission time, echo=TRUE, warning=FALSE}
+```{r 5.2 submission time, echo=FALSE, warning=FALSE}
 
       # submission time: submission deadline - tender initiation in relation to tender inquiry start
       tender_contract$tender_start_month <- strftime(tender_contract$DT_TENDER_START, "%m")
@@ -763,17 +906,65 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
         ungroup()
       
       # visualization 
-      ggplot(submission_time, aes(x = tender_start_year_month , y = submission_time_avg, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+      ggplot(submission_time, aes(x = tender_start_year_month , y = submission_time_avg, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = submission_time %>% filter(Group == "COVID"), aes(x = tender_start_year_month , y = submission_time_avg), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = submission_time %>% filter(Group == "Non-COVID"), aes(x = tender_start_year_month , y = submission_time_avg), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Tender Inquiry Start Date (Month)", y = "Submission Time (days)", 
              title = "Submission Time",
              subtitle = "Average Number of Days from Tender Inquiry Start to Tender Inquiry End from Jan 2019 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.the peak in COVID submission time was a contract signed in May 2022. The reason is that there was only 1 contract signed in May 2022.
                         \nAs the other months have many contracts with extremely low submission time (below 10 days), the impact of outliers (100+days) was cancelled out.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.2, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank()) + 
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
       
           # @team: check the caption - there should be a way to improve this graph. It would be misleading if we are trying to tell whether submission time increase or decrease from this graph.
           # there are large outliers in 2019 and 2020, but this graph cannot show that 
@@ -790,7 +981,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```
 
 ### Processing time: contract signature - tender inquiry start date
-```{r 5.3 processing time, echo=TRUE, warning=FALSE}
+```{r 5.3 processing time, echo=FALSE, warning=FALSE}
 
       # process time: contract signature - tender initiation // tender inquiry start
       processing_time <- tender_contract%>%
@@ -801,16 +992,66 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
         ungroup()
       
       # visualization 
-      ggplot(processing_time, aes(x = tender_start_year_month, y = processing_time_avg, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+      ggplot(processing_time, aes(x = tender_start_year_month, y = processing_time_avg, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = processing_time %>% filter(Group == "COVID"), aes(x = tender_start_year_month, y = processing_time_avg), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = processing_time %>% filter(Group == "Non-COVID"), aes(x = tender_start_year_month, y = processing_time_avg), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Tender Inquiry Start Date (Month)", y = "Processing Time (days)", 
              title = "Processing Time",
              subtitle = " Average Number of Days from Tender Inquiry Start to Contract Signature Date from Jan 2019 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.2, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank()) + 
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
+      
       
       ggsave(filename = paste0(output, "/Processing_time.jpeg"),
              width = 10,
@@ -822,7 +1063,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```
 
 ### Decision time:  contract signature – tender inquiry end date 
-```{r 5.4 decision time, echo=TRUE, warning=FALSE}
+```{r 5.4 decision time, echo=FALSE, warning=FALSE}
 
       # decision time: contract signature - submission deadline in relation to submission deadline 
       
@@ -840,16 +1081,66 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
         ungroup()
       
       # visualization 
-      ggplot(decision_time, aes(x = tender_end_year_month, y = decision_time_avg, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
+      ggplot(decision_time, aes(x = tender_end_year_month, y = decision_time_avg, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = decision_time %>% filter(Group == "COVID"), aes(x = tender_end_year_month, y = decision_time_avg,), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = decision_time %>% filter(Group == "Non-COVID"), aes(x = tender_end_year_month, y = decision_time_avg,), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Tender Submission End Date (Month)", y = "Decision Time (days)", 
              title = "Decision Time",
              subtitle = "Number of Days from Tender Inquiry End to Contract Signature Date from Jan 2019 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.2, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank()) + 
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
+            
       
       # @team: it seems the surge in processing and decision times after Jan 2022 was not driven by outliers. Why is that? 
       # Is it true that it takes longer time to process and make decisions on both COVID and non-COVID procurements in 2022?
@@ -872,7 +1163,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### x: the market share of top 3 suppliers 
 ### y: contract signature date 
 
-```{r 6.1 market concentration share}
+```{r 6.1 market concentration share, echo=FALSE}
 
     
       # merging in COVID item 
@@ -939,7 +1230,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
       firm_sector_total <-firm_sector_total%>%
         group_by(Group, contract_sign_quarter)%>%
         arrange(Group, contract_sign_quarter, desc(firm_total))%>%
-        dplyr::mutate(firm_share = (firm_total/sector_total)*100,
+        dplyr::mutate(firm_share = firm_total/sector_total,
                rank = row_number())%>%
         ungroup()
       
@@ -957,25 +1248,63 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
       firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 1, "COVID")
       
         
-      ggplot(firm_sector_total_top3, aes(x = contract_sign_quarter, y = top3_share, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
-        # annotate(geom = "text", x= as.Date("2019-09-01"), y = 81, label = "Dec 2019")+
-        # annotate("segment", x = as.Date("2019-11-01"), xend = as.Date("2019-12-01"), y = 81, yend = 81, colour = "darkgray", size=1, alpha=1)+
-        # annotate(geom = "text", x= as.Date("2020-11-01"), y = 86, label = "Feb 2021")+
-        # annotate("segment", x = as.Date("2021-01-01"), xend = as.Date("2021-02-01"), y = 85.3, yend = 85.3, colour = "darkgray", size=1, alpha=1)+
-        # annotate(geom = "text", x= as.Date("2021-07-01"), y = 11, label = "Aug 2021")+
-        # annotate("segment", x = as.Date("2021-08-01"), xend = as.Date("2021-08-01"), y = 12, yend = 18.18, colour = "darkgray", size=1, alpha=1)+
-        # annotate(geom = "text", x= as.Date("2022-07-01"), y = 84.1, label = "Apr 2022")+
-        # annotate("segment", x = as.Date("2022-05-01"), xend = as.Date("2022-04-01"), y = 84.1, yend = 84.1, colour = "darkgray", size=1, alpha=1)+
+      ggplot(firm_sector_total_top3, aes(x = contract_sign_quarter, y = top3_share, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_sector_total_top3 %>% filter(Group == "COVID"), aes(x = contract_sign_quarter, y = top3_share), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_sector_total_top3 %>% filter(Group == "Non-COVID"), aes(x = contract_sign_quarter, y = top3_share), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Tender Publication Date (Aggregate by Quarter)", y = "Market Share of Top 3 Firms (%)", title = "Market Concentration",
              subtitle =  "The Market Share of Top 3 Suppliers from Jan 2019 to Jul 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.The graph excludes the contracts that have top 1% total value as those contracts appears to be mistake.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
-      
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.2, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
         
       ggsave(filename = paste0(output, "/Market_concentration.jpeg"),
                width = 10,
@@ -989,7 +1318,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ## total number of tenders per month 
 
-```{r 6.2 total number of tenders per month}
+```{r 6.2 total number of tenders per month, echo=FALSE}
 
       # the number of tenders in relation to tender publication dates
       tender <- tender_contract%>%
@@ -1010,17 +1339,64 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
                  year_month <= as.Date("2022-08-01"))
       
       # visualzation 
-      ggplot(tender, aes(x = year_month, y = count, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      ggplot(tender, aes(x = year_month, y = count, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = tender %>% filter(Group == "COVID"), aes(x = year_month, y = count), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = tender %>% filter(Group == "Non-COVID"), aes(x = year_month, y = count), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Tender Publication Date (aggregate by Month)", 
              y = "Number of Tenders", title = "The Number of Tenders Published Per Month",
              subtitle =  "Jan 2019 - Ang 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.9, 0.8),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
       
       ggsave(filename = paste0(output, "/Total_tender_number.jpeg"),
              width = 10,
@@ -1036,7 +1412,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ## The number of contracts signed in relation to the contract signatue 
 
-```{r 6.3 number of contracts}
+```{r 6.3 number of contracts, echo=FALSE}
 
       # the number of contracts signed in relation to the contract signature date 
       contract <- tender_contract%>%
@@ -1057,17 +1433,65 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
                  year_month <= as.Date("2022-08-01"))
       
       # visualization 
-      ggplot(contract, aes(x = year_month, y = count, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      ggplot(contract, aes(x = year_month, y = count, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = contract %>% filter(Group == "COVID"), aes(x = year_month, y = count), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = contract %>% filter(Group == "Non-COVID"), aes(x = year_month, y = count), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Contract Signed Date (aggregate by Month)", 
              y = "Number of Contracts signed", title = "The Number of Contracts Signed per Month ",
              subtitle =  "Jan 2019 - Ang 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.9, 0.8),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
+      
       
       ggsave(filename = paste0(output, "/Total_contract_number.jpeg"),
              width = 10,
@@ -1081,7 +1505,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ## average monetary value 
 
-```{r 6.4 average monetary value}
+```{r 6.4 average monetary value, echo=FALSE}
 
       # the value of contracts in relation to contract signature date (also use the contract value data)
       contract_value <- contract_supplier%>%
@@ -1110,17 +1534,64 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
                  year_month < as.Date("2022-01-01"))
       
       # visualization 
-      ggplot(contract_value_avg, aes(x = year_month, y = average_value, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      ggplot(contract_value_avg, aes(x = year_month, y = average_value/1000, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = contract_value_avg %>% filter(Group == "COVID"), aes(x = year_month, y = average_value/1000), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = contract_value_avg %>% filter(Group == "Non-COVID"), aes(x = year_month, y = average_value/1000), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Contract Signed Date (aggregate by Month)", 
-             y = "Average Value of Contracts", title = "Average Contract Value per Month ",
+             y = "Average Value of Contracts (thousands)", title = "Average Contract Value per Month ",
              subtitle =  "Jan 2019 - Dec 2021",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.9, 0.8),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
       
       ggsave(filename = paste0(output, "/Avg_contract_value.jpeg"),
              width = 10,
@@ -1138,7 +1609,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### Number of different products (UNSPC codes) supplied by the same firm over 6 months 
 
 ### 7.1  Do firms during covid supply a broader range of different products?
-```{r 7.1 product classification}
+```{r 7.1 product classification, echo=FALSE}
    
       # explore the number of products sold by the firm before, during and after COVID
       # create half year dummy 
@@ -1179,16 +1650,65 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
       firm_item_stats$semester <- as.Date(firm_item_stats$semester)
       
       # visualization  
-      ggplot(firm_item_stats, aes(x = semester, y = num_unspsc_avg, group = Group, color = Group))+
-        geom_line()+
-        theme_classic()+
-        theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-        geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
+      ggplot(firm_item_stats, aes(x = semester, y = num_unspsc_avg, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_item_stats %>% filter(Group == "COVID"), aes(x = semester, y = num_unspsc_avg), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_stats %>% filter(Group == "Non-COVID"), aes(x = semester, y = num_unspsc_avg), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
         labs(x = "Contract Signature Date (every 6 months)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
              subtitle = "Average number of different UNSPSC product codes that firms have supplied from Jan 2019 - Jul 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.2, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
+      
+      
       
       ggsave(filename = paste0(output, "/product_classification.jpeg"),
              width = 10,
@@ -1203,7 +1723,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ### the share of firms that have increased the product code during COVID 
 
-```{r 7.2 product classification}
+```{r 7.2 product classification, echo=FALSE}
 
       # the share of firms that have increased the product code during COVID 
       firm_item_year <- supplier_item%>%
@@ -1245,7 +1765,7 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ### firms that sold COVID products in 2019, do they sell COVID products in 2020? 
 
-```{r 7.3 product classification}
+```{r 7.3 product classification, echo=FALSE}
 
       # firms that sold COVID products in 2019, do they sell COVID products in 2020? 
         
@@ -1294,67 +1814,67 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ### Same location dummy: Whether the firm is from the same municipality, or from the same province or from the same state (we can look at different levels of geographical areas, depending on the country). [Are contracts during covid more likely to be awarded to firms from the same location as the buyer? Are bidders during covid less likely to be from the same location as the buyer?
 ```{r 8.1 geographical analysis, echo=FALSE, warning=FALSE}
 
-
-      # generate a list of buyers 
-      buyer <- data_parties_merged%>%
-        filter(CAT_PARTY_ROLE == "buyer")%>%
-        distinct()%>%
-        dplyr::rename(ID_BUYER = ID_PARTY) 
-      
-      supplier_address <- data_parties_merged%>%
-        filter(CAT_PARTY_ROLE == "supplier;tenderer" |
-                 CAT_PARTY_ROLE == "supplier")%>%
-        distinct()%>%
-        select(ID_PARTY, ADDRESS_ST)%>%
-        dplyr::rename(ID_SUPPLIER      = ID_PARTY,
-                      ADDRESS_SUPPLIER = ADDRESS_ST)
-      
-      # merge buyers information to contract-supplier data 
-      supplier_buyer <- contract_supplier%>%
-        left_join(supplier_address, by = "ID_SUPPLIER")%>%
-        left_join(buyer, by = "ID", suffix = c("", "_BUYER"))
-      
-      
-      # search municipalities names from supplier address data 
-      supplier_buyer$ADDRESS_ST_BUYER <- tolower(supplier_buyer$ADDRESS_ST)
-      
-      supplier_buyer$ADDRESS_LOCALITY_BUYER <- tolower(supplier_buyer$ADDRESS_LOCALITY)
-      
-      supplier_buyer <- supplier_buyer%>%
-        mutate(Flag = c('No', 'Yes')[1+str_detect(ADDRESS_SUPPLIER, as.character(ADDRESS_LOCALITY_BUYER))])
-      
-      # add group dummy 
-      supplier_buyer <- supplier_buyer%>%
-        filter(DT_CONTRACT_SIGNED >= as.Date("2019-01-01")&
-                 DT_CONTRACT_SIGNED <= as.Date("2022-07-31"))%>%
-        dplyr::rename(Group = covid_firm)
-      
-      supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 0 | is.na(supplier_buyer$Group), "Non-COVID")
-      
-      supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 1, "COVID")
-      
-      
-      # calculate statistics by group and municipalities 
-      stats_supplier_buyer <- supplier_buyer%>%
-        group_by(ADDRESS_LOCALITY_BUYER, Flag)%>%
-        dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
-        ungroup()
-      
-      stats_supplier_buyer_wide <- stats_supplier_buyer%>%
-        pivot_wider(names_from = Flag, values_from = count)%>%
-        dplyr::rename(same_locality = Yes,
-                      different_locality = No)%>%
-        replace(is.na(.), 0)%>%
-        mutate(total_firm = same_locality + different_locality)%>%
-        mutate(share_same_locality = same_locality/total_firm)%>%
-        replace(is.na(.), 0)
-
-      stats_supplier_buyer_wide 
-          # it seems a large number of suppliers are in the same district as the buyer 
-          # the evidence is that 19.7% firms have the location that contains the municipality of the buyers 
-          # if we improve the geographical key words, the overlapping rate would be higher 
-          # thus next step should work on the loop to go over all the municipality names of the supplier and buyer 
-          # also, maybe not the same municipality, but the same department 
+# 
+#       # generate a list of buyers 
+#       buyer <- data_parties_merged%>%
+#         filter(CAT_PARTY_ROLE == "buyer")%>%
+#         distinct()%>%
+#         dplyr::rename(ID_BUYER = ID_PARTY) 
+#       
+#       supplier_address <- data_parties_merged%>%
+#         filter(CAT_PARTY_ROLE == "supplier;tenderer" |
+#                  CAT_PARTY_ROLE == "supplier")%>%
+#         distinct()%>%
+#         select(ID_PARTY, ADDRESS_ST)%>%
+#         dplyr::rename(ID_SUPPLIER      = ID_PARTY,
+#                       ADDRESS_SUPPLIER = ADDRESS_ST)
+#       
+#       # merge buyers information to contract-supplier data 
+#       supplier_buyer <- contract_supplier%>%
+#         left_join(supplier_address, by = "ID_SUPPLIER")%>%
+#         left_join(buyer, by = "ID", suffix = c("", "_BUYER"))
+#       
+#       
+#       # search municipalities names from supplier address data 
+#       supplier_buyer$ADDRESS_ST_BUYER <- tolower(supplier_buyer$ADDRESS_ST)
+#       
+#       supplier_buyer$ADDRESS_LOCALITY_BUYER <- tolower(supplier_buyer$ADDRESS_LOCALITY)
+#       
+#       supplier_buyer <- supplier_buyer%>%
+#         mutate(Flag = c('No', 'Yes')[1+str_detect(ADDRESS_SUPPLIER, as.character(ADDRESS_LOCALITY_BUYER))])
+#       
+#       # add group dummy 
+#       supplier_buyer <- supplier_buyer%>%
+#         filter(DT_CONTRACT_SIGNED >= as.Date("2019-01-01")&
+#                  DT_CONTRACT_SIGNED <= as.Date("2022-07-31"))%>%
+#         dplyr::rename(Group = covid_firm)
+#       
+#       supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 0 | is.na(supplier_buyer$Group), "Non-COVID")
+#       
+#       supplier_buyer$Group <- replace(supplier_buyer$Group, supplier_buyer$Group == 1, "COVID")
+#       
+#       
+#       # calculate statistics by group and municipalities 
+#       stats_supplier_buyer <- supplier_buyer%>%
+#         group_by(ADDRESS_LOCALITY_BUYER, Flag)%>%
+#         dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
+#         ungroup()
+#       
+#       stats_supplier_buyer_wide <- stats_supplier_buyer%>%
+#         pivot_wider(names_from = Flag, values_from = count)%>%
+#         dplyr::rename(same_locality = Yes,
+#                       different_locality = No)%>%
+#         replace(is.na(.), 0)%>%
+#         mutate(total_firm = same_locality + different_locality)%>%
+#         mutate(share_same_locality = same_locality/total_firm)%>%
+#         replace(is.na(.), 0)
+# 
+#       stats_supplier_buyer_wide 
+#           # it seems a large number of suppliers are in the same district as the buyer 
+#           # the evidence is that 19.7% firms have the location that contains the municipality of the buyers 
+#           # if we improve the geographical key words, the overlapping rate would be higher 
+#           # thus next step should work on the loop to go over all the municipality names of the supplier and buyer 
+#           # also, maybe not the same municipality, but the same department 
       
 
 ```
@@ -1363,66 +1883,298 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 ```{r 8.2 geographical analysis, echo=FALSE, warning=FALSE}
 
 
-      # load GIS data 
-      honduras_municipal <- st_read(paste0(raw_data, "/Honduras_admin/polbnda_hnd.shp"))
+#       # load GIS data 
+#       honduras_municipal <- st_read(paste0(raw_data, "/Honduras_admin/polbnda_hnd.shp"))
+#       
+#       honduras_municipal <- honduras_municipal%>%
+#         dplyr::rename("department" = "nam",
+#                       "municipal"  = "laa")
+#       
+#       
+#       # convert geometry dimension z to lat and long 
+#       honduras_municipal <- st_zm(honduras_municipal)
+#       
+#       honduras_municipal <- honduras_municipal%>%
+#         mutate(Geom = gsub('[()°]', '', geometry)) %>% 
+#         separate(col = Geom, into = c('Latitude', 'Longitude '), sep = '\\,')
+#       
+#       honduras_municipal <- honduras_municipal%>%
+#         mutate(Latitude = gsub("listc", "", Latitude))
+#       
+#       
+#       # merging the variable of interests
+#       honduras_municipal$municipal <- tolower(honduras_municipal$municipal)
+#       
+#       honduras_municipal <- left_join(honduras_municipal, stats_supplier_buyer_wide,
+#                                       by = c("municipal" = "ADDRESS_LOCALITY_BUYER"))
+#       
+#       honduras_municipal_share <- honduras_municipal%>%
+#         select(share_same_locality, geometry)
+#       
+#       honduras_municipal_share <- honduras_municipal_share%>%
+#         mutate(Category = ifelse(is.na(share_same_locality), "No Contract",
+#                                  ifelse(share_same_locality >= 0 & share_same_locality <0.1, "0 - 10%",
+#                                         ifelse(share_same_locality >= 0.1 & share_same_locality < 0.2, "10% - 20%",
+#                                                ifelse(share_same_locality >= 0.2 & share_same_locality < 0.3, "20% - 30%",
+#                                                       ifelse(share_same_locality >= 0.3, "30% - 40%", ""))))))
+#       
+#       # generate a capital dataframe 
+#       capital <- data.frame(name = "Tegucigalpa",
+#                             lat  = "-87.3944015502929",
+#                             long = "-87.3946380615234")
+#       
+#       # draw map 
+#       ggplot()+
+#         geom_sf(data = honduras_municipal_share, aes(fill = Category))+
+#         scale_fill_manual(values = c(
+#           "No Contract" = "white",
+#           "0 - 10%" = "cornflowerblue",
+#           "10% - 20%" = "darkseagreen",
+#           "20% - 30%" = "darkgoldenrod1",
+#           "30% - 40%" = "coral2"
+#         ))+
+#         coord_sf()+
+#         theme_classic()+
+#         labs(x = "", y = "", title = "Geographical Concentration of Buyers and Suppliers",
+#              subtitle =  "Share of Contracts that the Buyer and Supplier Locate at the Same Municipality",
+#              caption = "Note: data retrieved from ONCAE in Aug 2022.")+
+#         theme(legend.position = "bottom")+
+#         theme(plot.caption = element_text(hjust = 0))
+#       
+#       
+#       ggsave(filename = paste0(output, "/Geographical_Concentration.jpeg"),
+#              width = 10,
+#              height = 8,
+#              units = c("in"),
+#              dpi = 300)
+# 
+# 
+# ```
+# 
+# ```{r 8.3 geographical analysis, echo=FALSE, warning=FALSE}
+# 
+# 
+#       honduras_municipal_share_top5 <- stats_supplier_buyer_wide%>%
+#         select(ADDRESS_LOCALITY_BUYER, share_same_locality)%>%
+#         slice_max(share_same_locality, n= 5)%>%
+#         dplyr::rename(Municipal = ADDRESS_LOCALITY_BUYER,
+#                       Percentage_of_Contract = share_same_locality)
+#       
+#       honduras_municipal_share_top5
+#       
+
+
+```
+
+
+## Product Classification  
+### For firms that have sold or not sold any product in 2019, the average number of new products sold since 2020
+
+```{r Product Classification DiD1, echo=FALSE}
+
+# DiD ------------------------------------------------------------------------------------------------------------
       
-      honduras_municipal <- honduras_municipal%>%
-        dplyr::rename("department" = "nam",
-                      "municipal"  = "laa")
+      # assign observations to group 
+      firm_item_did <- firm_item %>%
+        mutate(covid_firm_2019 = ifelse(year == 2019 & covid_item == 1, 1, 0))
+      
+      firm_item_group <- firm_item_did%>%
+        group_by(ID_PARTY)%>%
+        dplyr::summarise(Group = sum(covid_firm_2019, na.rm = TRUE))%>%
+        ungroup()%>%
+        mutate(Group = ifelse(Group > 0, "COVID", "Non-COVID"))
+      
+      firm_item_did <- left_join(firm_item_did, firm_item_group, by = "ID_PARTY")
+      
+      # generate a 2019 unspsc string 
+      firm_item_2019 <- firm_item_did%>%
+        filter(year == 2019)%>%
+        select(ID_PARTY, ID_ITEM_UNSPSC)%>%
+        distinct()
+      
+      firm_item_2019 = as.data.table(firm_item_2019)
+      
+      firm_item_2019 = firm_item_2019[,id := order(ID_ITEM_UNSPSC), by  = ID_PARTY]
+
+      firm_item_2019 <- as.data.frame(firm_item_2019)
+      
+      firm_item_2019$id <- as.character(firm_item_2019$id)
+      
+      firm_item_2019$sequence <- "a"
+      
+      firm_item_2019$sequence <- paste0(firm_item_2019$sequence, firm_item_2019$id)
+      
+      firm_item_string <- firm_item_2019%>%
+        select(-id)%>%
+        pivot_wider(names_from = sequence, values_from = ID_ITEM_UNSPSC)%>%
+        tidyr::unite("unspsc_2019", a1:a100, na.rm = TRUE, remove = FALSE)%>%
+        select(ID_PARTY, unspsc_2019)
+      
+      # flag unspsc that does not occur in 2019 string 
+      firm_item_did <- left_join(firm_item_did, firm_item_string, by = "ID_PARTY")
+      
+      firm_item_did$Flag <-  mapply(grepl, firm_item_did$ID_ITEM_UNSPSC, firm_item_did$unspsc_2019)
+      
+      firm_item_did$unspsc_new <- ifelse(firm_item_did$Flag == "TRUE", 0, 1)
       
       
-      # convert geometry dimension z to lat and long 
-      honduras_municipal <- st_zm(honduras_municipal)
+      # average number of new product sold since 2020 
+      firm_item_avg_new <- firm_item_did%>%
+        group_by(ID_PARTY, Group, year_month)%>%
+        dplyr::summarise(sum_new = sum(unspsc_new, na.rm = TRUE))%>%
+        group_by(Group, year_month)%>%
+        dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
+        ungroup()%>%
+        ungroup()%>%
+        filter(year_month >= "2020-01-01")
       
-      honduras_municipal <- honduras_municipal%>%
-        mutate(Geom = gsub('[()°]', '', geometry)) %>% 
-        separate(col = Geom, into = c('Latitude', 'Longitude '), sep = '\\,')
+      ggplot(firm_item_avg_new, aes(x = year_month, y = avg_new, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_item_avg_new %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
+        labs(x = "Tender Publication Date (by Month)", y = "Average Number of New Products Sold", title = "Product Classification",
+             subtitle = "Average Number of New Products Sold Since 2020",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.85, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
       
-      honduras_municipal <- honduras_municipal%>%
-        mutate(Latitude = gsub("listc", "", Latitude))
+
+      ggsave(filename = paste0(output, "/product_classification_new_product_2020.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+      
+
+
+```
+
+
+### For firms that have sold or not sold any product in 2019, the average number of new COVID products sold since 2020
+
+```{r product classification did2, echo=FALSE}
+
+      # average number of new COVID product 
+      firm_item_avg_new_COVID <- firm_item_did%>%
+        mutate(new_COVID = unspsc_new * covid_item)%>%
+        group_by(ID_PARTY, Group, year_month)%>%
+        dplyr::summarise(sum_new = sum(new_COVID, na.rm = TRUE))%>%
+        group_by(Group, year_month)%>%
+        dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
+        ungroup()%>%
+        ungroup()%>%
+        filter(year_month >= "2020-01-01")
       
       
-      # merging the variable of interests
-      honduras_municipal$municipal <- tolower(honduras_municipal$municipal)
+      ggplot(firm_item_avg_new_COVID, aes(x = year_month, y = avg_new, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
+        labs(x = "Tender Publication Date (by Month)", y = "Average Number of New COVID Products Sold", title = "Product Classification",
+             subtitle = "Average Number of New COVID Products Sold Since 2020",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.85, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
       
-      honduras_municipal <- left_join(honduras_municipal, stats_supplier_buyer_wide,
-                                      by = c("municipal" = "ADDRESS_LOCALITY_BUYER"))
-      
-      honduras_municipal_share <- honduras_municipal%>%
-        select(share_same_locality, geometry)
-      
-      honduras_municipal_share <- honduras_municipal_share%>%
-        mutate(Category = ifelse(is.na(share_same_locality), "No Contract",
-                                 ifelse(share_same_locality >= 0 & share_same_locality <0.1, "0 - 10%",
-                                        ifelse(share_same_locality >= 0.1 & share_same_locality < 0.2, "10% - 20%",
-                                               ifelse(share_same_locality >= 0.2 & share_same_locality < 0.3, "20% - 30%",
-                                                      ifelse(share_same_locality >= 0.3, "30% - 40%", ""))))))
-      
-      # generate a capital dataframe 
-      capital <- data.frame(name = "Tegucigalpa",
-                            lat  = "-87.3944015502929",
-                            long = "-87.3946380615234")
-      
-      # draw map 
-      ggplot()+
-        geom_sf(data = honduras_municipal_share, aes(fill = Category))+
-        scale_fill_manual(values = c(
-          "No Contract" = "white",
-          "0 - 10%" = "cornflowerblue",
-          "10% - 20%" = "darkseagreen",
-          "20% - 30%" = "darkgoldenrod1",
-          "30% - 40%" = "coral2"
-        ))+
-        coord_sf()+
-        theme_classic()+
-        labs(x = "", y = "", title = "Geographical Concentration of Buyers and Suppliers",
-             subtitle =  "Share of Contracts that the Buyer and Supplier Locate at the Same Municipality",
-             caption = "Note: data retrieved from ONCAE in Aug 2022.")+
-        theme(legend.position = "bottom")+
-        theme(plot.caption = element_text(hjust = 0))
       
       
-      ggsave(filename = paste0(output, "/Geographical_Concentration.jpeg"),
+      ggsave(filename = paste0(output, "/product_classification_new_covid_product_2020.jpeg"),
              width = 10,
              height = 8,
              units = c("in"),
@@ -1431,20 +2183,134 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
 ```
 
-```{r 8.3 geographical analysis, echo=FALSE, warning=FALSE}
+
+### For firms that have sold or not sold any product in 2019, the average number of new Non-COVID products sold since 2020
+
+```{r product classification3, echo=FALSE}
+
+      # average number of new non-COVID product 
+      firm_item_avg_new_non_COVID <- firm_item_did%>%
+        mutate(new_non_COVID = ifelse(unspsc_new == 1 & covid_item == 0, 1, 0))%>%
+        group_by(ID_PARTY, Group, year_month)%>%
+        dplyr::summarise(sum_new = sum(new_non_COVID, na.rm = TRUE))%>%
+        group_by(Group, year_month)%>%
+        dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
+        ungroup()%>%
+        ungroup()%>%
+        filter(year_month >= "2020-01-01")
+      
+      ggplot(firm_item_avg_new_non_COVID, aes(x = year_month, y = avg_new, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100','#18466E'))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
+        labs(x = "Tender Publication Date (by Month)", y = "Average Number of New Non-COVID Products Sold", title = "Product Classification",
+             subtitle = "Average Number of New Non-COVID Products Sold Since 2020",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.85, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
+      
+      
+      ggsave(filename = paste0(output, "/product_classification_new_non_covid_product_2020.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+
+```
 
 
-      honduras_municipal_share_top5 <- stats_supplier_buyer_wide%>%
-        select(ADDRESS_LOCALITY_BUYER, share_same_locality)%>%
-        slice_max(share_same_locality, n= 5)%>%
-        dplyr::rename(Municipal = ADDRESS_LOCALITY_BUYER,
-                      Percentage_of_Contract = share_same_locality)
+
+```{r procurement method, echo=FALSE}
+
+# Open Procurement Methods --------------------------------------------------
+      # assign COVID dummy to tender-item data 
+      tender_item <- left_join(tender_item, covid_item, by = "ID_ITEM") # perfect match 
       
-      honduras_municipal_share_top5
+      # CAT_TENDER_METHOD
+      method_num <- tender_item%>%
+        mutate(noncovid_item = 1-covid_item)%>%
+        group_by(CAT_TENDER_METHOD)%>%
+        dplyr::summarise(across(c(covid_item, noncovid_item),sum),
+                  .groups = 'drop') %>%
+        ungroup()%>%
+        dplyr::rename("Procurement Method" = "CAT_TENDER_METHOD",
+               "COVID" = "covid_item",
+               "Non-COVID" = "noncovid_item")
       
+      method_num %>%
+        kbl(caption = "Summary Statistics about Procurement Method") %>%
+        kable_classic(full_width = F, html_font = "Cambria")
+      
+      # CAT_TENDER_METHOD_DETAIL
+      method_num_detail <- tender_item%>%
+        mutate(noncovid_item = 1-covid_item)%>%
+        group_by(CAT_TENDER_METHOD_DETAIL)%>%
+        dplyr::summarise(across(c(covid_item, noncovid_item),sum),
+                         .groups = 'drop') %>%
+        ungroup()%>%
+        dplyr::rename("Procurement Method" = "CAT_TENDER_METHOD_DETAIL",
+                      "COVID" = "covid_item",
+                      "Non-COVID" = "noncovid_item")
+      
+      method_num_detail %>%
+        kbl(caption = "Summary Statistics about Procurement Method") %>%
+        kable_classic(full_width = F, html_font = "Cambria")
+      
+
 
 
 ```
+
+
+
 
 
 
