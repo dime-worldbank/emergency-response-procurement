@@ -119,6 +119,7 @@
       new.packages <- packages[!(packages %in% installed.packages()[,"Package"])]
       if(length(new.packages)) install.packages(new.packages, repos = "http://cran.us.r-project.org")
 
+
     # Library the packages (needed for each new session)
 
       invisible(lapply(packages, library, character.only = TRUE))
