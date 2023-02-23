@@ -1,16 +1,20 @@
 * Made by Leandro Veloso
-* Main: Winners level: item level restrict to items
-
+* Main: Using lot data level to estimate the covid product frontier
+ 
 * 1: data preparation
-{
-	* reading data
-	use   "${path_project}/1_data/04-winners_data.dta"  if year_month >=`=ym(2020,1)',clear
-	
-	* Keeping
-	keep if type_item !=""
-	replace type_item = "Product" if type_item == "prod"
-	replace type_item = "Service" if type_item == "serv"
-	
+{	
+	use "${path_KCP_BR}/1-data\2-imported\Portal-02-item-code",clear
+
+	merge 1:1 id_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-item-panel", keepusing(id_item value_item year_month)  keep(3) nogen
+
+	gen id_bidding = substr(id_item ,1,17)
+
+	merge m:1 id_bidding using "${path_project}/1_data/01-tender_data", ///
+	 keepusing(id_bidding D_covid )  keep(3) nogen
+	 
+	* Restring to the pandemic period 
+	keep if year_month >=`=ym(2020,1)'
+		 
 	* Products
 	* keep if type_item=="prod"		
 	destring item_2d_code ,replace	
@@ -20,7 +24,7 @@
 	gegen covid_item = max(D_covid) , by(item_5d_code type_item)
   
     * Keeping relevant variables 
-	keep D_covid type_item item_5d_* D_covid item_4d_* item_2d_* value_item
+	keep D_covid covid_item type_item item_5d_* item_4d_* item_2d_* value_item
 	
 	compress
 	save  "${path_project}/4_outputs/1-data_temp/covid_product_temp",replace
@@ -104,9 +108,6 @@
 	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
 	 ytitle("The proportion of covid lots on covid tender")
-	
-	
-	
 	
 	* Labeling
 	label var D_covid_tag 		 "Old-dummy if it is a covid item" 

@@ -37,6 +37,7 @@
 	
 	* creating folder
 	cap mkdir "${path_project}/1_data"
+	cap mkdir "${path_project}/1_data/01-index_data"
 	cap mkdir "${path_project}/2_material"
 	cap mkdir "${path_project}/3_writting"
 	cap mkdir "${path_project}/4_outputs"

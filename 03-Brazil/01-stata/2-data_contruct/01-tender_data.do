@@ -5,7 +5,7 @@
 use "${path_KCP_BR}/1-data\2-imported/Portal-01-tender-panel.dta",clear
 
 *Keeping
-keep  id_bidding year_month purchase_method id_ug id_top_organ id_organ  bidding_status uf municipality bidding_object 
+keep  id_bidding year_month purchase_method id_ug id_top_organ id_organ  bidding_status uf municipality bidding_object date_result date_open
 order id_bidding year_month purchase_method id_ug id_top_organ id_organ  bidding_status uf municipality bidding_object 
 
 * modality
@@ -69,6 +69,13 @@ label data  "Brazil tender data - 01/2013-06/2022"
 * Ordering
 order year_month id_bidding methods purchase_method volume_tender D_covid D_law_926_2020
 sort  year_month id_bidding
+
+
+gen decision_time = date_result - date_open
+	label var decision_time "time between open process and having a winner"
+gen decision_time_trim = date_result - mdy(month(dofm(year_month)),1,year(dofm(year_month)))
+	label var decision_time_trim "time between trim open process and having a winner"
+
 
 * Saving
 compress
