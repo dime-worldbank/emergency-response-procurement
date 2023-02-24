@@ -94,27 +94,27 @@
 			label var N_batches		 		"N batches" 
 			
 			foreach var of varlist avg_S*_participants {
-				label var `var' "Avg \# SME participants by item/tender"
+				label var `var' "E[N SME participants by item/tender]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_win_gap {
-				label var `var' "Avg number of months between last win of winner firm"
+				label var `var' "E[Number of months between last win of winner firm]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_decision_time*  {
-				label var `var' "Avg Decision time"
+				label var `var' "E[Decision time]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_unit_price*  {
-				label var `var' "Avg unit price"
+				label var `var' "E[unit price]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_value_item*  {
-				label var `var' "Avg volume items"
+				label var `var' "E[volume item]"
 			}
 			.
 			
@@ -135,27 +135,27 @@
 			.	
 			
 			foreach var of varlist N_S*_new_winnes  {
-				label var `var' "\# New winners"
+				label var `var' "N New winners"
 			}
 			.
 			
 			foreach var of varlist avg_S*value_covid_high  {
-				label var `var' "Avg volume items High Covid items"
+				label var `var' "E[volume items High Covid items]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_value_covid_med { 
-				label var `var' "Avg volume items Medium Covid items"
+				label var `var' "E[volume items Medium Covid items]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_value_covid_low  {
-				label var `var' "Avg volume items Low Covid items"
+				label var `var' "E[volume items Low Covid items]"
 			}
 			.
 			
 			foreach var of varlist avg_S*_value_covid_none  {
-				label var `var' "Avg volume items no Covid items"
+				label var `var' "E[volume items no Covid items]"
 			}
 			. 
 			
@@ -259,7 +259,7 @@
 		* Collapsing 
 		gcollapse (sum) shannon_entropy_2d  HHI_2d,	///
 				  freq(N_lots ) 				///
-				  by(year Covid_group_level type_item item_2d_code) 	
+				  by(year Covid_group_level type_item item_2d_code) 	 labelformat(#sourcelabel#)
 				  
 		* Saving 
 		compress
@@ -289,7 +289,7 @@
 			use "${path_project}/4_outputs/1-data_temp/P07_hhi_2d.dta",clear
 			
 			* Collapsing 
-			gcollapse (mean) shannon_entropy_2d  HHI_2d, by(year)
+			gcollapse (mean) shannon_entropy_2d  HHI_2d, by(year) labelformat(#sourcelabel#)
 			
  			append using `hhi_5d'
 		}
@@ -299,7 +299,7 @@
 		label var HHI_2d "E[HHI: 2 digits item yearly]"
 		label var HHI_5d "E[HHI: 5 digits item yearly]"
 		label var shannon_entropy_2d "E[Shannon entropy: 5 digits item yearly]"
-		label var shannon_entropy_5d "E[Shannon entropy: 5 5 digits item yearly]"
+		label var shannon_entropy_5d "E[Shannon entropy: 5 digits item yearly]"
 		
 		* saving data
 		save "${path_project}/1_data/P07_HHI_index.dta", replace
@@ -312,7 +312,11 @@
 		use "${path_project}/4_outputs/1-data_temp/P07_hhi_5d.dta",clear
 
 		* Collapsing 
-		gcollapse (mean) shannon_entropy_5d  HHI_5d, by(year Covid_item_level )
+		gcollapse (mean) shannon_entropy_5d  HHI_5d, by(year Covid_item_level ) labelformat(#sourcelabel#)
+		
+		* labeling data
+ 		label var HHI_5d "E[HHI: 5 digits item yearly]"
+ 		label var shannon_entropy_5d "E[Shannon entropy: 5 digits item yearly]"
 		
 		* saving
 		compress
