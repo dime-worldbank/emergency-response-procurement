@@ -225,7 +225,6 @@
 	}
 	.
 	
-	
 	* lag vars
 	gen log_volume = log(volume)
 	foreach vars of varlist volume avg_n_participants avg_n_win_SME N_lots log_volume   HHI {

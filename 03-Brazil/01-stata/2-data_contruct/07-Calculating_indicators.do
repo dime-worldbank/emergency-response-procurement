@@ -73,29 +73,23 @@
 		* List of measures - Fase processo
  		bys id_bidding: gen byte N_batches = _n==1
 		bys id_ug     : gen byte N_ug      = _n==1 
+						gen byte N_lots	   =  1
+						
+		* year month
+		gen year  = year(dofm(year_month))
+		gen month = month(dofm(year_month))
+		gen year_semester = yh(year ,ceil(month/6)) 
+			format %th year_semester	
 	}
 	.
  
-	* 02: Collapsing measures by semesters
-	{ 
-		* year month
-		gen year = year(dofm(year_month))
-		gen year_semester = yh(year ,ceil(month(dofm(7))/6)) 
-			format %th year_semester	
-		
-		* Collapsing by time measure (month)
-		gcollapse 	(sum) N_S?_*  N_batches N_ug ///
-					(mean) avg_S?_* share_S?_*, by(year year_semester ) freq(N_lots)	
-	}
-	.	
-	
-	* 03: Labeling ordering ans saving data
+	* 02: Labeling it
 	{
-		* Labeling data
+	    * Labeling data
 		{
 			* Geral variables ALL
 			label var year_semester 		"Year/semester of opeing tender process"
-			label var N_lots 				"\# items"
+			label var N_lots 				"N items"
 			label var N_ug 					"N lots"
 			label var N_batches		 		"N batches" 
 			
@@ -171,15 +165,49 @@
 			.			
 		}
 		.
-		 
+	}
+	.
+	
+	* 03: Labeling ordering ans saving data
+	{	 
 		* Label data
 		label data "Indexes calculated by year/semester using lot/item data"
 		
 		* Saving
 		compress
-		save "${path_project}/1_data/01-index_data/P07_index_win", replace
+		save "${path_project}/1_data/01-index_data/P07_data_to_create_indexes", replace
 	}
 	.
+	
+	* 04: Collapsing measures by semesters
+	{ 
+		* Reading data
+		use "${path_project}/1_data/01-index_data/P07_data_to_create_indexes",clear
+			
+		* Collapsing by time measure (month)
+		gcollapse 	(sum)  N_S?_*  N_batches N_ug N_lots ///
+					(mean) avg_S?_* share_S?_*, by(year year_semester ) labelformat(#sourcelabel#)
+					
+		* saving
+		compress
+		save "${path_project}/1_data/01-index_data/P07-semester-index.dta",replace
+	}
+	.	
+	
+	* 05: Collapsing measures by semesters
+	{ 
+		* Reading data
+		use "${path_project}/1_data/01-index_data/P07_data_to_create_indexes",clear
+		 
+		* Collapsing by time measure (month)
+		gcollapse 	(sum) N_S?_*  N_batches N_ug N_lots ///
+					(mean) avg_S?_* share_S?_*, by(year year_semester Covid_item_level) labelformat(#sourcelabel#)
+					
+		* saving
+		compress
+		save "${path_project}/1_data/01-index_data/P07-semester-covid-level-index.dta",replace
+	}
+	.	
 }
 .
 
@@ -195,7 +223,7 @@
 		gen year = year(dofm(year_month))
 
 		* Total
-		gegen total_volume_5d = sum(value_item)  , by(year type_item item_5d_code)
+		gegen total_volume_5d = sum(value_item)  , by(year  type_item item_5d_code)
 		
 		* 5 digits
 		gen share_5d 			=  value_item/total_volume_5d
@@ -277,6 +305,20 @@
 		save "${path_project}/1_data/P07_HHI_index.dta", replace
 	}
 	.
+	
+	* 04: Covid level-index
+	{
+		* Using
+		use "${path_project}/4_outputs/1-data_temp/P07_hhi_5d.dta",clear
+
+		* Collapsing 
+		gcollapse (mean) shannon_entropy_5d  HHI_5d, by(year Covid_item_level )
+		
+		* saving
+		compress
+		save "${path_project}/1_data/01-index_data/P07-year-covid-level-index.dta",replace
+	}
+
 }
 .
 
