@@ -39,8 +39,8 @@
 }
 .
 
-* 01: Covid products
-do "${path_code}/3-analysis/01-Covid_products_criteria_study.do"
+* 01: Covid products ( jsut once)
+* do "${path_code}/3-analysis/01-Covid_products_criteria_study.do"
 
 * 02: Indicators table
 do "${path_code}/3-analysis/02-Indicators_overview_table.do"

@@ -70,7 +70,7 @@
 				
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${overleaf}/02_figures/P4-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
@@ -82,8 +82,9 @@
 		keep if year >= 2015
 		
 		* Graph 01: 1/N_bidders
-		format %10.2fc HHI_5d
-			*  ${covid_shadow} 
+		format %15.2gc HHI_5d
+
+		*  ${covid_shadow} 
 		 
 		* graphs configuration
 		global opt_year xlabel(2015(1)2022 , angle(90))  /*
@@ -112,7 +113,7 @@
 				
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${overleaf}/02_figures/P4-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.

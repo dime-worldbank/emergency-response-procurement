@@ -59,7 +59,6 @@
 * 02: Graph pre post pandemic
 foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "log_volume avg_n_win_SME"   "avg_n_win_SME volume" "HHI volume" {
 	preserve	 
-		 local words "avg_n_participants volume" 
    		* Materials and High covid products
 		keep if Covid_item_level==3
 		keep if type_item	== 1	
@@ -123,7 +122,7 @@ foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "lo
 				ylab(, nogrid)   ytitle("[2020-2021]") xtitle("[2018-2019]") ///
 				legend(off) xsize(10) ysize(5)  /// title("`title'")  caption("Restricted to Reverse Auction and FA")   note("Restricted to Reverse Auction and FA") 
 				caption("Number of items upper line = `upper_line'; Number of items lower line = `lower_line'") // ; limited to x {&isin} (0.01,0.99) {&intersect} y {&isin} (0.01,0.99) } ") 
-		graph export "${overleaf}/02_figures/P3-scatter_pre_post-`words'.pdf", replace as(pdf)		
+		graph export "${overleaf}/02_figures/P5-scatter_pre_post-`words'.pdf", replace as(pdf)		
 	restore
 }
 .
