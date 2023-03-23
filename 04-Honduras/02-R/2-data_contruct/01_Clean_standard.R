@@ -269,14 +269,14 @@
         mutate(
           DT_CONTRACT_SIGNED = dplyr::if_else(substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2049" | 
                                                 substr(data_contracts_new$DT_CONTRACT_SIGNED, 0, 4) == "2219",
-                                              paste0("2019", substr(data_contracts_new$DT_CONTRACT_SIGNED, 5, 12)), 
+                                              paste0("2016", substr(data_contracts_new$DT_CONTRACT_SIGNED, 5, 12)), 
                                               as.character(data_contracts_new$DT_CONTRACT_SIGNED)))
       
       currency_matrix <- WDI(
         
         country   = "HN"                              ,
         indicator = "PA.NUS.FCRF"                     ,
-        start     = 2018                              ,
+        start     = 2016                              ,
         end       = 2022             
       )
       
@@ -314,7 +314,7 @@
       rm(data_contracts_new, data_contracts)
       
     
-    # Contract_supplier-------------------------------------------------------
+# Contract_supplier-------------------------------------------------------
       drop <- c( "ocid" )
       
       # we drop the list of vars
@@ -478,7 +478,7 @@
       supplier_item$year <- strftime(supplier_item$DT_CONTRACT_SIGNED, "%Y")
       
       supplier_item <- supplier_item%>%
-        filter(year >= 2019 & 
+        filter(year >= 2016 & 
                  year < 2025)%>%
         distinct()%>%
         # drop items that do not link to any suppliers 
@@ -501,9 +501,9 @@
       
       tender_item$year <- strftime(tender_item$DT_CONTRACT_SIGNED, "%Y")
       
-      # drop tenders that were signed before 2019 
+      # drop tenders that were signed before 2016 
       tender_item <- tender_item %>%
-        filter(year >= 2019 &
+        filter(year >= 2016 &
                  year < 2025)%>%
         distinct() 
       
@@ -526,8 +526,8 @@
       tender_contract$year_month <- paste0(tender_contract$year, tender_contract$month)
       
       tender_contract <- tender_contract%>%
-        filter(year_month >= 201901 &
-                 year_month <= 202208)
+        filter(year_month >= 201601 &
+                 year_month <= 202303)
       
     fwrite(tender_contract, file = paste0(intermediate, "/Contract_Tender.csv"))
     
@@ -535,7 +535,7 @@
     
 # Clean single level data -----------------------------------------------------
     
-    # filter out 2019 - 2022 data 
+    # filter out 2016 - 2022 data 
     data_participants_final   <- readRDS(file.path(raw_oncae, "DATA_PARTICIPANTS.RDS"))
     data_documents_final      <- readRDS(file.path(raw_oncae, "DATA_DOCUMENTS.RDS"   ))
     data_items_final          <- readRDS(file.path(raw_oncae, "DATA_ITEMS.RDS"       ))
@@ -549,8 +549,8 @@
     data_participants_final$year <- strftime(data_participants_final$DT_CONTRACT_SIGNED, "%Y")
     
     data_participants_final <- data_participants_final%>%
-      filter(year >= 2019 & 
-               year <= 2022)
+      filter(year >= 2016 & 
+               year < 2024)
     
     fwrite(data_participants_final, file = paste0(intermediate, "/Data_Participants_Final.csv"))
     
@@ -561,8 +561,8 @@
     data_items_final$year <- strftime(data_items_final$DT_CONTRACT_SIGNED, "%Y")
     
     data_items_final <- data_items_final%>%
-      filter(year >= 2019 &
-               year <= 2022)
+      filter(year >= 2016 &
+             year < 2024)
     
     fwrite(data_items_final, file = paste0(intermediate, "/Data_Items_Final.csv"))
       
@@ -570,8 +570,8 @@
     data_contracts_final$year <- strftime(data_contracts_final$DT_CONTRACT_SIGNED, "%Y")
     
     data_contracts_final <- data_contracts_final%>%
-      filter(year >= 2019 &
-               year <= 2022)
+      filter(year >= 2016 &
+            year < 2024)
     
     fwrite(data_contracts_final, file = paste0(intermediate, "/Data_Contracts_Final.csv"))
     
@@ -579,17 +579,14 @@
     data_tenders_final$tender_pub_year   <- strftime(data_tenders_final$DT_TENDER_PUB, "%Y")
     
     data_tenders_final        <- data_tenders_final%>%
-      filter(tender_pub_year >= 2019 &
-               tender_pub_year <= 2022)
+      filter(tender_pub_year >= 2016 &
+               tender_pub_year < 2024)
     
     fwrite(data_tenders_final, file = paste0(intermediate, "/Data_Tenders_Final.csv"))
     
     
     
 
-    
-    
-    
     
     
     

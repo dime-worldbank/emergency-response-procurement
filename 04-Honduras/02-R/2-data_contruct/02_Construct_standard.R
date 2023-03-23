@@ -79,8 +79,8 @@
         
         country   = "HN"                              ,
         indicator = "PA.NUS.FCRF"                     ,
-        start     = 2018                              ,
-        end       = 2022             
+        start     = 2015                              ,
+        end       = 2023             
       )
       
       currency_matrix <- as.data.frame(currency_matrix[,c(4,5)])
@@ -123,7 +123,7 @@
         filter_all(all_vars(!is.infinite(.)))%>%
         filter(not_match == "Y")
       
-        # filter out 420 not match observations 
+        # filter out 1801 not match observations 
       list_not_match
       
       
@@ -145,7 +145,7 @@
       quantile(tender_unspsc$tender_value, probs = c(0.75, 0.8, 0.85, 0.9, 0.95, 1), na.rm = TRUE)
 
       #    75%      80%      85%      90%      95%        100% 
-      #  771.910  939.500  1205.598  1778.232  2815.400  9510.870  
+      #  603.115  724.672  962.230  1341.068  2072.598  10509.330  
       
       
       # step 4 trail & errors 
@@ -156,12 +156,12 @@
                                             quantile(tender_unspsc$tender_value, probs = 0.95, na.rm = TRUE)
                                             )
                )
-            # filter out 7 obs
+            # filter out 22 obs
       
           # trippled amount of the 95% 
       tender_unspsc_outlier <-   tender_unspsc%>%
         filter(tender_value > 8446.2)
-            # filter out 2 obs 
+            # filter out 5 obs 
       
       # step 5 apply this method to the whole sample 
       tender_unspsc <- tender_item_usd%>%
@@ -179,7 +179,7 @@
         left_join(quant95, by = "ID_ITEM_UNSPSC")%>%
         mutate(outlier = ifelse(tender_value > 2 * quant95, "Y", "N"))%>%
         filter(outlier == "Y")
-          # filter out 144 tenders 
+          # filter out 564 tenders (0.7% out of 74445 observations )
       
       # remove outliers from all intermediate files 
       tender_contract     <- tender_contract[!tender_contract$ID %in% tender_unspsc_outlier$ID, ]
@@ -386,7 +386,7 @@
         left_join(stats_covid_tender_2, by = c("covid" = "covid_tender", "year"))
       
       stats_covid
-      # note: @team, the number of supplies in 2019 is extremely high compared to the supplies during COVID. 
+      # note: @team, the number of supplies in 2015 is extremely high compared to the supplies during COVID. 
       # Why is that? My hypothesis is that supply chain crisis hit Honduras in 2020. 
       # Does this affect our understandings of the change in supplies during COVID? 
       # How to tease out the impact of supply chain crisis from the impact of 'COVID'? 
@@ -409,7 +409,7 @@
         
         left_join(covid_tender, by = "ID")  %>%
             # note: 306 participants cannot link to any items. Cannot find their tender ID in contract level or item level. 
-            # i.e. ocds-lcuori-grxXEr-COT. NÂ°10-2019-1/3 and ocds-lcuori-gGyD4L-COVID 19-CONTRATACIÃ"N DIRECTA No. 17-2021-HE-AME -2/3
+            # i.e. ocds-lcuori-grxXEr-COT. NÂ°10-2015-1/3 and ocds-lcuori-gGyD4L-COVID 19-CONTRATACIÃ"N DIRECTA No. 17-2021-HE-AME -2/3
         
         mutate_at(c("covid"), ~replace_na(., 0))
       
@@ -579,38 +579,48 @@
             mutate(new_winner = case_when(is.na(diff_days_contract) ~ 1 ,
                                           diff_days_contract > 365 ~ 1 ,
                                           TRUE ~ 0 ))
+      # add semester dummy 
+          contract_supplier$month <- as.numeric(strftime(contract_supplier$DT_TENDER_PUB, "%m"))
           
-          # summary statistics by month 
-          contract_supplier$month <- strftime(contract_supplier$DT_TENDER_PUB, "%m")
+          contract_supplier$year <- as.numeric(strftime(contract_supplier$DT_TENDER_PUB, "%Y"))
           
-          contract_supplier$year <- strftime(contract_supplier$DT_TENDER_PUB, "%Y")
+          # contract_supplier$tender_pub_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
           
-          contract_supplier$tender_pub_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
           
-          new_winner_month <- contract_supplier%>%
-            filter(tender_pub_month >= "2019-01-01")%>%
-            group_by(tender_pub_month)%>%
-            dplyr::summarise(num_new_winner = sum(new_winner))%>%
-            ungroup()
-
-          new_winner_month
+          contract_supplier <- contract_supplier%>%
+            
+            mutate(semester = ifelse(month <= 6, "03", "09"))
           
-          # summary statistics by year 
-          new_winner_year <- contract_supplier%>%
-            filter(year >= 2019 & 
-                     year <= 2022)%>%
-            group_by(YEAR)%>%
-            dplyr::summarise(num_new_winner = sum(new_winner),
-                             num_contract   = n_distinct(ID_CONTRACT))%>%
-            mutate(share_new_winner = num_new_winner/num_contract)%>%
-            ungroup()
           
-          new_winner_year     
+          contract_supplier$semester <- paste0(contract_supplier$year, "-", contract_supplier$semester, "-30")
+          
+          
+          # # summary statistics by month 
+          # new_winner_month <- contract_supplier%>%
+          #   filter(tender_pub_month >= "2015-01-01")%>%
+          #   group_by(tender_pub_month)%>%
+          #   dplyr::summarise(num_new_winner = sum(new_winner))%>%
+          #   ungroup()
+          # 
+          # new_winner_month
+          # 
+          # # summary statistics by year 
+          # new_winner_year <- contract_supplier%>%
+          #   filter(year >= 2015 & 
+          #            year <= 2022)%>%
+          
+          #   group_by(YEAR)%>%
+          #   dplyr::summarise(num_new_winner = sum(new_winner),
+          #                    num_contract   = n_distinct(ID_CONTRACT))%>%
+          #   mutate(share_new_winner = num_new_winner/num_contract)%>%
+          #   ungroup()
+          # 
+          # new_winner_year     
           
           # YEAR num_new_winner
           # <int>          <dbl>
           # 1  2018          13060
-          # 2  2019          13558
+          # 2  2015          13558
           # 3  2020           3694
           # 4  2021           7352
           # 5  2022            866
@@ -620,13 +630,14 @@
       # add Group dummy (merge covid firm ID to firm level data)
           contract_supplier <- left_join(contract_supplier, covid_firm,
                                          by = c("ID_SUPPLIER" = "ID_PARTY"))          # note: 100% merge 
-          
+
+      # summary statistics 
           new_winner_month_group <- contract_supplier%>%
             dplyr::rename(Group = covid_firm)%>%
-            filter(tender_pub_month >= "2019-01-01" &
-                     tender_pub_month <= "2022-08-01")%>%
+            filter(year >= 2016 &
+                     year <= 2022)%>%
             filter(!is.na(Group))%>%
-            group_by(tender_pub_month, Group)%>%
+            group_by(semester, Group)%>%
             dplyr::summarise(num_new_winner = sum(new_winner),
                              num_contract   = n_distinct(ID_CONTRACT))%>%
             mutate(share_new_winner = num_new_winner/num_contract)%>%
@@ -637,7 +648,8 @@
           new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 1, "COVID")
           
           
-          ggplot(new_winner_month_group, aes(x = tender_pub_month, y = share_new_winner, group = Group))+
+      # visualization 
+          ggplot(new_winner_month_group, aes(x = semester, y = share_new_winner, group = Group))+
             
             # draw a line graph for two groups
             geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -652,11 +664,13 @@
             scale_size_manual(values=c(1, 0.8))+
             
             # add point plots and define colors 
-            geom_point(data = new_winner_month_group %>% filter(Group == "COVID"), aes(x = tender_pub_month, y = share_new_winner), shape = 16, size = 3, color = "#FF0100") +
-            geom_point(data = new_winner_month_group %>% filter(Group == "Non-COVID"), aes(x = tender_pub_month, y = share_new_winner), shape = 18, size = 4, color = "#18466E") +
+            geom_point(data = new_winner_month_group %>% filter(Group == "COVID"), aes(x = semester, y = share_new_winner), shape = 16, size = 3, color = "#FF0100") +
+            geom_point(data = new_winner_month_group %>% filter(Group == "Non-COVID"), aes(x = semester, y = share_new_winner), shape = 18, size = 4, color = "#18466E") +
             
             # add a vertical line to show treatment 
-            geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+            geom_vline(xintercept= 8.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+            
+            # geom_segment(aes(x = 4, y = 15, xend = 4, yend = 27))+
             
             # set the theme, including background, and present the axis of the line graphs 
             theme(
@@ -680,7 +694,7 @@
               plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
             
             # change title and subtitles 
-            labs(x = "Tender Publication Date (aggregate by Month)", y = "Share of New Winners (%)", title = "Share of New Winners Jan 2019 - Aug 2022",
+            labs(x = "Tender Publication Date (aggregate by semester)", y = "Share of New Winners (%)", title = "Share of New Winners Jan 2015 - Aug 2022",
                  caption = "Note: data retrieved from ONCAE in Aug 2022.")+
             
             # add legend to the middle of the graph 
@@ -714,7 +728,7 @@
           
 # 4.0 Time Related Variables --------------------------------------------------------- 
       
-      # Total processing time: contract signature - tender initiation
+      # Total processing time: contract signature - tender initiation 
       # Submission time: submission deadline - tender initiation
       # Decision time: contract signature - submission deadline
           
@@ -758,29 +772,43 @@
       
       tender_contract$Group <- replace(tender_contract$Group, tender_contract$Group == 1, "COVID")
       
-      # formalize month dummy 
+      # add semester dummy
       tender_contract$year_month <- as.Date(paste0(tender_contract$year, "-", tender_contract$month, "-01"))
       
+      tender_contract$month <- as.numeric(strftime(tender_contract$DT_TENDER_PUB, "%m"))
+      
+      tender_contract$year <- as.numeric(strftime(tender_contract$DT_TENDER_PUB, "%Y"))
+      
+      
+      tender_contract <- tender_contract%>%
+        
+        mutate(semester = ifelse(month <= 6, "03", "09"))
+      
+      
+      tender_contract$semester <- paste0(tender_contract$year, "-", tender_contract$semester, "-30")
+      
+      
       # submission time: submission deadline - tender initiation in relation to tender inquiry start
-      tender_contract$tender_start_month <- strftime(tender_contract$DT_TENDER_START, "%m")
       
-      tender_contract$tender_start_year <- strftime(tender_contract$DT_TENDER_START, "%Y")
-      
-      tender_contract$tender_start_year_month <- as.Date(paste0(tender_contract$tender_start_year, "-", tender_contract$tender_start_month, "-01"))
+      # tender_contract$tender_pub_semester <- strftime(tender_contract$DT_TENDER_START, "%m")
+      # 
+      # tender_contract$tender_start_year <- strftime(tender_contract$DT_TENDER_START, "%Y")
+      # 
+      # tender_contract$tender_start_year_month <- as.Date(paste0(tender_contract$tender_start_year, "-", tender_contract$tender_start_month, "-01"))
       
       submission_time <- tender_contract%>%
-        filter(tender_start_year >= 2019 &
-                 tender_start_year <= 2022)%>%
-        group_by(tender_start_year_month , Group)%>%
+        filter(year >= 2015 &
+                 year <= 2022)%>%
+        group_by(semester , Group)%>%
         dplyr::summarise(submission_time_avg = mean(submission_time))%>%
         ungroup()
       
 
           # @team: check the caption - there should be a way to improve this graph. It would be misleading if we are trying to tell whether submission time increase or decrease from this graph.
-          # there are large outliers in 2019 and 2020, but this graph cannot show that 
+          # there are large outliers in 2015 and 2020, but this graph cannot show that 
       
       
-      ggplot(submission_time, aes(x = tender_start_year_month , y = submission_time_avg, group = Group))+
+            ggplot(submission_time, aes(x = semester , y = submission_time_avg, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -795,11 +823,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = submission_time %>% filter(Group == "COVID"), aes(x = tender_start_year_month , y = submission_time_avg), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = submission_time %>% filter(Group == "Non-COVID"), aes(x = tender_start_year_month , y = submission_time_avg), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = submission_time %>% filter(Group == "COVID"), aes(x = semester , y = submission_time_avg), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = submission_time %>% filter(Group == "Non-COVID"), aes(x = semester , y = submission_time_avg), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -823,9 +851,9 @@
           plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
         
         # change title and subtitles 
-        labs(x = "Tender Inquiry Start Date (Month)", y = "Submission Time (days)", 
+        labs(x = "Tender Publication Date (aggregate by semester)", y = "Submission Time (days)", 
              title = "Submission Time",
-             subtitle = "Average Number of Days from Tender Inquiry Start to Tender Inquiry End from Jan 2019 to Aug 2022",
+             subtitle = "Average Number of Days from Tender Inquiry Start to Tender Inquiry End from Jan 2015 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.the peak in COVID submission time was a contract signed in May 2022. The reason is that there was only 1 contract signed in May 2022.
                         \nAs the other months have many contracts with extremely low submission time (below 10 days), the impact of outliers (100+days) was cancelled out.")+
         
@@ -846,18 +874,18 @@
              height = 8,
              units = c("in"),
              dpi = 300)
-      
+
       
       # process time: contract signature - tender initiation // tender inquiry start
       processing_time <- tender_contract%>%
-        filter(tender_start_year >= 2019 &
-                 tender_start_year <= 2022)%>%
-        group_by(tender_start_year_month , Group)%>%
+        filter(year >= 2015 &
+                 year <= 2022)%>%
+        group_by(semester , Group)%>%
         dplyr::summarise(processing_time_avg = mean(processing_time))%>%
         ungroup()
       
 
-      ggplot(processing_time, aes(x = tender_start_year_month, y = processing_time_avg, group = Group))+
+      ggplot(processing_time, aes(x = semester, y = processing_time_avg, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -872,11 +900,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = processing_time %>% filter(Group == "COVID"), aes(x = tender_start_year_month, y = processing_time_avg), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = processing_time %>% filter(Group == "Non-COVID"), aes(x = tender_start_year_month, y = processing_time_avg), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = processing_time %>% filter(Group == "COVID"), aes(x = semester, y = processing_time_avg), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = processing_time %>% filter(Group == "Non-COVID"), aes(x = semester, y = processing_time_avg), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -900,9 +928,9 @@
           plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
         
         # change title and subtitles 
-        labs(x = "Tender Inquiry Start Date (Month)", y = "Processing Time (days)", 
+        labs(x = "Tender Publication Date (aggregate by semester)", y = "Processing Time (days)", 
              title = "Processing Time",
-             subtitle = " Average Number of Days from Tender Inquiry Start to Contract Signature Date from Jan 2019 to Aug 2022",
+             subtitle = " Average Number of Days from Tender Inquiry Start to Contract Signature Date from Jan 2015 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.")+
         
         
@@ -927,16 +955,16 @@
       
       # decision time: contract signature - submission deadline in relation to submission deadline 
       
-      tender_contract$tender_end_month <- strftime(tender_contract$DT_TENDER_END, "%m")
-      
-      tender_contract$tender_end_year <- strftime(tender_contract$DT_TENDER_END, "%Y")
-      
-      tender_contract$tender_end_year_month <- as.Date(paste0(tender_contract$tender_end_year, "-", tender_contract$tender_end_month, "-01"))
+      # tender_contract$tender_end_month <- strftime(tender_contract$DT_TENDER_END, "%m")
+      # 
+      # tender_contract$tender_end_year <- strftime(tender_contract$DT_TENDER_END, "%Y")
+      # 
+      # tender_contract$tender_end_year_month <- as.Date(paste0(tender_contract$tender_end_year, "-", tender_contract$tender_end_month, "-01"))
       
       decision_time <- tender_contract%>%
-        filter(tender_end_year >= 2019 &
-                 tender_end_year <= 2022)%>%
-        group_by(tender_end_year_month, Group)%>%
+        filter(year >= 2015 &
+                 year <= 2022)%>%
+        group_by(semester, Group)%>%
         dplyr::summarise(decision_time_avg = mean(decision_time))%>%
         ungroup()
       
@@ -945,7 +973,7 @@
       # Is it true that it takes longer time to process and make decisions on both COVID and non-COVID procurements in 2022?
 
       
-      ggplot(decision_time, aes(x = tender_end_year_month, y = decision_time_avg, group = Group))+
+      ggplot(decision_time, aes(x = semester, y = decision_time_avg, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -960,11 +988,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = decision_time %>% filter(Group == "COVID"), aes(x = tender_end_year_month, y = decision_time_avg,), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = decision_time %>% filter(Group == "Non-COVID"), aes(x = tender_end_year_month, y = decision_time_avg,), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = decision_time %>% filter(Group == "COVID"), aes(x = semester, y = decision_time_avg,), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = decision_time %>% filter(Group == "Non-COVID"), aes(x = semester, y = decision_time_avg,), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -988,9 +1016,9 @@
           plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
         
         # change title and subtitles 
-        labs(x = "Tender Submission End Date (Month)", y = "Decision Time (days)", 
+        labs(x = "Tender Publication Date (aggregate by semester)", y = "Decision Time (days)", 
              title = "Decision Time",
-             subtitle = "Number of Days from Tender Inquiry End to Contract Signature Date from Jan 2019 to Aug 2022",
+             subtitle = "Number of Days from Tender Inquiry End to Contract Signature Date from Jan 2015 to Aug 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.")+
         
         
@@ -1084,7 +1112,7 @@
       # 
       # # add group dummy 
       # supplier_buyer <- supplier_buyer%>%
-      #   filter(DT_CONTRACT_SIGNED >= as.Date("2019-01-01")&
+      #   filter(DT_CONTRACT_SIGNED >= as.Date("2015-01-01")&
       #            DT_CONTRACT_SIGNED <= as.Date("2022-07-31"))%>%
       #   dplyr::rename(Group = covid_firm)
       # 
@@ -1208,36 +1236,114 @@
       contract_supplier <- left_join(contract_supplier, covid_tender,
                                      by = "ID")          # note: 100% merge 
       
-      # definition:the market share of the top 3 suppliers in each sector per month (ranking firms by total market value of their items)
-      # contract_signature, by quarter 
+      # Month version 
       
-      # Create month 
-      contract_supplier$month <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%m")
+      # # Create month 
+      # contract_supplier$month <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%m")
+      # 
+      # contract_supplier$year <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%Y")
+      # 
+      # contract_supplier$contract_sign_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
+      # 
+      # contract_supplier$quarter <- lubridate::quarter(contract_supplier$DT_CONTRACT_SIGNED)
+      # 
+      # contract_supplier$quarter <- ifelse(contract_supplier$quarter == 1, "01-01", 
+      #                                     ifelse(contract_supplier$quarter == 2, "04-01",
+      #                                            ifelse(contract_supplier$quarter == 3, "07-01",
+      #                                                   ifelse(contract_supplier$quarter == 4, "10-01", NA))))
+      # 
+      # contract_supplier$contract_sign_quarter  <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$quarter))
+      # 
+      # # clean contract amount values 
+      # contract_supplier$AMT_CONTRACT_VALUE_USD[contract_supplier$AMT_CONTRACT_VALUE_USD == 0] <- NA
+      # 
+      # contract_supplier$AMT_CONTRACT_VALUE_USD <- as.numeric(contract_supplier$AMT_CONTRACT_VALUE_USD)
+      # 
+      # 
+      # # flag the top 3 suppliers in each sector (covid/non-covid)
+      # market_concentration <- contract_supplier%>%
+      #   filter(contract_sign_quarter >= as.Date("2015-01-01")&
+      #            contract_sign_quarter < as.Date("2022-08-01"))%>%
+      #   dplyr::rename(Group = covid_tender)%>%
+      #   # 191 contracts cannot be identified whether COVID or not 
+      #   filter(!is.na(Group))
+      # 
+      # check <- market_concentration%>%
+      #   filter(is.na(AMT_CONTRACT_VALUE_USD))    # 878 out of 35344 contracts has missing contract value 
+      # 
+      # # calculate sector(COVID/nonCOVID) total 
+      # sector_total <- market_concentration%>%
+      #   group_by(Group, contract_sign_quarter)%>%
+      #   dplyr::summarise(sector_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
+      #             num_contract = n())%>%
+      #   ungroup()
+      # 
+      # # calculate firm total 
+      # firm_total <- market_concentration%>%
+      #   group_by(Group, contract_sign_quarter, ID_SUPPLIER)%>%
+      #   dplyr::summarise(firm_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
+      #                    num_contract = n())%>%
+      #   ungroup()
+      #     # @team: some suppliers have many contracts in one months, but the value of those contracts is missing. 
+      #     # Also, check HN-RTN-0107956011840. It is an example of this. And it is a medical-nonCOVID firm. Neglecting firms like this could bias our result. 
+      # 
+      # # aggregate to firm-sector level 
+      # firm_sector_total <- firm_total%>%
+      #   left_join(sector_total, by = c("Group", "contract_sign_quarter"), suffix = c("_firm", "_sector"))
+      # 
+      # # select top 3 firms and calculate their share 
+      # firm_sector_total <-firm_sector_total%>%
+      #   group_by(Group, contract_sign_quarter)%>%
+      #   arrange(Group, contract_sign_quarter, desc(firm_total))%>%
+      #   dplyr::mutate(firm_share = (firm_total/sector_total),
+      #          rank = row_number())%>%
+      #   ungroup()
+      # 
+      # firm_sector_total_top3 <- firm_sector_total%>%
+      #   filter(rank <= 3)%>%
+      #   group_by(Group, contract_sign_quarter)%>%
+      #   dplyr::summarise(top3_share = sum(firm_share))%>%
+      #   ungroup()
+      #     # note: there was only 1 firm in May 2022 and 2 firms in July 2022, should we adjust the time period of interest? 
+      #     # @team: should we also do an analysis using the number of contracts? As there are a large number of contracts that have missing total value 
+      # 
+      # # plot
+      # firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 0, "Non-COVID")
+      # 
+      # firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 1, "COVID")
       
-      contract_supplier$year <- strftime(contract_supplier$DT_CONTRACT_SIGNED, "%Y")
+      
+      
+      # definition:the market share of the top 3 suppliers in each sector per semester (ranking firms by total market value of their items)
+      # contract_signature, by semester 
+      
+    # Create semester 
+      contract_supplier$month <- as.numeric(strftime(contract_supplier$DT_CONTRACT_SIGNED, "%m"))
+      
+      contract_supplier$year <- as.numeric(strftime(contract_supplier$DT_CONTRACT_SIGNED, "%Y"))
       
       contract_supplier$contract_sign_month <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$month, "-01"))
       
-      contract_supplier$quarter <- lubridate::quarter(contract_supplier$DT_CONTRACT_SIGNED)
-
-      contract_supplier$quarter <- ifelse(contract_supplier$quarter == 1, "01-01", 
-                                          ifelse(contract_supplier$quarter == 2, "04-01",
-                                                 ifelse(contract_supplier$quarter == 3, "07-01",
-                                                        ifelse(contract_supplier$quarter == 4, "10-01", NA))))
       
-      contract_supplier$contract_sign_quarter  <- as.Date(paste0(contract_supplier$year, "-", contract_supplier$quarter))
+      contract_supplier <- contract_supplier%>%
+        
+        mutate(semester = ifelse(month <= 6, "03", "09"))
       
-      # clean contract amount values 
+      
+      contract_supplier$semester <- paste0(contract_supplier$year, "-", contract_supplier$semester, "-30")
+      
+      
+    # clean contract amount values 
       contract_supplier$AMT_CONTRACT_VALUE_USD[contract_supplier$AMT_CONTRACT_VALUE_USD == 0] <- NA
       
       contract_supplier$AMT_CONTRACT_VALUE_USD <- as.numeric(contract_supplier$AMT_CONTRACT_VALUE_USD)
       
-
-      # flag the top 3 suppliers in each sector (covid/non-covid)
+      
+    # flag the top 3 suppliers in each sector (covid/non-covid)
       market_concentration <- contract_supplier%>%
-        filter(contract_sign_quarter >= as.Date("2019-01-01")&
-                 contract_sign_quarter < as.Date("2022-08-01"))%>%
-        dplyr::rename(Group = covid_tender)%>%
+        filter(year >= 2015 &
+                 year <= 2022)%>%
+        dplyr::rename(Group = covid_firm)%>%
         # 191 contracts cannot be identified whether COVID or not 
         filter(!is.na(Group))
       
@@ -1246,39 +1352,39 @@
       
       # calculate sector(COVID/nonCOVID) total 
       sector_total <- market_concentration%>%
-        group_by(Group, contract_sign_quarter)%>%
+        group_by(Group, semester)%>%
         dplyr::summarise(sector_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
-                  num_contract = n())%>%
+                         num_contract = n())%>%
         ungroup()
       
       # calculate firm total 
       firm_total <- market_concentration%>%
-        group_by(Group, contract_sign_quarter, ID_SUPPLIER)%>%
+        group_by(Group, semester, ID_SUPPLIER)%>%
         dplyr::summarise(firm_total = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE),
                          num_contract = n())%>%
         ungroup()
-          # @team: some suppliers have many contracts in one months, but the value of those contracts is missing. 
-          # Also, check HN-RTN-0107956011840. It is an example of this. And it is a medical-nonCOVID firm. Neglecting firms like this could bias our result. 
+      # @team: some suppliers have many contracts in one months, but the value of those contracts is missing. 
+      # Also, check HN-RTN-0107956011840. It is an example of this. And it is a medical-nonCOVID firm. Neglecting firms like this could bias our result. 
       
       # aggregate to firm-sector level 
       firm_sector_total <- firm_total%>%
-        left_join(sector_total, by = c("Group", "contract_sign_quarter"), suffix = c("_firm", "_sector"))
+        left_join(sector_total, by = c("Group", "semester"), suffix = c("_firm", "_sector"))
       
       # select top 3 firms and calculate their share 
       firm_sector_total <-firm_sector_total%>%
-        group_by(Group, contract_sign_quarter)%>%
-        arrange(Group, contract_sign_quarter, desc(firm_total))%>%
+        group_by(Group, semester)%>%
+        arrange(Group, semester, desc(firm_total))%>%
         dplyr::mutate(firm_share = (firm_total/sector_total),
-               rank = row_number())%>%
+                      rank = row_number())%>%
         ungroup()
       
       firm_sector_total_top3 <- firm_sector_total%>%
         filter(rank <= 3)%>%
-        group_by(Group, contract_sign_quarter)%>%
+        group_by(Group, semester)%>%
         dplyr::summarise(top3_share = sum(firm_share))%>%
         ungroup()
-          # note: there was only 1 firm in May 2022 and 2 firms in July 2022, should we adjust the time period of interest? 
-          # @team: should we also do an analysis using the number of contracts? As there are a large number of contracts that have missing total value 
+      # note: there was only 1 firm in May 2022 and 2 firms in July 2022, should we adjust the time period of interest? 
+      # @team: should we also do an analysis using the number of contracts? As there are a large number of contracts that have missing total value 
       
       # plot
       firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 0, "Non-COVID")
@@ -1286,7 +1392,7 @@
       firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 1, "COVID")
       
       
-      ggplot(firm_sector_total_top3, aes(x = contract_sign_quarter, y = top3_share, group = Group))+
+      ggplot(firm_sector_total_top3, aes(x = semester, y = top3_share, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -1301,11 +1407,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = firm_sector_total_top3 %>% filter(Group == "COVID"), aes(x = contract_sign_quarter, y = top3_share), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = firm_sector_total_top3 %>% filter(Group == "Non-COVID"), aes(x = contract_sign_quarter, y = top3_share), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = firm_sector_total_top3 %>% filter(Group == "COVID"), aes(x = semester, y = top3_share), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_sector_total_top3 %>% filter(Group == "Non-COVID"), aes(x = semester, y = top3_share), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -1329,8 +1435,8 @@
           plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
         
         # change title and subtitles 
-        labs(x = "Tender Publication Date (Aggregate by Quarter)", y = "Market Share of Top 3 Firms (%)", title = "Market Concentration",
-             subtitle =  "The Market Share of Top 3 Suppliers from Jan 2019 to Jul 2022",
+        labs(x = "Tender Publication Date (aggregate by semester)", y = "Market Share of Top 3 Firms (%)", title = "Market Concentration",
+             subtitle =  "The Market Share of Top 3 Suppliers in Each Semester from Jan 2015 to Jul 2022",
              caption = "Note: data retrieved from ONCAE in Aug 2022.The graph excludes the contracts that have top 1% total value as those contracts appears to be mistake.")+
         
         # add legend to the middle of the graph 
@@ -1343,7 +1449,6 @@
         
         # add percent to x axis, if needed 
         scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
-      
       
         
       ggsave(filename = paste0(output, "/Market_concentration.jpeg"),
@@ -1371,20 +1476,27 @@
         select(ID, DT_TENDER_PUB, Group)%>%
         distinct()
       
-      tender$month <- strftime(tender$DT_TENDER_PUB, "%m")
+      tender$month <- as.numeric(strftime(tender$DT_TENDER_PUB, "%m"))
       
-      tender$year <- strftime(tender$DT_TENDER_PUB, "%Y")
+      tender$year <- as.numeric(strftime(tender$DT_TENDER_PUB, "%Y"))
       
       tender$year_month <- as.Date(paste0(tender$year, "-", tender$month, "-01"))
       
-      tender <- tender %>%
-        group_by(year_month, Group)%>%
-        dplyr::summarise(count = n_distinct(ID))%>%
-        ungroup()%>%
-        filter(year_month >= as.Date("2019-01-01")&
-                 year_month <= as.Date("2022-08-01"))
+      tender <- tender%>%
+        
+        mutate(semester = ifelse(month <= 6, "03", "09"))
       
-      ggplot(tender, aes(x = year_month, y = count, group = Group))+
+      tender$semester <- paste0(tender$year, "-", tender$semester, "-30")
+      
+      tender <- tender %>%
+        filter(year >= 2015 & 
+                 year <= 2022)%>%
+        group_by(semester, Group)%>%
+        dplyr::summarise(count = n_distinct(ID))%>%
+        ungroup()
+
+      
+      ggplot(tender, aes(x = semester, y = count, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -1399,11 +1511,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = tender %>% filter(Group == "COVID"), aes(x = year_month, y = count), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = tender %>% filter(Group == "Non-COVID"), aes(x = year_month, y = count), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = tender %>% filter(Group == "COVID"), aes(x = semester, y = count), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = tender %>% filter(Group == "Non-COVID"), aes(x = semester, y = count), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept= 2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -1429,7 +1541,7 @@
         # change title and subtitles 
         labs(x = "Tender Publication Date (aggregate by Month)", 
              y = "Number of Tenders", title = "The Number of Tenders Published Per Month",
-             subtitle =  "Jan 2019 - Ang 2022",
+             subtitle =  "Jan 2015 - Ang 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
         
         # add legend to the middle of the graph 
@@ -1456,21 +1568,28 @@
         select(ID_CONTRACT, DT_CONTRACT_SIGNED, Group)%>%
         distinct()
       
-      contract$month <- strftime(contract$DT_CONTRACT_SIGNED, "%m")
+      contract$month <- as.numeric(strftime(contract$DT_CONTRACT_SIGNED, "%m"))
       
-      contract$year <- strftime(contract$DT_CONTRACT_SIGNED, "%Y")
+      contract$year <- as.numeric(strftime(contract$DT_CONTRACT_SIGNED, "%Y"))
       
-      contract$year_month <- as.Date(paste0(contract$year, "-", contract$month, "-01"))
+      # contract$year_month <- as.Date(paste0(contract$year, "-", contract$month, "-01"))
+      
+      contract <- contract%>%
+        
+        mutate(semester = ifelse(month <= 6, "03", "09"))
+      
+      contract$semester <- paste0(contract$year, "-", contract$semester, "-30")
+      
       
       contract <- contract %>%
-        group_by(year_month, Group)%>%
+        filter(year >= 2015 & 
+                 year <= 2022)%>%
+        group_by(semester, Group)%>%
         dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
-        ungroup()%>%
-        filter(year_month >= as.Date("2019-01-01")&
-                 year_month <= as.Date("2022-08-01"))
+        ungroup()
       
       
-      ggplot(contract, aes(x = year_month, y = count, group = Group))+
+      ggplot(contract, aes(x = semester, y = count, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -1485,11 +1604,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = contract %>% filter(Group == "COVID"), aes(x = year_month, y = count), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = contract %>% filter(Group == "Non-COVID"), aes(x = year_month, y = count), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = contract %>% filter(Group == "COVID"), aes(x = semester, y = count), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = contract %>% filter(Group == "Non-COVID"), aes(x = semester, y = count), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -1515,7 +1634,7 @@
         # change title and subtitles 
         labs(x = "Contract Signed Date (aggregate by Month)", 
              y = "Number of Contracts signed", title = "The Number of Contracts Signed per Month ",
-             subtitle =  "Jan 2019 - Ang 2022",
+             subtitle =  "Jan 2015 - Ang 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
         
         # add legend to the middle of the graph 
@@ -1549,22 +1668,26 @@
       contract_value$covid_firm <- replace(contract_value$covid_firm, contract_value$covid_firm == 1, "COVID")
       
       
-      contract_value$month <- strftime(contract_value$DT_CONTRACT_SIGNED, "%m")
+      contract_value$month <- as.numeric(strftime(contract_value$DT_CONTRACT_SIGNED, "%m"))
       
-      contract_value$year <- strftime(contract_value$DT_CONTRACT_SIGNED, "%Y")
+      contract_value$year <- as.numeric(strftime(contract_value$DT_CONTRACT_SIGNED, "%Y"))
       
-      contract_value$year_month <- as.Date(paste0(contract_value$year, "-", contract_value$month, "-01"))
+      contract_value <- contract_value%>%
+        
+        mutate(semester = ifelse(month <= 6, "03", "09"))
       
+      contract_value$semester <- paste0(contract_value$year, "-", contract_value$semester, "-30")
+      
+
       contract_value_avg <- contract_value%>%
+        filter(year >= 2015 & 
+                 year <= 2022)%>%
         dplyr::rename(Group = covid_firm)%>%
-        group_by(year_month, Group)%>%
+        group_by(semester, Group)%>%
         dplyr::summarize(average_value = mean(AMT_CONTRACT_VALUE_USD, na.rm = TRUE))%>%
-        ungroup()%>%
-        filter(year_month >= as.Date("2019-01-01")&
-                 year_month < as.Date("2022-01-01"))
+        ungroup()
       
-      
-      ggplot(contract_value_avg, aes(x = year_month, y = average_value/1000, group = Group))+
+      ggplot(contract_value_avg, aes(x = semester, y = average_value/1000, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
@@ -1579,11 +1702,11 @@
         scale_size_manual(values=c(1, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = contract_value_avg %>% filter(Group == "COVID"), aes(x = year_month, y = average_value/1000), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = contract_value_avg %>% filter(Group == "Non-COVID"), aes(x = year_month, y = average_value/1000), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = contract_value_avg %>% filter(Group == "COVID"), aes(x = semester, y = average_value/1000), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = contract_value_avg %>% filter(Group == "Non-COVID"), aes(x = semester, y = average_value/1000), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -1609,7 +1732,7 @@
         # change title and subtitles 
         labs(x = "Contract Signed Date (aggregate by Month)", 
              y = "Average Value of Contracts (thousands)", title = "Average Contract Value per Month ",
-             subtitle =  "Jan 2019 - Dec 2021",
+             subtitle =  "Jan 2015 - Dec 2021",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
         
         # add legend to the middle of the graph 
@@ -1660,7 +1783,7 @@
       #   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
       #   geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
       #   labs(x = "Month", y = "Total Value of Tenders", title = "Total Tender Monetary Value ",
-      #        subtitle =  "Jan 2019 - Jul 2022",
+      #        subtitle =  "Jan 2015 - Jul 2022",
       #        caption = "Note: data retrieved from ONCAE in Aug 2022. Tender ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3, signed on January 2022, was removed, 
       #                   \ndue to the extremely large total tender value. That tender aims to purchase 26,9928 CINTAS Glucometria test strips at a price of
       #                   \n11,7900 Lempira each.")+
@@ -1685,7 +1808,7 @@
       #   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
       #   geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
       #   labs(x = "Month", y = "Average Value per Tender", title = "Average Tender Monetary Value",
-      #        subtitle =  "Jan 2019 - Jul 2022",
+      #        subtitle =  "Jan 2015 - Jul 2022",
       #        caption ="Note: data retrieved from ONCAE in Aug 2022. Tender ocds-lcuori-gGyD4L-cm-229-amq-he-2021-1/3, signed on January 2022, was removed, 
       #                   \ndue to the extremely large total tender value. That tender aims to purchase 26,9928 CINTAS Glucometria test strips at a price of
       #                   \n11,7900 Lempira each.")+
@@ -1704,24 +1827,99 @@
       # 8.1 Do firms during covid supply a broader range of different products?
           # explore the number of products sold by the firm before, during and after COVID
           # create half year dummy 
-      supplier_item$month <- strftime(supplier_item$DT_CONTRACT_SIGNED, "%m")
+      supplier_item$month <- as.numeric(strftime(supplier_item$DT_CONTRACT_SIGNED, "%m"))
       
-      supplier_item$year <- strftime(supplier_item$DT_CONTRACT_SIGNED, "%Y")
+      supplier_item$year <- as.numeric(strftime(supplier_item$DT_CONTRACT_SIGNED, "%Y"))
       
       supplier_item$month <- as.numeric(supplier_item$month)
       
-      supplier_item$year_month <- as.Date(paste0(supplier_item$year, "-", supplier_item$month, "-01"))
+      supplier_item$year_month <- as.Date(paste0(supplier_item$year, "-", supplier_item$month, "-30"))
       
       
       firm_item <- supplier_item%>%
-        mutate(semester = ifelse(month <= 06, "01", "07"))
+        mutate(semester = ifelse(month <= 06, "03", "07"))
 
-      firm_item$semester <- paste0(firm_item$year, "-", firm_item$semester, "-01")
+      firm_item$semester <- paste0(firm_item$year, "-", firm_item$semester, "-30")
+      
+      # calculate the number of different products supplied by firms within 6 months 
+      firm_item_sum <- firm_item%>%
+        group_by(ID_PARTY, semester)%>%
+        dplyr::summarise(num_unspsc = n_distinct(ID_ITEM_UNSPSC))%>%
+        ungroup()
+      
+      firm_item_sum_stats <- firm_item_sum%>%
+        group_by(semester)%>%
+        dplyr::summarise(num_unspsc_sum = sum(num_unspsc))%>%
+        ungroup()
+      
+      # revise names 
+       firm_item_sum_stats$semester <- as.Date(firm_item_sum_stats$semester)
+      
+      ggplot(firm_item_sum_stats, aes(x = semester, y = num_unspsc_sum))+
+        
+        # draw a line graph for two groups
+        geom_line()+
+        
+        # add point plots and define colors 
+        geom_point(data = firm_item_sum_stats, shape = 16, size = 3) +
+
+        # add a vertical line to show treatment 
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
+        labs(x = "Contract Signature Date (aggregate by semester)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
+             subtitle = "Number of different products supplied by firm from Jan 2015 - Jul 2022",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.9, 0.8),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        scale_y_continuous(position = "right")
+      
+      
+      # add percent to x axis, if needed 
+      # scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
+      
+      
+      ggsave(filename = file.path(output, "/product_classification_sum.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
+
+      
+      # 8.2 the average unique UNSPSC code firms have supplied within 6 months 
       
       # assign observations to groups (covid firm) 
       firm_item <- left_join(firm_item, covid_firm, by = "ID_PARTY")
       
-      # calculate average unique UNSPSC code firms have supplied within 6 months 
+      # calculation 
       firm_item_avg <- firm_item%>%
         dplyr::rename(Group = covid_firm)%>%
         group_by(ID_PARTY, semester, Group)%>%
@@ -1760,7 +1958,7 @@
         geom_point(data = firm_item_stats %>% filter(Group == "Non-COVID"), aes(x = semester, y = num_unspsc_avg), shape = 18, size = 4, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -1784,23 +1982,26 @@
           plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
         
         # change title and subtitles 
-        labs(x = "Contract Signature Date (every 6 months)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
-             subtitle = "Average number of different UNSPSC product codes that firms have supplied from Jan 2019 - Jul 2022",
+        labs(x = "Contract Signature Date (aggregate by semester)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
+             subtitle = "Average number of different UNSPSC product codes that firms have supplied from Jan 2015 - Jul 2022",
              caption ="Note: data retrieved from ONCAE in Aug 2022.")+
         
         # add legend to the middle of the graph 
-        theme(legend.position = c(0.2, 0.85),
+        theme(legend.position = c(0.9, 0.8),
               legend.background = element_rect(fill = "white"))+
         theme(plot.caption = element_text(hjust = 0))+
         
         # set the background of the legend as blank. ps. you have to add this for line graphs 
-        theme(legend.key=element_blank())+
+        theme(legend.key=element_blank()) +
         
+        scale_y_continuous(position = "right")
+        
+      
         # add percent to x axis, if needed 
-        scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
+        # scale_y_continuous(position = "right", labels = scales::percent_format(accuracy = 1))
       
       
-      ggsave(filename = paste0(output, "/product_classification.jpeg"),
+      ggsave(filename = file.path(output, "/product_classification_avg.jpeg"),
              width = 10,
              height = 8,
              units = c("in"),
@@ -1817,9 +2018,13 @@
         spread(year, num_unspsc)%>%
         clean_names()%>%
         replace(is.na(.), 0)%>%
-        mutate(product_increase = case_when(x2020 > x2019 | x2021 > x2019 ~ 1,
+        mutate(product_increase = case_when(x2020 > x2015 | x2021 > x2015 ~ 1,
                                             TRUE ~ 0))%>%
-        dplyr::rename("2019" = "x2019",
+        dplyr::rename("2015" = "x2015",
+                      "2016" = "x2016",
+                      "2017" = "x2017",
+                      "2018" = "x2018",
+                      "2019" = "x2019",
                       "2020" = "x2020",
                       "2021" = "x2021",
                       "2022" = "x2022")%>%
@@ -1842,17 +2047,18 @@
       
       firm_product_stats
       
-      # 8.3 firms that sold COVID products in 2019, do they sell COVID products in 2020? 
+      
+      # 8.3 firms that sold COVID products in 2015, do they sell COVID products in 2020? 
         
-          # flag firms that sell COVID products in 2019 
-      COVID_firm_2019 <- firm_item %>%
-        filter(year == 2019 &
+          # flag firms that sell COVID products in 2015 
+      COVID_firm_2015 <- firm_item %>%
+        filter(year == 2015 &
                  covid_firm == 1)%>%
         distinct(ID_PARTY, covid_firm)
       
       firm_item_COVID <- firm_item %>%
-        left_join(COVID_firm_2019, by = "ID_PARTY", suffix = c("", "_2019"))%>%
-        mutate_at(c("covid_firm_2019"), ~replace_na(., 0))%>%
+        left_join(COVID_firm_2015, by = "ID_PARTY", suffix = c("", "_2015"))%>%
+        mutate_at(c("covid_firm_2015"), ~replace_na(., 0))%>%
         
          # whether a firm sells COVID items in 2020 
         mutate(covid_item_2020 = case_when(year_month >= "2020-01-01" & year_month <= "2020-12-01" & covid_item == 1 ~ 1))%>%
@@ -1865,7 +2071,7 @@
       
       firm_item_covid_2020 <- firm_item_COVID%>%
         filter(year <= 2020)%>%
-        group_by(covid_firm_2019, covid_item_2020)%>%
+        group_by(covid_firm_2015, covid_item_2020)%>%
         dplyr::summarise(num_firm = n_distinct(ID_PARTY))%>%
         ungroup()
       
@@ -1873,28 +2079,51 @@
       
       firm_item_covid_2021 <- firm_item_COVID%>%
         filter(year <= 2021)%>%
-        group_by(covid_firm_2019, covid_item_2021)%>%
+        group_by(covid_firm_2015, covid_item_2021)%>%
         dplyr::summarise(num_firm = n_distinct(ID_PARTY))%>%
         ungroup()
       
       firm_item_covid_2021
-        # thus, there are a good number of firms that sold COVID item in 2019 but did not sell COVID items during COVID. 
+        # thus, there are a good number of firms that sold COVID item in 2015 but did not sell COVID items during COVID. 
 
 # DiD ------------------------------------------------------------------------------------------------------------
       
       # assign observations to group 
       firm_item_did <- firm_item %>%
-        mutate(covid_firm_2019 = ifelse(year == 2019 & covid_item == 1, 1, 0))
+        mutate(covid_firm_2019 = ifelse(year == 2019 & covid_item == 1, 1, 0),
+               noncovid_firm_2019 = ifelse(year == 2019 & covid_item != 1, 1, 0),
+               nocontract_firm_2019 = ifelse(covid_firm_2019 == 0 & noncovid_firm_2019 == 0, 1, 0))
       
-      firm_item_group <- firm_item_did%>%
+      firm_item_group_covid <- firm_item_did%>%
         group_by(ID_PARTY)%>%
-        dplyr::summarise(Group = sum(covid_firm_2019, na.rm = TRUE))%>%
+        dplyr::summarise(COVID = sum(covid_firm_2019, na.rm = TRUE))%>%
         ungroup()%>%
-        mutate(Group = ifelse(Group > 0, "COVID", "Non-COVID"))
+        mutate(COVID = ifelse(COVID > 0, "COVID", "Other"))
       
-      firm_item_did <- left_join(firm_item_did, firm_item_group, by = "ID_PARTY")
+      firm_item_did <- left_join(firm_item_did, firm_item_group_covid, by = "ID_PARTY")
       
-      # generate a 2019 unspsc string 
+      firm_item_group_noncovid <- firm_item_did%>%
+        group_by(ID_PARTY)%>%
+        dplyr::summarise(NONCOVID = sum(noncovid_firm_2019, na.rm = TRUE))%>%
+        ungroup()%>%
+        mutate(NONCOVID = ifelse(NONCOVID > 0, "NONCOVID", "Other"))
+      
+      firm_item_did <- left_join(firm_item_did, firm_item_group_noncovid, by = "ID_PARTY")
+
+      firm_item_group_nocontract <- firm_item_did%>%
+        group_by(ID_PARTY)%>%
+        dplyr::summarise(NOCONTRACT = sum(nocontract_firm_2019, na.rm = TRUE))%>%
+        ungroup()%>%
+        mutate(NOCONTRACT = ifelse(NOCONTRACT > 0, "NOCONTRACT", "Other"))
+      
+      firm_item_did <- left_join(firm_item_did, firm_item_group_nocontract, by = "ID_PARTY")
+      
+      firm_item_did <- firm_item_did %>%
+        mutate(Group = ifelse(COVID == "COVID", "COVID",
+                              ifelse(NONCOVID == "NONCOVID", "Non-COVID", "No Contract")))
+            
+      
+      # generate a 2019 unspsc string non
       firm_item_2019 <- firm_item_did%>%
         filter(year == 2019)%>%
         select(ID_PARTY, ID_ITEM_UNSPSC)%>%
@@ -1926,37 +2155,45 @@
       firm_item_did$unspsc_new <- ifelse(firm_item_did$Flag == "TRUE", 0, 1)
       
       
-      # average number of new product sold since 2020 
+      # average number of new product sold since 2020 by semester
+      firm_item_did$month <- as.numeric(firm_item_did$month)
+      
+      firm_item_did <- firm_item_did%>%
+        mutate(semester = ifelse(month <= 06, "03", "07"))
+      
+      firm_item_did$semester <- paste0(firm_item$year, "-", firm_item$semester, "-30")
+      
       firm_item_avg_new <- firm_item_did%>%
-        group_by(ID_PARTY, Group, year_month)%>%
+        filter(year >= 2020)%>%
+        group_by(ID_PARTY, Group, semester)%>%
         dplyr::summarise(sum_new = sum(unspsc_new, na.rm = TRUE))%>%
-        group_by(Group, year_month)%>%
+        group_by(Group, semester)%>%
         dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
         ungroup()%>%
-        ungroup()%>%
-        filter(year_month >= "2020-01-01")
+        ungroup()
       
 
-      ggplot(firm_item_avg_new, aes(x = year_month, y = avg_new, group = Group))+
+      ggplot(firm_item_avg_new, aes(x = semester, y = avg_new, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
         
         # set line type separately 
-        scale_linetype_manual(values=c("solid", "dotted"))+
+        scale_linetype_manual(values=c("solid", "dotted", "dotdash"))+
         
         # set color separately 
-        scale_color_manual(values=c('#FF0100','#18466E'))+
+        scale_color_manual(values=c('#FF0100','#18466E', "#66CC99"))+
         
         # set size separately 
-        scale_size_manual(values=c(1, 0.8))+
+        scale_size_manual(values=c(1, 0.8, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = firm_item_avg_new %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = firm_item_avg_new %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = firm_item_avg_new %>% filter(Group == "COVID"), aes(x = semester, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new %>% filter(Group == "Non-COVID"), aes(x = semester, y = avg_new), shape = 18, size = 3, color = "#66CC99") +
+        geom_point(data = firm_item_avg_new %>% filter(Group == "No Contract"), aes(x = semester, y = avg_new), shape = 17, size = 3, color = "#18466E") +
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        # geom_vline(xintercept=2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -2005,36 +2242,38 @@
       
       # average number of new COVID product 
       firm_item_avg_new_COVID <- firm_item_did%>%
+        filter(year >= 2020)%>%
         mutate(new_COVID = unspsc_new * covid_item)%>%
-        group_by(ID_PARTY, Group, year_month)%>%
+        group_by(ID_PARTY, Group, semester)%>%
         dplyr::summarise(sum_new = sum(new_COVID, na.rm = TRUE))%>%
-        group_by(Group, year_month)%>%
+        group_by(Group, semester)%>%
         dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
         ungroup()%>%
-        ungroup()%>%
-        filter(year_month >= "2020-01-01")
+        ungroup()
       
       
-      ggplot(firm_item_avg_new_COVID, aes(x = year_month, y = avg_new, group = Group))+
+      ggplot(firm_item_avg_new_COVID, aes(x = semester, y = avg_new, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
         
         # set line type separately 
-        scale_linetype_manual(values=c("solid", "dotted"))+
+        scale_linetype_manual(values=c("solid", "dotted", "dotdash"))+
         
         # set color separately 
-        scale_color_manual(values=c('#FF0100','#18466E'))+
+        scale_color_manual(values=c('#FF0100','#18466E', "#66CC99"))+
         
         # set size separately 
-        scale_size_manual(values=c(1, 0.8))+
+        scale_size_manual(values=c(1, 0.8, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "COVID"), aes(x = semester, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "Non-COVID"), aes(x = semester, y = avg_new), shape = 18, size = 3, color = "#66CC99") +
+        geom_point(data = firm_item_avg_new_COVID %>% filter(Group == "No Contract"), aes(x = semester, y = avg_new), shape = 17, size = 3, color = "#18466E") +
+        
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        # geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -2085,36 +2324,39 @@
       
       # average number of new non-COVID product 
       firm_item_avg_new_non_COVID <- firm_item_did%>%
+        filter(year >= 2020)%>%
         mutate(new_non_COVID = ifelse(unspsc_new == 1 & covid_item == 0, 1, 0))%>%
-        group_by(ID_PARTY, Group, year_month)%>%
+        group_by(ID_PARTY, Group, semester)%>%
         dplyr::summarise(sum_new = sum(new_non_COVID, na.rm = TRUE))%>%
-        group_by(Group, year_month)%>%
+        group_by(Group, semester)%>%
         dplyr::summarise(avg_new = mean(sum_new, na.rm = TRUE))%>%
         ungroup()%>%
-        ungroup()%>%
-        filter(year_month >= "2020-01-01")
+        ungroup()
       
 
-      ggplot(firm_item_avg_new_non_COVID, aes(x = year_month, y = avg_new, group = Group))+
+      ggplot(firm_item_avg_new_non_COVID, aes(x = semester, y = avg_new, group = Group))+
         
         # draw a line graph for two groups
         geom_line(aes(color = Group, linetype = Group, size = Group))+
         
         # set line type separately 
-        scale_linetype_manual(values=c("solid", "dotted"))+
+        scale_linetype_manual(values=c("solid", "dotted", "dotdash"))+
         
         # set color separately 
-        scale_color_manual(values=c('#FF0100','#18466E'))+
+        scale_color_manual(values=c('#FF0100','#18466E', "#66CC99"))+
         
         # set size separately 
-        scale_size_manual(values=c(1, 0.8))+
+        scale_size_manual(values=c(1, 0.8, 0.8))+
         
         # add point plots and define colors 
-        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "COVID"), aes(x = year_month, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
-        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "Non-COVID"), aes(x = year_month, y = avg_new), shape = 18, size = 4, color = "#18466E") +
+        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "COVID"), aes(x = semester, y = avg_new), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "Non-COVID"), aes(x = semester, y = avg_new), shape = 18, size = 3, color = "#66CC99") +
+        geom_point(data = firm_item_avg_new_non_COVID %>% filter(Group == "No Contract"), aes(x = semester, y = avg_new), shape = 17, size = 3, color = "#18466E") +
+        
+        
         
         # add a vertical line to show treatment 
-        geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        # geom_vline(xintercept=as.Date("2020-01-01"), color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
         
         # set the theme, including background, and present the axis of the line graphs 
         theme(
@@ -2164,10 +2406,12 @@
       
       
 # Open Procurement Methods --------------------------------------------------
+      
+      
       # assign COVID dummy to tender-item data 
       tender_item <- left_join(tender_item, covid_item, by = "ID_ITEM") # perfect match 
       
-      # CAT_TENDER_METHOD
+      # generate summary statistics 
       method_num <- tender_item%>%
         mutate(noncovid_item = 1-covid_item)%>%
         group_by(CAT_TENDER_METHOD)%>%
@@ -2207,50 +2451,115 @@
       # 7 International public bidding 5 15
       # 8 National public tender 74 631
       
-      # calculate the monthly share 
-      tender_item$month <- strftime(tender_item$DT_TENDER_PUB, "%m")
-      
-      tender_item$year <- strftime(tender_item$DT_TENDER_PUB, "%Y")
-      
-      tender_item$month <- as.numeric(tender_item$month)
-      
-      tender_item$year_month <- as.Date(paste0(tender_item$year, "-", tender_item$month, "-01"))
-      
-      
-      # method_num_month <- tender_item%>%
-      #   mutate(noncovid_item = 1-covid_item)%>%
-      #   group_by(CAT_TENDER_METHOD, year_month)%>%
-      #   dplyr::summarise(across(c(covid_item, noncovid_item),sum),
-      #                    .groups = 'drop') %>%
-      #   ungroup()%>%
-      #   dplyr::rename("Procurement Method" = "CAT_TENDER_METHOD",
-      #                 "COVID" = "covid_item",
-      #                 "Non-COVID" = "noncovid_item",
-      #                 "Month" = "year_month")%>%
-      #   mutate(total = COVID + `Non-COVID`,
-      #          COVID = 100*(COVID/total), 
-      #          `Non-COVID` = 100*(`Non-COVID`/total))%>%
-      #   pivot_longer(cols=c("COVID", "Non-COVID"),
-      #                names_to='Group',
-      #                values_to='Share')
-      #   
+      # add semester dummy
+      # tender_item$month <- strftime(tender_item$DT_TENDER_PUB, "%m")
       # 
-      # ggplot(method_num_month, aes(x = Month, y = Share, group = Group, color = Group))+
-      #   geom_line()+
-      #   theme_classic()+
-      #   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.5))+
-      #   geom_vline(xintercept=as.Date("2020-01-01"), color="gray", size=1)+
-      #   labs(x = "Contract Signature Date (every 6 months)", y = "Number of Unique UNSPSC Commodity Code", title = "Product Classification",
-      #        subtitle = "Average number of different UNSPSC product codes that firms have supplied from Jan 2019 - Jul 2022",
-      #        caption ="Note: data retrieved from ONCAE in Aug 2022.")+
-      #   theme(legend.position = "bottom")+
-      #   theme(plot.caption = element_text(hjust = 0))
+      # tender_item$year <- strftime(tender_item$DT_TENDER_PUB, "%Y")
       # 
-      # ggsave(filename = paste0(output, "/procurement_method.jpeg"),
-      #        width = 10,
-      #        height = 8,
-      #        units = c("in"),
-      #        dpi = 300)
+      # tender_item$month <- as.numeric(tender_item$month)
+      # 
+      # tender_item$year_month <- as.Date(paste0(tender_item$year, "-", tender_item$month, "-01"))
+      # 
+      # tender_item <- tender_item%>%
+      #   mutate(semester = ifelse(month <= 06, "03", "07"))
+      # 
+      # tender_item$semester <- paste0(tender_item$year, "-", tender_item$semester, "-30")
+      
+      # classify procurement method 
+      contract_value <- contract_supplier%>%
+        select(ID_CONTRACT, AMT_CONTRACT_VALUE_USD)%>%
+        distinct()
+      
+      tender_contract <- left_join(tender_contract, contract_value, by = "ID_CONTRACT")
+      
+      method_share <- tender_contract %>%
+        mutate(method = ifelse(CAT_TENDER_METHOD_DETAIL == "Compra Menor" |
+                                 CAT_TENDER_METHOD_DETAIL == "Concurso privado"|
+                                 CAT_TENDER_METHOD_DETAIL == "Contratación directa"|
+                                 CAT_TENDER_METHOD_DETAIL == "Licitación privada"|
+                                 CAT_TENDER_METHOD_DETAIL == "Convenio Marco", "close", "open"))
+      
+      
+      # calculate the share of contract value of each procurement method 
+      method_share_stats <- method_share%>%
+        group_by(method, semester)%>%
+        dplyr::summarise(contract_sum = sum(AMT_CONTRACT_VALUE_USD, na.rm = TRUE))%>%
+        ungroup()%>%
+        pivot_wider(names_from = method, values_from = contract_sum)%>%
+        mutate(total = close + open)%>%
+        mutate(open = open/total,
+               close = close/total)
+      
+      method_share_stats_long <- method_share_stats %>%
+        pivot_longer(cols = c(open, close),
+                     names_to = "Group",
+                     values_to = "value")
+      
+      # visualization 
+      ggplot(method_share_stats_long, aes(x = semester, y = value, group = Group))+
+        
+        # draw a line graph for two groups
+        geom_line(aes(color = Group, linetype = Group, size = Group))+
+        
+        # set line type separately 
+        scale_linetype_manual(values=c("solid", "dotted"))+
+        
+        # set color separately 
+        scale_color_manual(values=c('#FF0100', "18466E"))+
+        
+        # set size separately 
+        scale_size_manual(values=c(1, 0.8))+
+        
+        # add point plots and define colors 
+        geom_point(data = method_share_stats_long %>% filter(Group == "close"), aes(x = semester, y = value), shape = 16, size = 3, color = "#FF0100") +
+        geom_point(data = method_share_stats_long %>% filter(Group == "open"), aes(x = semester, y = value), shape = 18, size = 3, color = "#18466E") +
+        
+        # add a vertical line to show treatment 
+        geom_vline(xintercept= 2.5, color = "gray80", alpha = 0.5, size = 1, linetype = 2)+
+        
+        # set the theme, including background, and present the axis of the line graphs 
+        theme(
+          aspect.ratio = 3.2/7,
+          text = element_text(family = "Roboto"),
+          plot.margin = margin(0, 5, 0, 5),
+          panel.background = element_rect(fill = "white"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.major.y = element_line(color = "darkgrey"),
+          axis.ticks.length = unit(.25, "cm"),
+          # legend.text = element_blank(),
+          # legend.title = element_blank(),
+          legend.key.width = unit(25,"pt"),
+          legend.key.height = unit(15, "pt"),
+          axis.text.x = ggtext::element_markdown(size = 12, color = "black", angle = 55, hjust = 1),
+          axis.text.y = ggtext::element_markdown(size = 12, color = "black"),
+          axis.line.x  = element_line(color = "gray8"),
+          axis.ticks.y = element_blank(),
+          plot.title = element_text(size = rel(1.5), hjust = 0, face = "bold", vjust = 5),
+          plot.caption = element_text(hjust = 0, size = 9),
+          plot.subtitle = element_text(size = rel(1), hjust = 0, vjust = 5))+
+        
+        # change title and subtitles 
+        labs(x = "Contract Signature Date (aggregate by semester)", y = "Share of Contract Value", title = "Procurement Method",
+             subtitle = "The Share of Contract Value of Each Procurement Method",
+             caption ="Note: data retrieved from ONCAE in Aug 2022.")+
+        
+        # add legend to the middle of the graph 
+        theme(legend.position = c(0.85, 0.85),
+              legend.background = element_rect(fill = "white"))+
+        theme(plot.caption = element_text(hjust = 0))+
+        
+        # set the background of the legend as blank. ps. you have to add this for line graphs 
+        theme(legend.key=element_blank())+
+        
+        # add percent to x axis, if needed 
+        scale_y_continuous(position = "right")
+      
+
+      ggsave(filename = paste0(output, "/procurement_method.jpeg"),
+             width = 10,
+             height = 8,
+             units = c("in"),
+             dpi = 300)
       
       
       
