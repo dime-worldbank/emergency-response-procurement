@@ -62,20 +62,30 @@ use  id_bidding  value_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-it
 gcollapse (sum) volume_tender = value_item, by(id_bidding)
 	
 merge 1:1 id_bidding  using `merge_data', keep(3) nogen
-		
-* Labeling data
-label data  "Brazil tender data - 01/2013-06/2022"
 
-* Ordering
-order year_month id_bidding methods purchase_method volume_tender D_covid D_law_926_2020
-sort  year_month id_bidding
-
-
+* Decisition time variable
 gen decision_time = date_result - date_open
 	label var decision_time "time between open process and having a winner"
 gen decision_time_trim = date_result - mdy(month(dofm(year_month)),1,year(dofm(year_month)))
 	label var decision_time_trim "time between trim open process and having a winner"
 
+* Including location information
+global temppath "C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil\01-portal_da_transparencia\02-import"
+
+clonevar ug_id= id_ug 
+
+merge m:1 ug_id using  "${temppath}/04-buyer_data.dta", keep(3) nogen keepusing(ug_id  ug_state_code ug_munic_code )
+drop ug_id
+
+* Labeling data
+label data  "Brazil tender data - 01/2013-06/2022"
+
+* Ordering
+order year_month id_bidding methods purchase_method  ug_state_code ug_munic_code volume_tender D_covid D_law_926_2020
+sort  year_month id_bidding
+
+label var ug_state_code "manage unit state code"
+label var ug_state_code "manage unit municipality code"
 
 * Saving
 compress

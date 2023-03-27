@@ -15,6 +15,7 @@
 	* defying path
 	* 1: Leandro Justino
 	if "`c(username)'" == "leand" {	
+		global procurement_data	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil"
 		global path_KCP_BR    	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\04-KCP\01-KCP-Brazil"
 		global path_firm   		"C:\Users\leand\Dropbox\3-Profissional\00-Base de dados\06-socios\6_clean"	
  		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
