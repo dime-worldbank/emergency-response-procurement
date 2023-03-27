@@ -36,7 +36,7 @@
 				*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
 				*/ title("")  xline(`=yh(2020,1)' ,  lc(gs8) lp(dash))
 				
-			* Covid shadow
+		* Covid shadow
 		global covid_shadow_semmester /*
 		 */	xline(`=yh(2020,2)' , lwidth(4.5)  lc(gs14))  /* 
 		 */	xline(`=yh(2021,2)' , lwidth(9)    lc(gs14))    /*
@@ -70,7 +70,7 @@
 				
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P4-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
@@ -88,7 +88,7 @@
 		 
 		* graphs configuration
 		global opt_year xlabel(2015(1)2022 , angle(90))  /*
-				*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(0(0.1)0.6, angle(0) nogrid) /*
+				*/ graphregion(color(white)) xsize(10) ysize(5) /*
 				*/ title("")  xline( 2020 ,  lc(gs8) lp(dash))
 		
 		global group_covid "Covid_item_level" 
@@ -113,8 +113,61 @@
 				
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P4-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
+	}
+	.
+}
+.
+
+* 02: Graph trend stand
+{
+	use "${path_project}/1_data/05-Lot_item_data",clear
+	keep if inrange(year_quarter,yq(2015,1),yq(2021,4))
+	
+	* Covid items
+	keep if type_item	== 1
+	keep if D_item_unit_price_sample	== 1
+
+	* year month
+	gen year  = year(dofm(year_month))
+	gen month = month(dofm(year_month))
+	gen year_semester = yh(year ,ceil(month/6)) 
+		format %th year_semester	
+ 		
+	gcollapse (mean) avg_price = unit_price_filter avg_log_price = log_unit_price_filter  ///
+			   (sd)  sd_price  = unit_price_filter sd_log_price  = log_unit_price_filter  ///
+			   , by(item_5d_code Covid_item_level year_semester)
+	
+	* Using price standardize by 2015
+	bys item_5d_code (year_semester): gen std_price = (avg_price-avg_price[1])/sd_price[1]
+	
+	* Using price standardize by 2015
+	bys item_5d_code (year_semester): gen std_log_price = (avg_log_price-avg_log_price[1])/sd_log_price[1]
+	
+	gcollapse (mean) std_price std_log_price , by(Covid_item_level year_semester)
+	
+	label var std_price "E[unit price standardize by 2015]"
+	label var std_log_price "E[log(unit price standardize by 2015)]" 
+ 	
+	* Graph 01: 1/N_bidders
+	format %15.2gc std_price std_log_price
+	
+	* Graph All class 
+	foreach y_dep of varlist  std_price std_log_price {
+		
+ 		* Plotting
+		tw 		(scatter `y_dep'  year_semester if ${group_covid} == 3 , ${High_covid_scatter_opt}		) ///
+			|| 	(scatter `y_dep'  year_semester if ${group_covid} == 2 , ${Medium_covid_scatter_opt} 	) ///
+			||	(scatter `y_dep'  year_semester if ${group_covid} == 1 , ${Low_covid_scatter_opt} 		) ///
+			|| 	(scatter `y_dep'  year_semester if ${group_covid} == 0 , ${No_covid_scatter_opt} 		) ///
+			,  legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4))   	  ///
+			note("Sample of selected products") ///
+			${covid_shadow_semmester} ${opt_semester} 
+			
+		* exporing
+		compress
+		graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 	}
 	.
 }

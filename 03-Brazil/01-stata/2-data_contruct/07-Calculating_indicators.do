@@ -26,8 +26,10 @@
 			unit_price				/// unit price
 			value_item				/// item value_item
 			Covid_item_level		///  Covid item
-			id_bidding id_ug
-			
+			id_bidding id_ug		///
+			D_same_munic_win D_same_state_win ///
+			log_unit_price_filter  unit_price_filter
+			 
 		* Sample 1: ALL
 			gen share_S1_sme_win 				= SME 
 			gen share_S1_material				= D_product
@@ -38,8 +40,9 @@
 			gen avg_S1_unit_price_non_restrict	= unit_price
 			gen avg_S1_value_item				= value_item
 			gen avg_S1_participants				= N_participants
+			gen share_S1_location_munic			= D_same_munic_win
+			gen share_S1_location_state			= D_same_state_win
 			gen share_S1_sme_participants 		= share_SME  
-
 		
 		* Sample 2: Only Auction 
 			gen N_S2_new_winnes 				= D_new_winner	 if D_auction == 1
@@ -54,6 +57,8 @@
 			gen share_S3_sme_win 				= SME 			 if D_product == 1
 			gen avg_S3_decision_time 			= decision_time  if D_product == 1
 			gen avg_S3_value_item				= value_item 	 if D_product == 1
+			gen avg_S3_unit_price_filter		= unit_price_filter	 if D_product == 1
+			gen avg_S3_log_unit_price_filter	= log_unit_price_filter	 if D_product == 1
 			gen avg_S3_value_covid_high			= value_item 	 if D_product == 1 & Covid_item_level==3
 			gen avg_S3_value_covid_med			= value_item 	 if D_product == 1 & Covid_item_level==2
 			gen avg_S3_value_covid_low			= value_item 	 if D_product == 1 & Covid_item_level==1
@@ -162,7 +167,28 @@
 			foreach var of varlist share_S*_sme_participants  {
 				label var `var' "Share SME participants"
 			}
-			.			
+			.
+ 
+			foreach var of varlist share_S*_location_munic {
+				label var `var' "Share same municipality"
+			}
+			.
+			
+			foreach var of varlist share_S*_location_state {
+				label var `var' "Share same state"
+			}
+			.
+			
+			foreach var of varlist avg_S*_unit_price_filter  {
+				label var `var' "E[unit price selected products|selected products]"
+			}
+			.
+			
+			foreach var of varlist avg_S*_log_unit_price_filter  {
+				label var `var' "E[log(unit price)|selected products]"
+			}
+			.	
+
 		}
 		.
 	}
@@ -326,5 +352,131 @@
 }
 .
 
-
+* 3: Firms that starts to sell covid items
+{
+		* reading
+		use year_month id_bidder year_month Covid_item_level SME type_item  item_5d_code  item_5d_name ///
+			using "${path_project}/1_data/05-Lot_item_data",clear
+			
+		* year month
+		gen year  = year(dofm(year_month))
+			
+		keep if inrange(year, 2018,2020)
+		
+		gen win =1
+		gcollapse (sum) win, by(id_bidder year Covid_item_level) 
+		reshape wide win, i(id_bidder year) j(Covid_item_level)
+		
+		gegen id_num = group(id_bidder)
+		xtset id_num year
+		
+		foreach var of varlist win* {
+			replace `var' = 0 if `var' ==.
+		}
+		
+ 		
+		cap drop start_covid*
+		gen covid_product = (win1+win2+win3) >=1
+		gen start_covid_product_1     = (covid_product>0) &  L1.covid_product == 0 
+		gen start_covid_product_2     = (covid_product>0) &  L1.covid_product == . 
+		gen start_covid_product_3     = (covid_product>0) & (L1.covid_product != . & L1.covid_product > 0)
+		
+		gcollapse (sum) covid_product (mean) start_covid_product_*, by(year) freq(N)
+		order year N covid_product start_covid_product_*
+		
+		label var year					"year tender"
+		label var covid_product  		"Number of covid item sellers"
+		label var N						"Number of unique sellers"
+		label var start_covid_product_1 "Firm didn't sell covid item"
+		label var start_covid_product_2 "Firm didn't win tender"
+		label var start_covid_product_3 "Firm sold covid item"
+		
+		keep if inrange(year,2019,2020)
+		
+		format %10.3fc start_covid_*
+		
+		
+		global vars 	N	covid_product	start_covid_product_1	start_covid_product_2	start_covid_product_3
+		
+ 		foreach  var of varlist start* {
+			replace `var' = `var'*100
+		}
+		.
+		 	
+		eststo drop *
+		eststo stats_2019: quietly estpost summarize $vars  if year == 2019 ,d 
+		eststo stats_2020: quietly estpost summarize $vars  if year == 2020 ,d   
+		
+		
+		esttab stats_2019 stats_2020 using 	///
+			"${overleaf}/01_tables/P2-Firms_starts_covid.tex",	/// 
+			cells("mean(fmt(%12.4gc))") mtitles("2019" "2020") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
  
+}
+ 
+ 
+* 4: Firms that starts to sell covid items
+{
+		* reading
+		use year_month id_bidder year_month Covid_item_level SME type_item  item_5d_code  item_5d_name ///
+			using "${path_project}/1_data/05-Lot_item_data",clear
+			
+		* year month
+		gen year  = year(dofm(year_month))
+			
+		keep if inrange(year, 2018,2020)
+		
+		gen win =1
+		gcollapse (sum) win, by(id_bidder year Covid_item_level) 
+		reshape wide win, i(id_bidder year) j(Covid_item_level)
+		
+		gegen id_num = group(id_bidder)
+		xtset id_num year
+		
+		foreach var of varlist win* {
+			replace `var' = 0 if `var' ==.
+		}
+		
+ 		
+		cap drop start_covid*
+		gen covid_product = ( win3) >=1
+		gen start_covid_product_1     = (covid_product>0) &  L1.covid_product == 0 
+		gen start_covid_product_2     = (covid_product>0) &  L1.covid_product == . 
+		gen start_covid_product_3     = (covid_product>0) & (L1.covid_product != . & L1.covid_product > 0)
+		
+		gcollapse (sum) covid_product (mean) start_covid_product_*, by(year) freq(N)
+		order year N covid_product start_covid_product_*
+		
+		label var year					"year tender"
+		label var covid_product  		"Number of High covid item sellers"
+		label var N						"Number of unique sellers"
+		label var start_covid_product_1 "Firm didn't sell covid item"
+		label var start_covid_product_2 "Firm didn't win tender"
+		label var start_covid_product_3 "Firm sold covid item"
+		
+		keep if inrange(year,2019,2020)
+		
+		format %10.3fc start_covid_*
+		
+		
+		global vars 	N	covid_product	start_covid_product_1	start_covid_product_2	start_covid_product_3
+		
+		foreach  var of varlist start* {
+			replace `var' = `var'*100
+		}
+		.
+		 	
+		eststo drop *
+		eststo stats_2019: quietly estpost summarize $vars  if year == 2019 ,d 
+		eststo stats_2020: quietly estpost summarize $vars  if year == 2020 ,d   
+		
+		
+		esttab stats_2019 stats_2020 using 	///
+			"${overleaf}/01_tables/P2-Firms_starts_Highcovid.tex",	/// 
+			cells("mean(fmt(%12.2gc))") mtitles("2019" "2020") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
+ 
+}

@@ -69,7 +69,7 @@
 	foreach var of varlist $general_N {
 		replace `var' = 1 if period==0
 	}
-	
+	.
  	
 	eststo drop *
 	eststo stats_10: quietly estpost summarize $desc_sample_1  if period == 0 ,d 
