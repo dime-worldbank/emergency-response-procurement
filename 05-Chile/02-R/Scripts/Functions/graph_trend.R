@@ -22,9 +22,9 @@ graph_trend <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 9, xend = 9, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "gray80", alpha = 0.5, size = 5) +
-      geom_point(data = data %>% filter(!!treatment == 1 & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
-      geom_point(data = data %>% filter(!!treatment == 0 & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#18466E") +
+      annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      geom_point(data = data %>% filter(!!treatment == 1), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
+      geom_point(data = data %>% filter(!!treatment == 0), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_line(data = data %>% filter(!!treatment == 1), aes(x = DT_S, y = !!variable), size = 0.7, color = "#FF0100") +
       geom_line(data = data %>% filter(!!treatment == 0), aes(x = DT_S, y = !!variable), size = 0.7, color = "#18466E", linetype = 2)  +
       labs(title    = title,
@@ -114,7 +114,7 @@ graph_trend <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 2020, xend = 2020, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      annotate("segment", x = 2019.5, xend = 2019.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(!!treatment == 1), aes(x = as.numeric(DT_Y), y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(!!treatment == 0), aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_line(data = data %>% filter(!!treatment == 1), aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#FF0100") +
@@ -295,8 +295,8 @@ graph_trend_no_treat <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 9, xend = 9, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "gray80", alpha = 0.5, size = 5) +
-      geom_point(data = data %>% filter(DT_S != 9), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
+      annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      geom_point(data = data, aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_line(data = data, aes(x = DT_S, y = !!variable), size = 0.7, color = "#FF0100") +
       labs(title    = title,
            subtitle = subtitle,
@@ -400,7 +400,7 @@ graph_trend_three_covid <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 9, xend = 9, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "gray80", alpha = 0.5, size = 5) +
+      annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(tender_covid == "ONLY COVID" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(tender_covid == "ONLY NON COVID" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_point(data = data %>% filter(tender_covid == "MIXED" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#63A15D") +
@@ -498,7 +498,7 @@ graph_trend_three_covid <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 2020, xend = 2020, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      annotate("segment", x = 2019.5, xend = 2019.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(tender_covid == "ONLY COVID"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(tender_covid == "ONLY NON COVID"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_point(data = data %>% filter(tender_covid == "MIXED"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#63A15D") +
@@ -609,7 +609,7 @@ graph_trend_three_medical <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 9, xend = 9, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "gray80", alpha = 0.5, size = 5) +
+      annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(tender_medical == "ONLY COVID" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(tender_medical == "ONLY NON MEDICAL" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_point(data = data %>% filter(tender_medical == "MIXED" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#63A15D") +
@@ -707,7 +707,7 @@ graph_trend_three_medical <- function(
     
     plot <- ggplot() +
       
-      annotate("segment", x = 2020, xend = 2020, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      annotate("segment", x = 2019.5, xend = 2019.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(tender_medical == "ONLY MEDICAL"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(tender_medical == "ONLY NON MEDICAL"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_point(data = data %>% filter(tender_medical == "MIXED"), aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#63A15D") +
