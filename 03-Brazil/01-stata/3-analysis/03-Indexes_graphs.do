@@ -34,7 +34,7 @@
 		* graphs configuration
 		global opt_semester xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  /*
 				*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
-				*/ title("")  xline(`=yh(2020,1)' ,  lc(gs8) lp(dash))
+				*/ title("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
 				
 		* Covid shadow
 		global covid_shadow_semmester /*
@@ -67,7 +67,7 @@
 				,  legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4))   	  ///
 				note("`note_scatter'") ///
 				${covid_shadow_semmester} ${opt_semester} 
-				
+		
 			* exporing
 			compress
 			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
@@ -89,7 +89,7 @@
 		* graphs configuration
 		global opt_year xlabel(2015(1)2022 , angle(90))  /*
 				*/ graphregion(color(white)) xsize(10) ysize(5) /*
-				*/ title("")  xline( 2020 ,  lc(gs8) lp(dash))
+				*/ title("")  xline( 2019.5 ,  lc(gs8) lp(dash))
 		
 		global group_covid "Covid_item_level" 
 		
@@ -110,7 +110,7 @@
 				,  legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4))   	  ///
 				note("`note_scatter'") ///
 				 ${opt_year} 
-				
+			 	
 			* exporing
 			compress
 			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
