@@ -255,9 +255,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bidders_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -280,9 +280,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -309,9 +309,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bidders_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -334,9 +334,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -366,9 +366,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/one_bidder_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -392,9 +392,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -420,9 +420,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/one_bidder_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -446,9 +446,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -478,9 +478,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_bid_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -504,9 +504,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -532,9 +532,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_bid_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -557,9 +557,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -591,9 +591,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_win_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -617,9 +617,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_win_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -645,9 +645,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_win_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -671,9 +671,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/smes_win_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -706,9 +706,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_bid_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -731,9 +731,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_bid_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -759,9 +759,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_bid_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -784,9 +784,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_bid_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -820,9 +820,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -845,9 +845,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -873,9 +873,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -898,9 +898,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -932,9 +932,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_win_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -957,9 +957,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_win_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -985,9 +985,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_win_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1011,9 +1011,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_win_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1045,9 +1045,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_win_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1071,9 +1071,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1099,9 +1099,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_win_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1125,9 +1125,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1315,9 +1315,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1343,9 +1343,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1369,9 +1369,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1397,9 +1397,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1431,9 +1431,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1459,9 +1459,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1485,9 +1485,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1513,9 +1513,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1539,9 +1539,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1567,9 +1567,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1593,9 +1593,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1621,9 +1621,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1814,9 +1814,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1842,9 +1842,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1868,9 +1868,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1896,9 +1896,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1928,9 +1928,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1956,9 +1956,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1982,9 +1982,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2010,9 +2010,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2036,9 +2036,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2064,9 +2064,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2090,9 +2090,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2118,9 +2118,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2149,9 +2149,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_time_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2177,9 +2177,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_time_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2203,9 +2203,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_time_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2231,9 +2231,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_time_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2261,9 +2261,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_process_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2289,9 +2289,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_process_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2315,9 +2315,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_process_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2343,9 +2343,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_process_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2374,9 +2374,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_submission_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2402,9 +2402,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_submission_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2428,9 +2428,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2456,9 +2456,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2482,9 +2482,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2510,9 +2510,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2536,9 +2536,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2564,9 +2564,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2597,9 +2597,9 @@ plot <- graph_trend_no_treat(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_products_bid_.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2631,9 +2631,9 @@ plot <- graph_trend_no_treat(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_products_semester_bid_.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2664,9 +2664,9 @@ plot <- graph_trend_no_treat(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_products_win_.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2698,9 +2698,9 @@ plot <- graph_trend_no_treat(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_products_semester_win_.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2735,9 +2735,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bid_sector.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2772,9 +2772,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bid_semester_sector.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2809,9 +2809,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_win_sector.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2846,9 +2846,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_win_semester_sector.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2891,9 +2891,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/hhi_year_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2936,9 +2936,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/hhi_semester_medic.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -2992,9 +2992,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3016,9 +3016,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3068,9 +3068,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_medical.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3094,9 +3094,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_medical.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3146,9 +3146,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3170,9 +3170,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3222,9 +3222,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_medical.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3248,9 +3248,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_medical.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3318,9 +3318,9 @@ plot <- graph_trend_three_covid(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_semester.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3341,9 +3341,9 @@ plot <- graph_trend_three_covid(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_year.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3410,9 +3410,9 @@ plot <- graph_trend_three_medical(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_semester.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3433,9 +3433,9 @@ plot <- graph_trend_three_medical(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_year.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3621,9 +3621,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3649,9 +3649,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3675,9 +3675,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3703,9 +3703,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3729,9 +3729,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3757,9 +3757,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3783,9 +3783,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3811,9 +3811,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3837,9 +3837,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3865,9 +3865,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3891,9 +3891,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -3919,9 +3919,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4114,9 +4114,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4142,9 +4142,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4168,9 +4168,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4196,9 +4196,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4228,9 +4228,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4256,9 +4256,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4282,9 +4282,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4310,9 +4310,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4336,9 +4336,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4364,9 +4364,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4390,9 +4390,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic_2.jpeg"),
   plot = plot                                                ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -4418,9 +4418,9 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid_2.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )

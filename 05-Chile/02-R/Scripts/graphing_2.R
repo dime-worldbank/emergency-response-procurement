@@ -42,7 +42,9 @@
         "zoo",
         "haven",
         "extrafont",
-        "fixest"
+        "fixest",
+        "modelsummary",
+        "kableExtra"
       )
     
     # If the package is not installed, then install it 
@@ -187,7 +189,7 @@ set_theme <- function(
       
       print("Ruggero has been selected")
       
-      dropbox_dir  <- "/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package"
+      dropbox_dir  <- "/Users/ruggerodoino/Dropbox/COVID_19"
       github_dir   <- "/Users/ruggerodoino/Documents/GitHub/emergency-response-procurement/05-Chile/02-R/Scripts"
       
     }
@@ -197,8 +199,8 @@ set_theme <- function(
   { # Set working directories
     
     # DATA
-    fin_data <- file.path(dropbox_dir, "Data/Final")
-    int_data <- file.path(dropbox_dir, "Data/Intermediate")
+    fin_data <- file.path(dropbox_dir, "CHILE/Reproducible-Package/Data/Final")
+    int_data <- file.path(dropbox_dir, "CHILE/Reproducible-Package/Data/Intermediate")
     
     
     # CODE
@@ -217,12 +219,30 @@ data_pos_raw <- fread(file = file.path(fin_data, "purchase_orders_raw.csv"), enc
 
 data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1") 
 
-plot_bar_errors <- function(clfe, title, min, max) {
+plot_bar_errors <- function(clfe, title) {
   
   results <- confint(clfe)
   colnames(results) <- c("ci_low", "ci_up")
   results$coefficients <- clfe$coefficients
-  results$year         <- c(2017, 2018, 2019, 2020, 2021, 2022)
+  results$year         <- seq(2016.5, 2022.5, by = 0.5)
+  results <- results %>% add_row(
+    ci_low = 0, 
+    ci_up = 0,
+    year = 2016,
+    coefficients = 0
+  )
+  
+  min = min(unique(results[,1]))
+  min = data.table::fcase(
+    min < 5 & min > -5, plyr::round_any(min, accuracy = 0.05, f = floor),
+    min > 5 & min < -5, floor(min)
+  )
+  
+  max = max(unique(results[,2]))
+  max = data.table::fcase(
+    max < 5 & max > -5, plyr::round_any(max, accuracy = 0.05, f = ceiling),
+    max > 5 & max < -5, ceiling(min)
+  )
   
   plot <- ggplot()  +
     
@@ -246,22 +266,55 @@ plot_bar_errors <- function(clfe, title, min, max) {
         y = coefficients),
       size = 2) +
     
-    scale_x_continuous(breaks = seq(2016, 2022)) +
+    scale_x_continuous(breaks = seq(2016, 2022.5, by = 0.5),
+                       label = c("S1 2016", "S2 2016",
+                       "S1 2017", "S2 2017",
+                       "S1 2018", "S2 2018",
+                       "S1 2019", "S2 2019",
+                       "S1 2020", "S2 2020",
+                       "S1 2021", "S2 2021",
+                       "S1 2022", "S2 2022"),
+                       limits = c(2016, 2023)) +
     scale_y_continuous(limits = c(min, max)) +
     set_theme( 
       axis_line_x = element_line(),
-      axis_line_y = element_line(),
+      axis_line_y = element_line()
     ) +
     geom_hline(yintercept = 0) +
-    geom_vline(xintercept = 2020, size = 1, color = "red", alpha = 1, linetype = "dotted") +
+    geom_vline(xintercept = 2019.75, size = 1, color = "red", alpha = 1, linetype = "dotted") +
     xlab("") +
     ylab("") +
     ggtitle(
       title
     ) +
-    labs(caption = "The fixed effects included are monthly, product, sector and buyer.")
+    labs(caption = "The fixed effects included are monthly, product, sector and buyer.") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1))
   
   return(plot)
+  
+}
+model_ols <- function(data, dep_var, filename, title) {
+  
+  clfe <- list(feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + ID_ITEM_UNSPSC")),
+                     data = data, vcov = "HC1"),
+               feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER")),
+                     data = data, vcov = "HC1"))
+  
+  rows <- tribble(~term,          ~OLS,  ~OLS,
+                  'Month Fixed Effects', 'Yes',   'Yes',
+                  'Item Fixed Effects', 'Yes', 'Yes',
+                  'Buyer Fixed Effects', 'No', 'Yes')
+  attr(rows, 'position') <- c(4, 5, 6)
+  f <- function(x) formatC(x, digits = 3, big.mark = ",", format = "f")
+  kableExtra::save_kable(msummary(clfe, 
+                                  stars = c('*' = .1, '**' = .05, '***' = .01), 
+                                  vcov = "HC1",
+                                  coef_rename = c("Treatment"),
+                                  title = title,
+                                  gof_map = c("nobs", "r.squared"),
+                                  add_rows = rows,
+                                  output = "html", fmt = f
+  ), paste0("/Users/ruggerodoino/Dropbox/COVID_19/Untitled/img/tab/", filename, ".html"))
   
 }
 
@@ -287,7 +340,7 @@ n_bidders_y_covid <- data_covid[DT_TENDER_YEAR > 0,
                                       DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
                                     by = list(DT_TENDER_MONTH, DT_S, ID_ITEM, ID_ITEM_UNSPSC, treat, ID_RUT_BUYER)]
 
-n_bidders_y_covid <- n_bidders_y_covid %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0))
+n_bidders_y_covid <- n_bidders_y_covid %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
 data_medic <- data_offer_sub %>% 
   filter(DT_TENDER_YEAR > 2014) %>% 
@@ -309,406 +362,83 @@ n_bidders_y_medicine <- data_medic[DT_TENDER_YEAR > 0,
                             DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
                           by = list(DT_TENDER_MONTH, DT_S, ID_ITEM, ID_ITEM_UNSPSC, treat, ID_RUT_BUYER)]
 
-n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0))
+n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
-# "Number of bidders (Covid Products)" s
-clfe <- feols(
-  data = n_bidders_y_covid,
-  n_bidders ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S)
-plot <- plot_bar_errors(clfe, "Number of bidders (Covid Products)", min = - 1, max = 1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# "Number of bidders (Medical Products)" 
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  n_bidders ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Number of bidders (Medical Products)", min = - 1.5, max = 1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Only one bidder (Covid Products)" s
-clfe <- feols(
-  data = n_bidders_y_covid,
-  only_one_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of Tenders with only one bidder (Covid Products)", min = - 0.1, max = 0.2)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Only one bidder (Medical Products)" 
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  only_one_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Number of bidders (Medical Products)", min = - 0.05, max = 0.05)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes bidding (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  sme_bidders ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of SMEs bidding (Covid Products)", min = - 0.1, max = 0.05)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes bidding (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  sme_bidders ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of SMEs bidding (Medical Products)", min = - 0.05, max = 0.05)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  sme_winners ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of SMEs bidding (Covid Products)", min = - 0.05, max = 0.05)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  sme_winners ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of SMEs bidding (Medical Products)", min = - 0.1, max = 0.05)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  same_municipality_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of bidders from the same municipalitys (Covid Products)", min = - 0.025, max = 0.025)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_mun_bid_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  same_municipality_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of bidders from the same municipality (Medical Products)", min = - 0.01, max = 0.02)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_mun_bid_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  same_municipality_winner ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of winners from the same municipalitys (Covid Products)", min = - 0.025, max = 0.025)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_mun_win_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  same_municipality_winner ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of winners from the same municipality (Medical Products)", min = - 0.02, max = 0.02)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_mun_win_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  same_region_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of bidders from the same region (Covid Products)", min = - 0.03, max = 0.03)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_reg_bid_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  same_region_bidder ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of bidders from the same region (Medical Products)", min = - 0.02, max = 0.02)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_reg_bid_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  same_region_winner ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of winners from the same region (Covid Products)", min = - 0.04, max = 0.04)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_reg_win_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  same_region_winner ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of winners from the same region (Medical Products)", min = - 0.05, max = 0.02)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/same_reg_win_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  DD_DECISION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between end of bidding and awarding (Covid Products)", min = - 30, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_decision_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  DD_DECISION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between end of bidding and awarding (Medical Products)", min = - 60, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_decision_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  DD_SUBMISSION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start and end of bidding (Covid Products)", min = - 2, max = 1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_submission_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  DD_SUBMISSION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start and end of bidding (Medical Products)", min = - 2.5, max = 2.5)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_submission_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  DD_SUBMISSION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start and end of bidding (Covid Products)", min = - 2, max = 1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_submission_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  DD_SUBMISSION ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start and end of bidding (Medical Products)", min = - 2.5, max = 1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_submission_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  DD_AWARD_CONTRACT ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between declaring winner and awarding contract(Covid Products)", min = - 30, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_award_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  DD_AWARD_CONTRACT ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between declaring winner and awarding contract (Medical Products)", min = - 40, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_award_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = n_bidders_y_covid,
-  DD_TOT_PROCESS ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start of bidding and awarding contract (Covid Products)", min = - 35, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_award_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = n_bidders_y_medicine,
-  DD_TOT_PROCESS ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Average number of days between start of bidding and awarding contract (Medical Products)", min = - 50, max = 10)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/DD_award_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
+for (dep_var in c(
+  "only_one_bidder",
+  "n_bidders",
+  "sme_bidders",              
+  "sme_winners",             
+  "same_municipality_bidder", 
+  "same_region_bidder",       
+  "same_municipality_winner", 
+  "same_region_winner",       
+  "DD_DECISION",              
+  "DD_SUBMISSION",            
+  "DD_TOT_PROCESS",           
+  "DD_AWARD_CONTRACT"        
+)) {
+  
+  for (type in c("covid", "medic")) {
+    
+    if (type == "covid") {
+      
+      data = n_bidders_y_covid
+      
+    } else {
+      
+      data = n_bidders_y_medicine
+      
+    }
+    
+    title = case_when(
+        dep_var == "only_one_bidder" ~ "Share of only one bidder",
+        dep_var == "n_bidders"   ~ "Number of bidders",
+        dep_var == "sme_winners" ~ "Share of SMEs winning",             
+        dep_var == "same_municipality_bidder" ~ "Share of firms bidding from the same municipality", 
+        dep_var == "same_region_bidder" ~ "Share of firms bidding from the same region",       
+        dep_var == "same_municipality_winner" ~ "Share of firms winning from the same municipality", 
+        dep_var == "same_region_winner" ~ "Share of firms winning from the same region",       
+        dep_var == "DD_DECISION" ~ "Average number of days between end of bidding and awarding",              
+        dep_var == "DD_SUBMISSION" ~ "Average number of days between start and end of bidding",            
+        dep_var == "DD_TOT_PROCESS" ~ "Average number of days between start of bidding and awarding contract",           
+        dep_var == "DD_AWARD_CONTRACT" ~ "Average number of days between declaring winner and awarding contract"
+    )
+    
+    type_title <- ifelse(type == "covid", " (Covid products)", " (Medical products)")
+    
+    title = paste0(title, type_title)
+    
+    clfe <- feols(
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC+ DT_S")), vcov = "HC1")
+    plot <- plot_bar_errors(clfe, title)
+    ggsave(
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/", dep_var, "_treat_", type, ".jpeg")),
+      plot = plot                                                ,
+      width    = 11                                            ,
+      height   = 6.5                                            ,
+      dpi      = 250                                              ,
+      units    = "in"                                             ,
+      device   = 'jpeg'
+    )
+    model_ols(data = data, 
+              dep_var = dep_var,
+              title = title, 
+              filename = paste0(dep_var, "_treat_", type))
+    
+  }
+  
+}
 
 # Time to last bid (months)
 last_bid_covid <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
@@ -716,22 +446,21 @@ last_bid_covid <- data_covid %>%
   group_by(ID_FIRM_RUT) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_BID_MONTHS = ifelse(is.na(LAST_BID_MONTHS), 999999, LAST_BID_MONTHS), 
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
@@ -739,138 +468,87 @@ last_bid_med <- data_covid %>%
   group_by(ID_FIRM_RUT) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_BID_MONTHS = ifelse(is.na(LAST_BID_MONTHS), 999999, LAST_BID_MONTHS), 
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 6 months (Covid Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_6_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 6 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_6_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 12 months (Covid Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_12_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 12 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_12_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 24 months (Covid Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_24_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time within the last 24 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_bid_24_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
+for (months in c(6, 12, 24)) {
+  
+  for (type in c("covid", "medic")) {
+    
+    if (type == "covid") {
+      
+      data = last_bid_covid
+      
+    } else {
+      
+      data = last_bid_med
+      
+    }
+    
+    dep_var = paste0("new_bidder_", months)
+    
+    type_title <- ifelse(type == "covid", " (Covid products)", " (Medical products)")
+    
+    title = paste0("Share of firms bidding for the first time within the last ", months, " months", type_title)
+    
+    clfe <- feols(
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+    plot <- plot_bar_errors(clfe, title)
+    ggsave(
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_bid_", months, "_treat_", type, ".jpeg")),
+      plot = plot                                                ,
+      width    = 11                                            ,
+      height   = 6.5                                            ,
+      dpi      = 250                                              ,
+      units    = "in"                                             ,
+      device   = 'jpeg'
+    )
+    model_ols(data = data, 
+              dep_var = dep_var,
+              title = title, 
+              filename = paste0("first_bid_", months, "_treat_", type))
+    
+  }
+  
+}
 
 # Time to last bid (months)
 last_win_covid <- data_covid %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
   na.omit() %>% 
   group_by(ID_FIRM_RUT) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
-  mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
+  mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>%  
   mutate(
     LAST_WIN_MONTHS = ifelse(is.na(LAST_WIN_MONTHS), 999999, LAST_WIN_MONTHS), 
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
 # Time to last bid (months)
 last_win_med <- data_medic %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
@@ -878,114 +556,64 @@ last_win_med <- data_medic %>%
   group_by(ID_FIRM_RUT) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_WIN_MONTHS = ifelse(is.na(LAST_WIN_MONTHS), 999999, LAST_WIN_MONTHS), 
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 6 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_6_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
+for (months in c(6, 12, 24)) {
+  
+  for (type in c("covid", "medic")) {
+    
+    if (type == "covid") {
+      
+      data = last_win_covid
+      
+    } else {
+      
+      data = last_win_med
+      
+    }
+    
+    dep_var = paste0("new_winner_", months)
+    
+    type_title <- ifelse(type == "covid", " (Covid products)", " (Medical products)")
+    
+    title = paste0("Share of firms winning for the first time within the last ", months, " months", type_title)
+    
+    clfe <- feols(
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+    plot <- plot_bar_errors(clfe, title)
+    ggsave(
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_win_", months, "_treat_", type, ".jpeg")),
+      plot = plot                                                ,
+      width    = 11                                            ,
+      height   = 6.5                                            ,
+      dpi      = 250                                              ,
+      units    = "in"                                             ,
+      device   = 'jpeg'
+    )
+    model_ols(data = data, 
+              dep_var = dep_var,
+              title = title, 
+              filename = paste0("first_win_", months, "_treat_", type))
+    
+  }
+  
+}
 
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 6 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_6_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 12 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_12_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 12 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_12_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 24 months (Covid Products)", min = - 0.15, max = 0.15)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_24_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time within the last 24 months (Medical Products)", min = - 0.01, max = 0.01)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_win_24_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Time to last bid (months)
 # Time to last bid (months)
 last_win_covid <- data_covid %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT, ID_RUT_BUYER
   ) %>% 
@@ -993,23 +621,22 @@ last_win_covid <- data_covid %>%
   group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_WIN_MONTHS = ifelse(is.na(LAST_WIN_MONTHS), 999999, LAST_WIN_MONTHS), 
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
 # Time to last bid (months)
 last_win_med <- data_medic %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT, ID_RUT_BUYER
   ) %>% 
@@ -1017,21 +644,20 @@ last_win_med <- data_medic %>%
   group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_WIN_MONTHS = ifelse(is.na(LAST_WIN_MONTHS), 999999, LAST_WIN_MONTHS), 
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 # Time to last bid (months)
 last_bid_covid <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
@@ -1039,22 +665,21 @@ last_bid_covid <- data_covid %>%
   group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_BID_MONTHS = ifelse(is.na(LAST_BID_MONTHS), 999999, LAST_BID_MONTHS), 
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
-    MONTHS = DT_TENDER_YEAR * 12 + DT_TENDER_MONTH
+    MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_TENDER_YEAR, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
     MONTHS, ID_FIRM_RUT
   ) %>% 
@@ -1062,266 +687,164 @@ last_bid_med <- data_covid %>%
   group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
-  filter(DT_TENDER_YEAR > 0) %>% 
   mutate(
     LAST_BID_MONTHS = ifelse(is.na(LAST_BID_MONTHS), 999999, LAST_BID_MONTHS), 
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) 
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
 
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 6 months(Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_6_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
+for (months in c(6, 12, 24)) {
+  
+  for (type in c("covid", "medic")) {
+    
+    if (type == "covid") {
+      
+      data = last_win_covid
+      
+    } else {
+      
+      data = last_win_med
+      
+    }
+    
+    dep_var = paste0("new_winner_", months)
+    
+    type_title <- ifelse(type == "covid", " (Covid products)", " (Medical products)")
+    
+    title = paste0("Share of firms winning for the first time within the last ", months, " months", type_title)
+    
+    clfe <- feols(
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+    plot <- plot_bar_errors(clfe, title)
+    ggsave(
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_win_", months, "_treat_", type, ".jpeg")),
+      plot = plot                                                ,
+      width    = 11                                            ,
+      height   = 6.5                                            ,
+      dpi      = 250                                              ,
+      units    = "in"                                             ,
+      device   = 'jpeg'
+    )
+    model_ols(data = data, 
+              dep_var = dep_var,
+              title = title, 
+              filename = paste0("first_establishment_win_", months, "_treat_", type))
+    
+  }
+  
+}
 
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 6 months (Medical Products)", min = - 0.2, max = 0.2)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_6_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
+for (months in c(6, 12, 24)) {
+  
+  for (type in c("covid", "medic")) {
+    
+    if (type == "covid") {
+      
+      data = last_bid_covid
+      
+    } else {
+      
+      data = last_bid_med
+      
+    }
+    
+    dep_var = paste0("new_bidder_", months)
+    
+    type_title <- ifelse(type == "covid", " (Covid products)", " (Medical products)")
+    
+    title = paste0("Share of firms bidding for the first time within the last ", months, " months", type_title)
+    
+    clfe <- feols(
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+    plot <- plot_bar_errors(clfe, title)
+    ggsave(
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_bid_", months, "_treat_", type, ".jpeg")),
+      plot = plot                                                ,
+      width    = 11                                            ,
+      height   = 6.5                                            ,
+      dpi      = 250                                              ,
+      units    = "in"                                             ,
+      device   = 'jpeg'
+    )
+    model_ols(data = data, 
+              dep_var = dep_var,
+              title = title, 
+              filename = paste0("first_establishment_bid_", months, "_treat_", type))
+    
+  }
+  
+  
+}
 
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 12 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_12_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 12 months (Medical Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_12_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_win_covid,
-  new_winner_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 24 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_24_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_win_med,
-  new_winner_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms winning for the first time to the establishment within the last 24 months (Medical Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_win_24_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 6 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_6_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_6 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 6 months (Medical Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_6_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 12 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_12_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_12 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 12 months (Medical Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_12_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Covid Products)
-clfe <- feols(
-  data = last_bid_covid,
-  new_bidder_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC  + ID_RUT_BUYER + DT_TENDER_YEAR)
-
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 24 months (Covid Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_24_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-# Smes winning (Medical Products)
-clfe <- feols(
-  data = last_bid_med,
-  new_bidder_24 ~ i(DT_TENDER_YEAR, treat, ref = 1) | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER + DT_TENDER_YEAR)
-plot <- plot_bar_errors(clfe, "Share of firms bidding for the first time to the establishment within the last 24 months (Medical Products)", min = - 0.1, max = 0.1)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/first_establishment_bid_24_treat_med.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-data_pos_raw <- data_pos_raw %>% mutate(CAT_DIRECT = ifelse(CAT_DIRECT == "Si", 1, 0))
-
-data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(COVID_LABEL), 
-                                 list(CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE)), 
-                                 by = list(DT_MONTH, DT_YEAR, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, COVID_LABEL, ID_RUT_ISSUER)]
-
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1) %>% 
-  filter(DT_YEAR > 2014) %>% 
-  mutate(treat = COVID_LABEL == 1,
-         DT_YEAR = ifelse(DT_YEAR == "2016", 1,
-                                 ifelse(DT_YEAR == "2017", 2,
-                                        ifelse(DT_YEAR == "2018", 3,
-                                               ifelse(DT_YEAR == "2019", 4,
-                                                      ifelse(DT_YEAR == "2020", 5,
-                                                             ifelse(DT_YEAR == "2021", 6, 
-                                                                    ifelse(DT_YEAR == "2022", 7, 0)))))))) 
-
-clfe <- feols(
-  data = data_po_collapse,
-  CAT_DIRECT ~ i(DT_YEAR, treat, ref = 1) | DT_MONTH + ID_ITEM_UNSPSC + ID_RUT_ISSUER + DT_YEAR)
-plot <- plot_bar_errors(clfe, "Share of direct contracts (Covid Products)", min = - 0.2, max = 0.2)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/direct_treat_covid.jpeg"),
-  plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
-  units    = "in"                                             ,
-  device   = 'jpeg'
-)
-
-data_pos_raw <- data_pos_raw %>% mutate(MED_DUMMY = ifelse(substr(ID_ITEM_UNSPSC, 1, 2) == 42, 1, 0))
+data_pos_raw <- data_pos_raw %>% mutate(MED_DUMMY = ifelse(substr(ID_ITEM_UNSPSC, 1, 2) == 42, 1, 0)) %>% mutate(CAT_DIRECT = ifelse(CAT_DIRECT == "No", 0, 1))
 data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(MED_DUMMY), 
                                  list(
                                    CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE)
                                  ), 
-                                 by = list(DT_MONTH, DT_YEAR, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, MED_DUMMY, ID_RUT_ISSUER)]
+                                 by = list(DT_MONTH, DT_S, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, MED_DUMMY, ID_RUT_ISSUER)]
 
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1) %>% 
-  filter(DT_YEAR > 2014) %>% 
-  mutate(treat = MED_DUMMY == 1,
-         DT_YEAR = ifelse(DT_YEAR == "2016", 1,
-                          ifelse(DT_YEAR == "2017", 2,
-                                 ifelse(DT_YEAR == "2018", 3,
-                                        ifelse(DT_YEAR == "2019", 4,
-                                               ifelse(DT_YEAR == "2020", 5,
-                                                      ifelse(DT_YEAR == "2021", 6, 
-                                                             ifelse(DT_YEAR == "2022", 7, 0))))))))
-
+data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)%>% mutate(Treated = MED_DUMMY == 1 & DT_S %in% seq(1, 7))
 
 clfe <- feols(
   data = data_po_collapse,
-  CAT_DIRECT ~ i(DT_YEAR, treat, ref = 1) | DT_MONTH + ID_ITEM_UNSPSC + ID_RUT_ISSUER + DT_YEAR)
+  CAT_DIRECT ~ i(DT_S, MED_DUMMY, ref = 1) | DT_MONTH + ID_ITEM_UNSPSC+ DT_S, vcov = "HC1")
   
-plot <- plot_bar_errors(clfe, "Share of direct contracts (Medical Products)", min = - 0.3, max = 0.3)
+plot <- plot_bar_errors(clfe, "Share of direct contracts (Medical Products)")
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/direct_treat_med.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_medic.jpeg"),
   plot = plot                                                ,
-  width    = 12                                            ,
-  height   = 6.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.5                                            ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
+model_ols(data = data_po_collapse %>% rename(DT_TENDER_MONTH = DT_MONTH, ID_RUT_BUYER = ID_RUT_ISSUER), 
+          dep_var = "CAT_DIRECT",
+          title = "Share of direct purchases (Medical products)", 
+          filename = paste0("direct_treat_medic"))
+
+data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(COVID_LABEL), 
+                                 list(
+                                   CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE)
+                                 ), 
+                                 by = list(DT_MONTH, DT_S, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, COVID_LABEL, ID_RUT_ISSUER)]
+
+data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1) %>% mutate(Treated = COVID_LABEL == 1 & DT_S %in% seq(1, 7))
+
+clfe <- feols(
+  data = data_po_collapse,
+  CAT_DIRECT ~ i(DT_S, COVID_LABEL, ref = 1) | DT_MONTH + ID_ITEM_UNSPSC+ DT_S, vcov = "HC1")
+
+plot <- plot_bar_errors(clfe, "Share of direct contracts (Covid Products)")
+ggsave(
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_covid.jpeg"),
+  plot = plot                                                ,
+  width    = 11                                            ,
+  height   = 6.5                                            ,
+  dpi      = 250                                              ,
+  units    = "in"                                             ,
+  device   = 'jpeg'
+)
+model_ols(data = data_po_collapse %>% rename(DT_TENDER_MONTH = DT_MONTH, ID_RUT_BUYER = ID_RUT_ISSUER), 
+          dep_var = "CAT_DIRECT",
+          title = "Share of direct purchases (Covid products)", 
+          filename = paste0("direct_treat_covid"))
 
 data <- fread("/Users/ruggerodoino/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Final/Merged_data.csv")
+
+data_covid <- data_offer_sub %>% 
+  filter(DT_TENDER_YEAR > 2014) %>% 
+  mutate(treat = COVID_LABEL == 1)
 
 tc <- data_covid %>% distinct(ID_ITEM_UNSPSC, treat)
 
 data_covid_final <- data %>% filter(!is.na(N_PAYMENTS)) %>% 
-  left_join(tc, by = "ID_ITEM_UNSPSC") %>%
+  mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)) %>% 
+  left_join(tc %>% mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)), by = "ID_ITEM_UNSPSC") %>%
   
   # create month and year date
   mutate(
@@ -1363,11 +886,11 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/payment_delay_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_semester_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.75                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
@@ -1415,12 +938,11 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/payment_delay_yearly_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_yearly_covid.jpeg"),
   plot = plot                                                 ,
-  width    = 9                                            ,
-  height   = 5.75                                             ,
-  dpi      = 600                                              ,
+  width    = 11                                            ,
+  height   = 6.75                                             ,
+  dpi      = 250                                              ,
   units    = "in"                                             ,
   device   = 'jpeg'
 )
-
