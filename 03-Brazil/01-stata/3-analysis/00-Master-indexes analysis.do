@@ -25,7 +25,8 @@
 	
 	* 2:XXXX
 	if "`c(username)'" == "XXXX" {
-		global path_project 	""
+		global path_project 	"C:\Users\wb543303\OneDrive - WBG\03-Procurement\02-Covid-br"
+		global overleaf			"C:\Users\wb543303\OneDrive - WBG\03-Procurement\02-Covid-br\4_outputs\3-Figures"
  	}
 	.
 	
@@ -36,8 +37,10 @@
 	.
 	
 	* packages
+	ssc install ftools
 	ssc install catplot
 	ssc install gtools
+	ssc install reghdfe
 
 	* graphs configuration
 	global graph_option graphregion(color(white)) xsize(10) ysize(5)
