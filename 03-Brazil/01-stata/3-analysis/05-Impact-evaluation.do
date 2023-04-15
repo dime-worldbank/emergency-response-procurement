@@ -232,7 +232,7 @@
 {
 	* Sampling data
 	use "${path_project}/1_data/05-Regession_data-sample",clear
- 
+  
 	global list_iter  ""
 	foreach year of numlist 2015/2021 { 
 		foreach semester in 1 2 {
@@ -255,9 +255,7 @@
 		
 	* 3: Regressions on wage 
 	foreach dep_var in $outcome  {   	
-		
-		local dep_var D_new_winner
-		
+				
 		* Set of variables left hand side of regression
 		global FE1 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
 		global FE2 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_ug)" 
@@ -266,11 +264,7 @@
 		
 		* Running regressions in a loop
 		eststo drop *
-		foreach k in 2 /*2 3 4*/ {
-			
-			local dep_var D_new_winner
-			local k			2
-					
+		foreach k in 1 2 3 4 {
 			
 			* regression according X1, X2,... global
  			reghdfe `dep_var' ${FE`k'}			
