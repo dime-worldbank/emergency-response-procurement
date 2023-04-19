@@ -41,7 +41,8 @@
 	ssc install catplot
 	ssc install gtools
 	ssc install reghdfe
-
+	ssc install coefplot
+	
 	* graphs configuration
 	global graph_option graphregion(color(white)) xsize(10) ysize(5)
 }

@@ -45,7 +45,7 @@
 	global outcome D_new_winner SME share_SME decision_time decision_time_trim ///
 		   unit_price log_volume_item D_same_munic_win D_same_state_win ///
 		   log_unit_price_filter  unit_price_filter N_participants ///
-		   N_SME_participants months_since
+		   N_SME_participants months_since_last_win
 
 	compress
 	save "${path_project}/1_data/05-Regession_data-sample", replace
@@ -178,13 +178,14 @@
 	foreach dep_var in  $outcome  	{ 
 		* Set of variables left hand side of regression
  		global FE1 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
-		global FE2 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_ug)" 
-		global FE3 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_bidder)"
-		global FE4 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_bidder id_ug)"		
+		global FE2 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month)"
+		global FE3 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_ug)" 
+		global FE4 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder)"
+		global FE5 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder id_ug)"		
  
 		* Running regressions in a loop
 		eststo drop *
-		foreach k in 1 2 3 4 {
+		foreach k in 1 2 3 4 5 {
 			* regression according X1, X2,... global
  			eststo: reghdfe `dep_var' ${FE`k'}
 			
@@ -201,7 +202,7 @@
 			else						  	 		estadd loc ym_fe 	"\xmark"
 	
 			* Maker if it has Month
-			if regex("${FE`k'}","months") 			estadd loc month_fe "\cmark"
+			if regex("${FE`k'}","month") 			estadd loc month_fe "\cmark"
 			else						  			estadd loc month_fe "\xmark"
 			
 			* Maker if it has Buyer
@@ -258,13 +259,14 @@
 				
 		* Set of variables left hand side of regression
 		global FE1 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
-		global FE2 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_ug)" 
-		global FE3 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_bidder)"
-		global FE4 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester months id_bidder id_ug)"		
+		global FE2 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month)" 
+		global FE3 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_ug)" 
+		global FE4 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder)"
+		global FE5 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder id_ug)"		
 		
 		* Running regressions in a loop
 		eststo drop *
-		foreach k in 1 2 3 4 {
+		foreach k in 1 2 3 4 5 {
 			
 			* regression according X1, X2,... global
  			reghdfe `dep_var' ${FE`k'}			
