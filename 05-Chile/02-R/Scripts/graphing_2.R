@@ -293,6 +293,7 @@ plot_bar_errors <- function(clfe, title) {
   return(plot)
   
 }
+
 model_ols <- function(data, dep_var, filename, title) {
   
   clfe <- list(feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + ID_ITEM_UNSPSC")),
@@ -306,15 +307,14 @@ model_ols <- function(data, dep_var, filename, title) {
                   'Buyer Fixed Effects', 'No', 'Yes')
   attr(rows, 'position') <- c(4, 5, 6)
   f <- function(x) formatC(x, digits = 3, big.mark = ",", format = "f")
-  kableExtra::save_kable(msummary(clfe, 
-                                  stars = c('*' = .1, '**' = .05, '***' = .01), 
-                                  vcov = "HC1",
-                                  coef_rename = c("Treatment"),
-                                  title = title,
-                                  gof_map = c("nobs", "r.squared"),
-                                  add_rows = rows,
-                                  output = "html", fmt = f
-  ), paste0("/Users/ruggerodoino/Dropbox/COVID_19/Untitled/img/tab/", filename, ".html"))
+    modelsummary(clfe, 
+             stars = c('*' = .1, '**' = .05, '***' = .01), 
+             vcov = "HC1",
+             coef_rename = c("Treatment"),
+             title = title,
+             gof_map = c("nobs", "r.squared"),
+             add_rows = rows, fmt = f, output = "gt") %>% 
+      gt::gtsave(filename = paste0("/Users/ruggerodoino/Dropbox/COVID_19/Untitled/img/tab/", filename, ".html"), inline_css = FALSE)
   
 }
 
@@ -414,13 +414,13 @@ for (dep_var in c(
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC+ DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/", dep_var, "_treat_", type, ".jpeg")),
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/", dep_var, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
       dpi      = 250                                              ,
       units    = "in"                                             ,
-      device   = 'jpeg'
+      device   = 'png'
     )
     model_ols(data = data, 
               dep_var = dep_var,
@@ -500,13 +500,13 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_bid_", months, "_treat_", type, ".jpeg")),
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_bid_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
       dpi      = 250                                              ,
       units    = "in"                                             ,
-      device   = 'jpeg'
+      device   = 'png'
     )
     model_ols(data = data, 
               dep_var = dep_var,
@@ -588,13 +588,13 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_win_", months, "_treat_", type, ".jpeg")),
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_win_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
       dpi      = 250                                              ,
       units    = "in"                                             ,
-      device   = 'jpeg'
+      device   = 'png'
     )
     model_ols(data = data, 
               dep_var = dep_var,
@@ -719,13 +719,13 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_win_", months, "_treat_", type, ".jpeg")),
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_win_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
       dpi      = 250                                              ,
       units    = "in"                                             ,
-      device   = 'jpeg'
+      device   = 'png'
     )
     model_ols(data = data, 
               dep_var = dep_var,
@@ -761,13 +761,13 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_bid_", months, "_treat_", type, ".jpeg")),
+      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_bid_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
       dpi      = 250                                              ,
       units    = "in"                                             ,
-      device   = 'jpeg'
+      device   = 'png'
     )
     model_ols(data = data, 
               dep_var = dep_var,
@@ -794,13 +794,13 @@ clfe <- feols(
   
 plot <- plot_bar_errors(clfe, "Share of direct contracts (Medical Products)")
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                            ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 model_ols(data = data_po_collapse %>% rename(DT_TENDER_MONTH = DT_MONTH, ID_RUT_BUYER = ID_RUT_ISSUER), 
           dep_var = "CAT_DIRECT",
@@ -821,13 +821,13 @@ clfe <- feols(
 
 plot <- plot_bar_errors(clfe, "Share of direct contracts (Covid Products)")
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_covid.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                            ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 model_ols(data = data_po_collapse %>% rename(DT_TENDER_MONTH = DT_MONTH, ID_RUT_BUYER = ID_RUT_ISSUER), 
           dep_var = "CAT_DIRECT",
@@ -886,13 +886,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.75                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 data_covid_final <- data %>% filter(!is.na(N_PAYMENTS)) %>% 
@@ -938,11 +938,11 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_yearly_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_yearly_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.75                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )

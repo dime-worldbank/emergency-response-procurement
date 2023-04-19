@@ -67,6 +67,7 @@
       
     }
     
+    
   }
   
   { # Set working directories
@@ -93,75 +94,6 @@ data_pos_raw <- fread(file = file.path(fin_data, "purchase_orders_raw.csv"), enc
 data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1") 
 
 # Task 1
-
-n_bidders_y_covid <- data_offer_sub[DT_TENDER_YEAR > 2015, 
-                       list(
-                         n_bidders                =    .N                                      ,
-                         sme_bidders              = mean(sme                     , na.rm = TRUE),
-                         sme_winners              = mean(sme_winner              , na.rm = TRUE),
-                         same_municipality_bidder = mean(same_municipality_bidder, na.rm = TRUE),
-                         same_region_bidder       = mean(same_region_bidder      , na.rm = TRUE),
-                         same_municipality_winner = mean(same_municipality_winner, na.rm = TRUE),
-                         same_region_winner       = mean(same_region_winner      , na.rm = TRUE),
-                         DD_DECISION              = mean(DD_DECISION             , na.rm = TRUE),
-                         DD_SUBMISSION            = mean(DD_SUBMISSION           , na.rm = TRUE),
-                         DD_TOT_PROCESS           = mean(DD_TOT_PROCESS          , na.rm = TRUE),
-                         DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
-                       by = list(DT_Y, ID_ITEM, COVID_LABEL)]
-
-n_bidders_y_covid <- n_bidders_y_covid %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0))
-
-n_bidders_y_covid <- n_bidders_y_covid[, 
-                                    list(
-                                      n_bidders                = mean(n_bidders                , na.rm = TRUE)    ,
-                                      only_one_bidder          = mean(only_one_bidder          , na.rm = TRUE)*100,
-                                      sme_bidders              = mean(sme_bidders              , na.rm = TRUE)*100,
-                                      sme_winners              = mean(sme_winners              , na.rm = TRUE)*100,
-                                      same_municipality_bidder = mean(same_municipality_bidder , na.rm = TRUE)*100,
-                                      same_region_bidder       = mean(same_region_bidder       , na.rm = TRUE)*100,
-                                      same_municipality_winner = mean(same_municipality_winner , na.rm = TRUE)*100,
-                                      same_region_winner       = mean(same_region_winner       , na.rm = TRUE)*100,
-                                      DD_DECISION              = mean(DD_DECISION              , na.rm = TRUE),
-                                      DD_SUBMISSION            = mean(DD_SUBMISSION            , na.rm = TRUE),
-                                      DD_TOT_PROCESS           = mean(DD_TOT_PROCESS           , na.rm = TRUE),
-                                      DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT        , na.rm = TRUE)), 
-                                    by = list(DT_Y, COVID_LABEL)]
-
-n_bidders_y_medicine <- data_offer_sub %>% mutate(MED_DUMMY = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0))
-
-n_bidders_y_medicine <- n_bidders_y_medicine[DT_TENDER_YEAR > 2015, 
-                                    list(
-                                      n_bidders                =    .N                                      ,
-                                      sme_bidders              = mean(sme                     , na.rm = TRUE),
-                                      sme_winners              = mean(sme_winner              , na.rm = TRUE),
-                                      same_municipality_bidder = mean(same_municipality_bidder, na.rm = TRUE),
-                                      same_region_bidder       = mean(same_region_bidder      , na.rm = TRUE),
-                                      same_municipality_winner = mean(same_municipality_winner, na.rm = TRUE),
-                                      same_region_winner       = mean(same_region_winner      , na.rm = TRUE),
-                                      DD_DECISION              = mean(DD_DECISION             , na.rm = TRUE),
-                                      DD_SUBMISSION            = mean(DD_SUBMISSION           , na.rm = TRUE),
-                                      DD_TOT_PROCESS           = mean(DD_TOT_PROCESS          , na.rm = TRUE),
-                                      DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
-                                    by = list(DT_Y, ID_ITEM, MED_DUMMY)]
-
-n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0))
-
-n_bidders_y_medicine <- n_bidders_y_medicine[, 
-                                       list(
-                                         n_bidders                = mean(n_bidders                , na.rm = TRUE)    ,
-                                         only_one_bidder          = mean(only_one_bidder          , na.rm = TRUE)*100,
-                                         sme_bidders              = mean(sme_bidders              , na.rm = TRUE)*100,
-                                         sme_winners              = mean(sme_winners              , na.rm = TRUE)*100,
-                                         same_municipality_bidder = mean(same_municipality_bidder , na.rm = TRUE)*100,
-                                         same_region_bidder       = mean(same_region_bidder       , na.rm = TRUE)*100,
-                                         same_municipality_winner = mean(same_municipality_winner , na.rm = TRUE)*100,
-                                         same_region_winner       = mean(same_region_winner       , na.rm = TRUE)*100,
-                                         DD_DECISION              = mean(DD_DECISION              , na.rm = TRUE),
-                                         DD_SUBMISSION            = mean(DD_SUBMISSION            , na.rm = TRUE),
-                                         DD_TOT_PROCESS           = mean(DD_TOT_PROCESS           , na.rm = TRUE),
-                                         DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT        , na.rm = TRUE)), 
-                                       by = list(DT_Y, MED_DUMMY)]
-
 
 n_bidders_s_covid <- data_offer_sub[DT_TENDER_YEAR > 2015, 
                                     list(
@@ -232,7 +164,6 @@ n_bidders_s_medicine <- n_bidders_s_medicine[,
                                              by = list(DT_S, MED_DUMMY)]
 
 
-
 # Number of bidders -------------------------------------------------------
 
 # Yearly - Medicine
@@ -253,13 +184,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bidders_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -278,13 +209,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -307,13 +238,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bidders_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -332,13 +263,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Share of tenders with only one bidder (all tenders) --------------------------
@@ -364,13 +295,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/one_bidder_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -390,13 +321,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -418,13 +349,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/one_bidder_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -444,13 +375,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/one_bidder_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Share of SMEs firm (all tenders) --------------------------
@@ -476,13 +407,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_bid_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -502,13 +433,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -530,13 +461,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_bid_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_covid, 
@@ -555,13 +486,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_bid_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -589,13 +520,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_win_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -615,13 +546,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_win_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -643,13 +574,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_win_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -669,13 +600,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/smes_win_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/smes_win_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -704,13 +635,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_bid_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_bid_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_medicine, 
@@ -729,13 +660,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_bid_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_bid_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -757,13 +688,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_bid_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_bid_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_covid, 
@@ -782,13 +713,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_bid_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_bid_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -818,13 +749,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_medicine, 
@@ -843,13 +774,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -871,13 +802,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_bid_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_covid, 
@@ -896,13 +827,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_bid_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -930,13 +861,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_win_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_win_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 plot <- graph_trend(
   data = n_bidders_s_medicine, 
@@ -955,13 +886,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_win_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_win_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -983,13 +914,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_win_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_win_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1009,13 +940,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/region_win_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/region_win_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -1043,13 +974,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_win_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_win_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1069,13 +1000,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1097,13 +1028,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_win_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_win_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1123,13 +1054,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/municipality_win_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -1313,13 +1244,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1341,13 +1272,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1367,13 +1298,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1395,13 +1326,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -1429,13 +1360,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1457,13 +1388,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1483,13 +1414,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1511,13 +1442,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1537,13 +1468,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1565,13 +1496,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1591,13 +1522,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1619,13 +1550,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -1812,13 +1743,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1840,13 +1771,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1866,13 +1797,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1894,13 +1825,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 # Quarterly - Covid-19
 
@@ -1926,13 +1857,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -1954,13 +1885,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -1980,13 +1911,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2008,13 +1939,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2034,13 +1965,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2062,13 +1993,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2088,13 +2019,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2116,13 +2047,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -2147,13 +2078,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_time_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_time_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2175,13 +2106,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_time_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_time_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
   
 plot <- graph_trend(
@@ -2201,13 +2132,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_time_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_time_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2229,13 +2160,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_time_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_time_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Decision Time  ---------------------------------------------------------------
@@ -2259,13 +2190,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_process_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_process_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2287,13 +2218,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_process_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_process_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2313,13 +2244,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_process_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_process_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2341,13 +2272,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_process_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_process_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -2372,13 +2303,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_submission_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_submission_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2400,13 +2331,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_submission_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_submission_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2426,13 +2357,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2454,13 +2385,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_submission_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2480,13 +2411,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2508,13 +2439,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -2534,13 +2465,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -2562,13 +2493,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 table_product_firms_bid <- data_offer_sub %>% 
@@ -2595,13 +2526,13 @@ plot <- graph_trend_no_treat(
   percentage = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_bid_.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_products_bid_.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 table_product_firms_bid <- data_offer_sub %>% 
@@ -2629,13 +2560,13 @@ plot <- graph_trend_no_treat(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_semester_bid_.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_products_semester_bid_.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 table_product_firms_win <- data_offer_sub %>% 
@@ -2662,13 +2593,13 @@ plot <- graph_trend_no_treat(
   percentage = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_win_.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_products_win_.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 table_product_firms_win <- data_offer_sub %>% 
@@ -2696,13 +2627,13 @@ plot <- graph_trend_no_treat(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_semester_win_.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_products_semester_win_.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
   
 n_bidders_sector <- data_offer_sub %>% 
@@ -2733,13 +2664,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bid_sector.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bid_sector.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 n_bidders_sector <- data_offer_sub %>% 
@@ -2770,13 +2701,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bid_semester_sector.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_bid_semester_sector.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 n_winners_sector <- data_offer_sub %>% 
@@ -2807,13 +2738,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_win_sector.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_win_sector.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 n_winners_sector <- data_offer_sub %>% 
@@ -2844,13 +2775,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_win_semester_sector.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_win_semester_sector.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 concentration <- data_offer_sub %>% 
@@ -2889,13 +2820,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/hhi_year_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/hhi_year_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 concentration <- data_offer_sub %>% 
@@ -2934,13 +2865,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/hhi_semester_medic.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/hhi_semester_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 data_pos_raw <- data_pos_raw %>% 
@@ -2990,13 +2921,13 @@ plot <- graph_trend(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3014,13 +2945,13 @@ plot <- graph_trend(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
@@ -3066,13 +2997,13 @@ plot <- graph_trend(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_medical.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_medical.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3092,13 +3023,13 @@ plot <- graph_trend(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_medical.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_medical.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -3144,13 +3075,13 @@ plot <- graph_trend(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3168,13 +3099,13 @@ plot <- graph_trend(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_covid.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_covid.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
@@ -3220,13 +3151,13 @@ plot <- graph_trend(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_medical.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_semester_medical.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3246,13 +3177,13 @@ plot <- graph_trend(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_medical.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_semester_medical.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -3316,13 +3247,13 @@ plot <- graph_trend_three_covid(
     yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_semester.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_semester.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend_three_covid(
@@ -3339,13 +3270,13 @@ plot <- graph_trend_three_covid(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_year.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_year.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 tender_composition_year <- data_offer_sub[DT_TENDER_YEAR > 2015, 
@@ -3408,13 +3339,13 @@ plot <- graph_trend_three_medical(
   yearly = FALSE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_semester.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_semester.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend_three_medical(
@@ -3431,13 +3362,13 @@ plot <- graph_trend_three_medical(
   yearly = TRUE
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_year.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/share_tenders_medical_year.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 
@@ -3619,13 +3550,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3647,13 +3578,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3673,13 +3604,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3701,13 +3632,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3727,13 +3658,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3755,13 +3686,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3781,13 +3712,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3809,13 +3740,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3835,13 +3766,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3863,13 +3794,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -3889,13 +3820,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -3917,13 +3848,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Quarterly - Covid-19
@@ -4112,13 +4043,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4140,13 +4071,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -4166,13 +4097,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4194,13 +4125,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 # Quarterly - Covid-19
 
@@ -4226,13 +4157,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4254,13 +4185,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -4280,13 +4211,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4308,13 +4239,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -4334,13 +4265,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4362,13 +4293,13 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_year_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 plot <- graph_trend(
@@ -4388,13 +4319,13 @@ plot <- graph_trend(
   label_control_legend = "Non-medical"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_medic_2.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
 # Yearly - Covid-19
@@ -4416,12 +4347,12 @@ plot <- graph_trend(
   label_control_legend = "Others"
 )
 ggsave(
-  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid_2.jpeg"),
+  filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_covid_2.png"),
   plot = plot                                                 ,
   width    = 11                                            ,
   height   = 6.5                                             ,
   dpi      = 250                                              ,
   units    = "in"                                             ,
-  device   = 'jpeg'
+  device   = 'png'
 )
 
