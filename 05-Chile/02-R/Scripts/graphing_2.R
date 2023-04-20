@@ -411,7 +411,7 @@ for (dep_var in c(
     
     clfe <- feols(
       data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC+ DT_S")), vcov = "HC1")
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/", dep_var, "_treat_", type, ".png")),
