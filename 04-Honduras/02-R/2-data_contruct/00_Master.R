@@ -18,7 +18,22 @@
 
   # Clear the environment -----------------------------------------------------
 
-    rm(list=ls())
+  { # 0.1: Prepare the workspace 
+    
+    # Clean the workspace
+    rm(list=ls()) 
+    
+    # Free Unused R memory
+    gc()
+    
+    # Options for avoid scientific notation
+    options(scipen = 9999)
+    
+    # Set the same seed
+    set.seed(123)
+    
+  }
+  
 
   # Set working directory -----------------------------------------
       
@@ -109,7 +124,11 @@
               "data.table"       ,
               "gdata"            ,
               "WDI"              ,
-              "DescTools"
+              "DescTools"        ,
+              "cli"              ,
+              "skimr"            ,
+              "plotly"           ,
+              "fixest"
               
               )
 
@@ -139,4 +158,25 @@
     # 2) Construct Variables 
      source(file.path(scripts, "02_Construct_standard.R"))
       # there is also a Rmarkdown version of this script - the markdown is the most up to date one 
-
+ 
+    # 3) Output of Descriptive Analysis 
+     source(file.path(scripts, "04_Output_final.Rmd"))
+      
+    # 4) Regression Analysis  
+     source(file.path(scripts, "05_regression.R"))
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
