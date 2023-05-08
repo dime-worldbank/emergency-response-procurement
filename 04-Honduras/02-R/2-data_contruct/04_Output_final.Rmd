@@ -710,6 +710,9 @@ tender_contract_grouped$Group <- replace(tender_contract_grouped$Group, tender_c
 
 tender_contract_grouped$Group <- replace(tender_contract_grouped$Group, tender_contract_grouped$Group == 1, "COVID")
 
+fwrite(tender_contract_grouped, file = paste0(cleaned, "/Number_of_tenders.csv"))
+
+
 # construct a tender dataset 
 tender <- tender_contract_grouped%>%
   select(ID, DT_TENDER_PUB, Group)%>%
@@ -835,6 +838,8 @@ contract <- contract %>%
   dplyr::summarise(count = n_distinct(ID_CONTRACT))%>%
   ungroup()
 
+fwrite(contract, file = paste0(cleaned, "/Number_of_contracts.csv"))
+
 
 ggplot(contract, aes(x = semester, y = count, group = Group))+
   
@@ -936,14 +941,19 @@ contract_value <- contract_value%>%
 
 contract_value$semester <- paste0(contract_value$year, "-", contract_value$semester, "-30")
 
-
-contract_value_avg <- contract_value%>%
+contract_value <- contract_value%>%
   filter(year >= 2016 & 
            year <= 2022)%>%
-  dplyr::rename(Group = covid_firm)%>%
+  dplyr::rename(Group = covid_firm)
+
+fwrite(contract_value, file = paste0(cleaned, "/Contracts_value.csv"))
+
+
+contract_value_avg <- contract_value%>%
   group_by(semester, Group)%>%
   dplyr::summarize(average_value = mean(AMT_CONTRACT_VALUE_USD, na.rm = TRUE))%>%
   ungroup()
+
 
 ggplot(contract_value_avg, aes(x = semester, y = average_value/1000, group = Group))+
   
@@ -989,7 +999,7 @@ ggplot(contract_value_avg, aes(x = semester, y = average_value/1000, group = Gro
   
   # change title and subtitles 
   labs(x = "Contract Signed Date (aggregate by Month)", 
-       y = "Average Value of Contracts (thousands)", title = "Average Contract Value per Month ",
+       y = "Average Value of Contracts (thousands)", title = "Average Contract Value per Month",
        subtitle =  "Jan 2016 - Dec 2021",
        caption ="Note: data retrieved from ONCAE in Mar 2023.")+
   
@@ -1142,6 +1152,8 @@ method_share_stats <- method_share%>%
 #                names_to = "",
 #                values_to = "value")
 
+fwrite(method_share, file = paste0(cleaned, "/Procurement_method.csv"))
+
 
 
 ```
@@ -1224,7 +1236,7 @@ ggsave(filename = paste0(output, "/procurement_method.jpeg"),
 ```{r 3.1, echo=FALSE}
 
 # 8.1 Do firms during covid supply a broader range of different products?
-# explore the number of products sold by the firm before, during and after COVID
+# explore the number of products sold by the firm before, during and after COVID (before assigning to groups)
 # create half year dummy 
 supplier_item$month <- as.numeric(strftime(supplier_item$DT_CONTRACT_SIGNED, "%m"))
 
@@ -1256,6 +1268,8 @@ firm_item_sum_stats <- firm_item_sum%>%
 # revise names 
 firm_item_sum_stats$semester <- as.Date(firm_item_sum_stats$semester)
 
+
+# visualization 
 ggplot(firm_item_sum_stats, aes(x = semester, y = num_unspsc_sum))+
   
   # draw a line graph for two groups
@@ -1325,6 +1339,8 @@ ggsave(filename = file.path(output, "/product_classification_sum.jpeg"),
 # assign observations to groups (covid firm) 
 firm_item <- left_join(firm_item, covid_firm, by = "ID_PARTY")
 
+fwrite(firm_item, file = paste0(cleaned, "/firm_item.csv"))
+
 # calculation 
 firm_item_avg <- firm_item%>%
   filter(year >= 2016 & 
@@ -1347,6 +1363,7 @@ firm_item_stats$Group <- replace(firm_item_stats$Group, firm_item_stats$Group ==
 firm_item_stats$semester <- as.Date(firm_item_stats$semester)
 
 
+# visualization 
 ggplot(firm_item_stats, aes(x = semester, y = num_unspsc_avg, group = Group))+
   
   # draw a line graph for two groups
@@ -1579,6 +1596,9 @@ firm_item_did <- firm_item_did%>%
 
 firm_item_did$semester <- paste0(firm_item_did$year, "-", firm_item_did$semester, "-30")
 
+fwrite(firm_item_did, file = paste0(cleaned, "/Firm_item_did.csv"))
+
+
 firm_item_avg_new <- firm_item_did%>%
   filter(year >= 2020 & year <= 2022)%>%
   group_by(ID_PARTY, Group, semester)%>%
@@ -1589,6 +1609,7 @@ firm_item_avg_new <- firm_item_did%>%
   ungroup()
 
 
+# visualization 
 ggplot(firm_item_avg_new, aes(x = semester, y = avg_new, group = Group))+
   
   # draw a line graph for two groups
@@ -1924,6 +1945,8 @@ firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_secto
 
 firm_sector_total_top3$Group <- replace(firm_sector_total_top3$Group, firm_sector_total_top3$Group == 1, "COVID")
 
+fwrite(firm_sector_total_top3, file = paste0(cleaned, "/Market_concentration.csv"))
+
 
 ggplot(firm_sector_total_top3, aes(x = semester, y = top3_share, group = Group))+
   
@@ -2076,6 +2099,9 @@ submission_time <- tender_contract%>%
 
 # @team: check the caption - there should be a way to improve this graph. It would be misleading if we are trying to tell whether submission time increase or decrease from this graph.
 # there are large outliers in 2016 and 2020, but this graph cannot show that 
+
+
+fwrite(tender_contract, file = paste0(cleaned, "/Duration.csv"))
 
 
 ggplot(submission_time, aes(x = semester , y = submission_time_avg, group = Group))+
@@ -2388,6 +2414,8 @@ new_winner_month_group <- contract_supplier%>%
 new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 0, "Non-COVID")
 
 new_winner_month_group$Group <- replace(new_winner_month_group$Group, new_winner_month_group$Group == 1, "COVID")
+
+fwrite(contract_supplier, file = paste0(cleaned, "/New_winner.csv"))
 
 
 # visualization 
