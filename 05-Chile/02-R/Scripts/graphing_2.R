@@ -328,7 +328,7 @@ data_covid <- data_offer_sub %>%
 n_bidders_y_covid <- data_covid[DT_TENDER_YEAR > 0, 
                                     list(
                                       n_bidders                =    .N                                      ,
-                                      sme_bidders              = mean(sme                     , na.rm = TRUE),
+                                      sme_bidders              = mean(CAT_MSME                     , na.rm = TRUE),
                                       sme_winners              = mean(sme_winner              , na.rm = TRUE),
                                       same_municipality_bidder = mean(same_municipality_bidder, na.rm = TRUE),
                                       same_region_bidder       = mean(same_region_bidder      , na.rm = TRUE),
@@ -350,7 +350,7 @@ data_medic <- data_offer_sub %>%
 n_bidders_y_medicine <- data_medic[DT_TENDER_YEAR > 0, 
                           list(
                             n_bidders                =    .N                                      ,
-                            sme_bidders              = mean(sme                     , na.rm = TRUE),
+                            sme_bidders              = mean(CAT_MSME                     , na.rm = TRUE),
                             sme_winners              = mean(sme_winner              , na.rm = TRUE),
                             same_municipality_bidder = mean(same_municipality_bidder, na.rm = TRUE),
                             same_region_bidder       = mean(same_region_bidder      , na.rm = TRUE),
@@ -370,9 +370,7 @@ for (dep_var in c(
   "sme_bidders",              
   "sme_winners",             
   "same_municipality_bidder", 
-  "same_region_bidder",       
   "same_municipality_winner", 
-  "same_region_winner",       
   "DD_DECISION",              
   "DD_SUBMISSION",            
   "DD_TOT_PROCESS",           

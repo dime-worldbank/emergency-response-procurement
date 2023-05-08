@@ -105,27 +105,19 @@
       select(
         Codigoitem,
         CodigoExterno,
-        Estado,
-        CodigoOrganismo,
-        sector,
         ComunaUnidad,
         RegionUnidad,
         RutUnidad,
-        CodigoUnidad,
         CodigoMoneda,
         FechaCreacion,
         FechaCierre,
         FechaInicio,
         FechaFinal,
-        FechaPubRespuestas,
-        FechaActoAperturaTecnica,
-        FechaActoAperturaEconomica,
         FechaPublicacion,
         CodigoTipo,
         Tipo,
         FechaAdjudicacion,
         Modalidad,
-        FechaAprobacion,
         RutProveedor,
         `Cantidad Ofertada`,
         `Moneda de la Oferta`,
@@ -135,13 +127,13 @@
         MontoLineaAdjudica,
         FechaEnvioOferta,
         CodigoProductoONU,
-        `Oferta seleccionada`,
-        `Estado Oferta`
+        `Estado Oferta`,
+        `Oferta seleccionada`
       ) %>% 
       filter(
-        (`Estado Oferta` == "Aceptada" & Estado == "Adjudicada")
+        (`Estado Oferta` == "Aceptada")
       ) %>% # therefore we exclude offers that have not been accepted and tenders that were "Cerrada", "Suspendida", "Revocada"
-      select(-c("Estado Oferta", "Estado", "sector"))
+      select(-c("Estado Oferta"))
     
     # 3.2: format dates
     datalist[[i]] <- datalist[[i]] %>% 
@@ -186,13 +178,13 @@
         ID_RUT_BUYER = gsub("\\.", "", ID_RUT_BUYER)
       )
     
+    datalist[[i]] = as.data.table(datalist[[i]])
+    
     # 3.7: filtering out the intermediary cenabast R.U.T.: 61608700-2
-    datalist[[i]] <- datalist[[i]] %>% 
-      filter(ID_RUT_BUYER != "61608700-2")
+    datalist[[i]] = datalist[[i]][ID_RUT_BUYER != "61608700-2", ] # 17,027
     
     # 3.8: convert the string for selected offer into dummy
-    datalist[[i]] <- datalist[[i]] %>% 
-      mutate(CAT_OFFER_SELECT = ifelse(CAT_OFFER_SELECT == "Seleccionada", 1, 0))
+    datalist[[i]] <- datalist[[i]][, CAT_OFFER_SELECT := fifelse(CAT_OFFER_SELECT == "Seleccionada", 1, 0)]
     
   }
   

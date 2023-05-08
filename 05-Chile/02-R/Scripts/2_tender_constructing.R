@@ -9,7 +9,7 @@
 
       
       # Load firm data
-      data_firms <- read_dta(file = file.path(fin_data, "SII_2015_2020.dta"))
+      data_firms <- fread("/Users/ruggerodoino/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Intermediate/Firm Registry/firm_data.csv", encoding = "Latin-1")
       
       # Load PO data
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
@@ -284,21 +284,12 @@
 {
   
   # adjust the rut code for the firm-level data
-  data_firms_clean <- rut_check(data_firms, rut, without_dots = FALSE, SII = TRUE) %>% 
-    rename(
-      ID_FIRM_RUT = var
-    ) %>% 
-    group_by(ID_FIRM_RUT) %>% 
-    dplyr::summarise(
-      sme     = first(sme)    ,
-      region  = first(region) ,
-      commune = first(commune)
-    )
+  data_firms_clean <- data_firms %>% 
+    filter(YEAR == 2019) 
   
   # merge sme information to main dataset
   data_offer_sub <- data_offer_sub %>% 
-    mutate(ID_FIRM_RUT = gsub('[^[:alnum:] ]','', ID_RUT_FIRM)) %>% 
-    left_join(data_firms_clean, by = c("ID_FIRM_RUT"))
+    left_join(data_firms_clean, by = c("ID_RUT_FIRM"))
 
 }
 
@@ -318,8 +309,8 @@
     )
   
   # adjust the rut code for the firm-level data
-  data_offer_sub <- clean_string(data_offer_sub, commune) %>% 
-    select(-commune) %>% 
+  data_offer_sub <- clean_string(data_offer_sub, STR_FIRM_CITY) %>% 
+    select(-STR_FIRM_CITY) %>% 
     rename(STR_FIRM_CITY = new_string) %>% 
     mutate(
       STR_FIRM_CITY = ifelse(
@@ -335,25 +326,26 @@
   
   
   # adjust the rut code for the firm-level data
-  data_offer_sub <- data_offer_sub %>% 
-    mutate(region = as.character(region)) %>% 
-    mutate(
-      STR_FIRM_REGION = ifelse(region == 1, "Región de Tarapacá",
-                      ifelse(region == 2, "Región de Antofagasta",
-                             ifelse(region == 3, "Región de Atacama",
-                                    ifelse(region == 4, "Región de Coquimbo ",
-                                           ifelse(region == 5, "Región de la Araucanía ",
-                                                  ifelse(region == 7,"Región de Valparaíso",
-                                                         ifelse(region == 8, "Región del Libertador General Bernardo O´Higgins",
-                                                                ifelse(region == 9, "Región del Maule",
-                                                                       ifelse(region == 10, "Región del Biobío ",
-                                                                              ifelse(region == 11, "Región de los Lagos",
-                                                                                     ifelse(region == 12,"Región Aysén del General Carlos Ibáñez del Campo",
-                                                                                            ifelse(region == 13, "Región de Magallanes y de la Antártica",
-                                                                                                   ifelse(region == 14, "Región Metropolitana de Santiago",
-                                                                                                          ifelse(region == 15, "Región de Los Ríos",
-                                                                                                                 ifelse(region == 16,"Región de Arica y Parinacota",
-                                                                                                                        ifelse(region == 17, "Región del Ñuble", NA))))))))))))))))) %>% 
+  test <- data_offer_sub %>% 
+    mutate(region = as.character(STR_FIRM_REGION)) %>% 
+    mutate(region = substr(region, 0, str_locate(region, " ")[[1]] - 1)) %>% 
+   mutate(
+      STR_FIRM_REGION = ifelse(region == "I RE", "Región de Tarapacá",
+                      ifelse(region == "II R", "Región de Antofagasta",
+                             ifelse(region == "III ", "Región de Atacama",
+                                    ifelse(region == "IV R", "Región de Coquimbo ",
+                                           ifelse(region == "IX R", "Región de la Araucanía ",
+                                                  ifelse(region == "V RE","Región de Valparaíso",
+                                                         ifelse(region == "VI R", "Región del Libertador General Bernardo O´Higgins",
+                                                                ifelse(region == "VII ", "Región del Maule",
+                                                                       ifelse(region == "VIII", "Región del Biobío ",
+                                                                              ifelse(region == "X RE", "Región de los Lagos",
+                                                                                     ifelse(region == "XI R","Región Aysén del General Carlos Ibáñez del Campo",
+                                                                                            ifelse(region == "XII ", "Región de Magallanes y de la Antártica",
+                                                                                                   ifelse(STR_FIRM_REGION == "XIII", "Región Metropolitana de Santiago",
+                                                                                                          ifelse(STR_FIRM_REGION == "XIV ", "Región de Los Ríos",
+                                                                                                                 ifelse(STR_FIRM_REGION == "XV R","Región de Arica y Parinacota",
+                                                                                                                        ifelse(STR_FIRM_REGION == "XVI ", "Región del Ñuble", NA))))))))))))))))) %>% 
     select(-region)
  
 }
@@ -365,16 +357,16 @@
     # One dummy for bidder being from the same municipality
     mutate(same_municipality_bidder = ifelse(STR_BUYER_CITY == STR_FIRM_CITY, 1, 0)) %>% 
     
-    # One dummy for bidder being from the same region
+    # One dummy for bidder being from the same STR_FIRM_REGION
     mutate(same_region_bidder       = ifelse(STR_BUYER_REGION == STR_FIRM_REGION, 1, 0)) %>% 
     
     # One dummy for winner being an SME
-    mutate(sme_winner               = ifelse(CAT_OFFER_SELECT == 1, sme, NA)) %>% 
+    mutate(sme_winner               = ifelse(CAT_OFFER_SELECT == 1, CAT_MSME, NA)) %>% 
     
     # One dummy for the winner being from the same municipality
     mutate(same_municipality_winner = ifelse(CAT_OFFER_SELECT == 1, same_municipality_bidder, NA)) %>% 
     
-    # One dummy for the winner being from the same region
+    # One dummy for the winner being from the same STR_FIRM_REGION
     mutate(same_region_winner = ifelse(CAT_OFFER_SELECT == 1, same_region_bidder, NA))
     
 

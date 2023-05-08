@@ -98,7 +98,6 @@
         codigoProductoONU,
         CodigoAbreviadoTipoOC,
         EsTratoDirecto, 
-        EsCompraAgil, 
         Estado,
         FechaCreacion,
         FechaEnvio,
