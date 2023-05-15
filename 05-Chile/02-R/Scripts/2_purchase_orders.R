@@ -93,19 +93,21 @@
     # 3.1: select only relevant variables 
     datalist[[i]] <- datalist[[i]] %>% 
       dplyr::select(
-        Codigo,
+        Codigo, 
         CodigoLicitacion,
-        codigoProductoONU,
         CodigoAbreviadoTipoOC,
-        EsTratoDirecto, 
         Estado,
+        IDItem,
         FechaCreacion,
         FechaEnvio,
         FechaAceptacion,
+        MontoTotalOC_PesosChilenos,
         RutSucursal,
         RutUnidadCompra,
-        MontoTotalOC,
-        TipoMonedaOC)
+        codigoProductoONU,
+        sector,
+        EsCompraAgil,
+        EsTratoDirecto)
     
     # 3.3: format dates
     datalist[[i]] <- datalist[[i]] %>% 
@@ -116,7 +118,7 @@
     # 3.4: format numeric values
     datalist[[i]] <- datalist[[i]] %>% 
       mutate(
-        MontoTotalOC = as.numeric(gsub(",", ".", MontoTotalOC))
+        MontoTotalOC_PesosChilenos = as.numeric(gsub(",", ".", MontoTotalOC_PesosChilenos))
       ) 
     
     # 3.5: change names 
@@ -178,16 +180,21 @@
 {
   
   # We collapse data at the PO X SELLER X TENDER level for all POs coming from competitive processes    
-  data_po <- purchase_data %>% 
-    group_by(
-      ID_RUT_FIRM, 
-      ID_TENDER) %>% 
-    dplyr::summarise(
-      DT_ACCEPT_OC = first(DT_ACCEPT_OC)
-    )
+  purchase_data = as.data.table(purchase_data)
+  data_po = purchase_data[, .(
+    DT_ACCEPT_OC = first(DT_ACCEPT_OC),
+    CAT_TYPE_OC  = first(CAT_TYPE_OC),
+    DT_ENTRY_OC = first(DT_ENTRY_OC), 
+    DT_SEND_OC = first(DT_SEND_OC),  
+    AMT_TOT_PESOS_OC = sum(AMT_TOT_PESOS_OC, na.rm = TRUE),
+    ID_RUT_ISSUER = first(ID_RUT_ISSUER), 
+    ID_ITEM_UNSPSC = first(ID_ITEM_UNSPSC), 
+    STR_SECTOR = first(STR_SECTOR),
+    CAT_COMPRA_AGIL = first(CAT_COMPRA_AGIL),
+    CAT_DIRECT = first(CAT_DIRECT),
+    DT_YEAR = first(DT_YEAR),
+    DT_MONTH = first(DT_MONTH)), by = .(ID_TENDER, ID_PURCHASE_ORDER, ID_RUT_FIRM)]
     
-  
-  
 }
 
 # 5: Save data ---------------------------------------------------------------
