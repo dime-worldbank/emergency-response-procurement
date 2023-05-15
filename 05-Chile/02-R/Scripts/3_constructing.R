@@ -213,7 +213,9 @@
   # We add the submission date from the PO dataset
   data_offer_sub <- data_offer_sub %>% 
     left_join(
-      data_po %>% select(ID_RUT_FIRM, ID_TENDER, DT_ACCEPT_OC), by = c("ID_RUT_FIRM", "ID_TENDER")
+      data_po[, .(
+        DT_ACCEPT_OC = first(DT_ACCEPT_OC)
+        ), by = .(ID_TENDER, ID_RUT_FIRM)], by = c("ID_RUT_FIRM", "ID_TENDER")
     ) 
   
 }
@@ -374,7 +376,7 @@
     fwrite(data_offer_sub , file.path(fin_data, "data_offer_sub.csv" ))
     
     # Save data frames
-    fwrite(data_pos_raw , file.path(fin_data, "purchase_orders_raw.csv" ))
+    fwrite(data_po , file.path(fin_data, "purchase_orders_raw.csv" ))
     
     # Remove data frames to free RAM
     rm(data_offer_sub)
