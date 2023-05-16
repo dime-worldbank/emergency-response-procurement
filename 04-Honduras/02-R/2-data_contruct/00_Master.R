@@ -37,23 +37,17 @@
 
   # Set working directory -----------------------------------------
       
-      if (Sys.info()["user"] == "wb595473") {
+if (Sys.info()["user"] == "wb554125") {
   
-      scriptFolder <- file.path("/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/04-Honduras/02-R") 
+  scriptFolder <- file.path("C:/Users/wb554125/GitHub/emergency-response-procurement/04-Honduras")
   
-      projectFolder <- file.path("/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/1_data")
+  projectFolder <- file.path("C:/Users/wb554125/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/Data")
   
-      
-      } else if (Sys.info()["user"] == "") {
-      
-      scriptFolder <- file.path("") 
-      
-      projectFolder <- file.path("")
-      
-      }
+} 
 
 
-    scripts          <- file.path(scriptFolder,  "2-data_contruct"                                  ) # folder for the scripts
+
+    scripts          <- file.path(scriptFolder,  "02-R/2-data_contruct"                                  ) # folder for the scripts
     raw_oncae        <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Final"                       ) # folder for raw data from the standard portal 
     raw_data         <- file.path(projectFolder, "1_Raw"                                            ) # folder for all raw datasets
     raw_oncae_interm <- file.path(projectFolder, "1_Raw/Data_ONCAE/DCC/Intermediate/1 - Panel data" )
@@ -61,18 +55,8 @@
     cleaned          <- file.path(projectFolder, "3_Cleaned"                                        ) # cleaned datasets 
     output           <- file.path(projectFolder, "4_Output"                                         ) # cleaned datasets 
     
-    # data_covid  <- file.path(projectFolder, "1_Raw/Data_covid/IAIP_Emergencia_Covid19"         ) # folder for raw data from the covid portal 
-    # final_covid <- file.path(projectFolder, "1_Raw/Data_covid"                                 ) # folder for constructed covid data 
-    # data_agg    <- file.path(projectFolder, "1_Raw/Data_Aggregate")
-    
-    # Data        <- file.path(projectFolder, "1_Raw/DCC/Intermediate/1 - Panel data"            ) # folder for intermediate datasets of old data 
-    # Data_final  <- file.path(projectFolder, "1_Raw/DCC/Intermediate/2 - Harmonized sub-sampled Panel Data") # folder for intermediate datasets of old data 
-    # final       <- file.path(projectFolder, "1_Raw/Data_old/DCC/Final"                         ) # folder for constructed old data    
-  
-    # outputs     <- file.path(projectFolder, "4_Outputs"                                        ) # folder for all outputs produced
-    
-    
-  # Install and load packages -------------------------------------------------
+
+      # Install and load packages -------------------------------------------------
 
     # Packages 
 
@@ -153,17 +137,17 @@
 
 
     # 1) Clean and Merge Honduras Covid Data 
-     source(file.path(scripts, "01_Clean_standard.R"))
+     source(file.path(scripts, "01_Clean_standard.R")) 
 
     # 2) Construct Variables 
-     source(file.path(scripts, "02_Construct_standard.R"))
+     source(file.path(scripts, "02_Construct_standard.Rmd")) ##line 1748 code breaks, that chunck cannot be run
       # there is also a Rmarkdown version of this script - the markdown is the most up to date one 
  
     # 3) Output of Descriptive Analysis 
      source(file.path(scripts, "04_Output_final.Rmd"))
       
     # 4) Regression Analysis  
-     source(file.path(scripts, "05_regression.R"))
+     source(file.path(scripts, "05_regression.R")) ##markdown breaks at line 322 and the R breaks in line 229, but only that regression
       
       
       
