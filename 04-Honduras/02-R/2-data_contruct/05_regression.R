@@ -226,7 +226,7 @@ clfe <- feols(data = firm_item_avg_new, avg_new ~ Group | year_month, cluster = 
 
 etable(clfe)
 
-# average number of new COVID product 
+# average number of new COVID product ## CODE BREAKS HERE
 firm_item_avg_new_COVID <- firm_item_did[year >= 2016 & year <= 2022, 
                                          new_COVID := unspsc_new * covid_item]
 
