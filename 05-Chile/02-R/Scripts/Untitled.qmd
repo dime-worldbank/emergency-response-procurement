@@ -1,0 +1,275 @@
+
+# Average number of days between start and end of bidding 
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_submission_semester_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_submission_year_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_submission_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_submission_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_submission_treat_covid.jpeg")
+
+:::
+  
+  ::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_submission_treat_med.jpeg")
+
+:::
+
+# Average number of days between start of bidding and awarding contract
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_process_semester_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_process_year_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_process_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_process_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_award_treat_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_award_treat_med.jpeg")
+
+:::
+
+# Average number of days between declaring winner and awarding contract
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_award_contract_semester_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_award_contract_year_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_award_contract_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/dd_award_contract_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_award_treat_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/DD_award_treat_med.jpeg")
+
+:::
+
+
+# Number of type of products bidded by a firm within one year/six months 
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_products_bid_.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_products_semester_bid_.jpeg")
+
+:::
+
+# Number of type of products awarded to a firm within one year/six months 
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_products_win_.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_products_semester_win_.jpeg")
+
+:::
+
+# Total number of bidders per sector
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_bid_semester_sector.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_bid_sector.jpeg")
+
+:::
+
+# Total number of winners per sector
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_win_semester_sector.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_win_semester_sector.jpeg")
+
+:::
+
+# HHI index (market concentration)
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/hhi_semester_medic.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/hhi_year_medic.jpeg")
+
+:::
+
+# Number of direct tenders
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_direct_contracts_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_direct_contracts_year_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_direct_contracts_semester_medical.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/n_direct_contracts_year_medical.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/direct_treat_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/direct_treat_med.jpeg")
+
+:::
+
+# Share of direct tenders by number 
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/share_tenders_covid_semester.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/share_tenders_covid_year.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/share_tenders_medical_semester.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/share_tenders_medical_year.jpeg")
+
+:::
+
+# Share of direct tenders by number 
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/value_direct_contracts_semester_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/value_direct_contracts_year_covid.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/value_direct_contracts_semester_medical.jpeg")
+
+:::
+
+::: {layout="[100]"}
+
+![]("/Users/ruggerodoino/Dropbox/COVID_19/CHILE/Reproducible-Package/Outputs/value_direct_contracts_year_medical.jpeg")
+
+:::
