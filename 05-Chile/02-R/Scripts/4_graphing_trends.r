@@ -285,7 +285,7 @@ ggsave(
   device   = 'png'
 )
 
-# Share of SMEs firm (all tenders) --------------------------
+# Share of SMEs firm bidding (all tenders) --------------------------
 
 # Quarterly - Medicine
 
@@ -348,7 +348,7 @@ ggsave(
 
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding (all tenders) --------------------------
+# Share of SMEs firms winning (all tenders) --------------------------
 
 # Quarterly - Medicine
 
@@ -412,7 +412,7 @@ ggsave(
 
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding (all tenders) --------------------------
+# Share of bidders from the same region (all tenders) --------------------------
 
 # Quarterly - Medicine
 
@@ -476,7 +476,7 @@ ggsave(
 # Quarterly - Covid-19
 
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of bidders from the same municipality (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -539,7 +539,7 @@ ggsave(
 
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of winners from the same region (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -602,7 +602,7 @@ ggsave(
 
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of winners from the same municipality (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -764,7 +764,7 @@ last_bid_s_medicine <- last_bid_medicine %>%
     new_bidder_24 = mean(new_bidder_24, na.rm = TRUE)*100
   ) 
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new bidders within the last 6 months (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -827,7 +827,7 @@ ggsave(
 
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new bidders within the last 12 months (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -1045,7 +1045,7 @@ last_win_s_medicine <- last_win_medicine %>%
     new_winner_24 = mean(new_winner_24, na.rm = TRUE)*100
   ) 
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new winners within the last 6 months (all tenders) -------------
 
 # Quarterly - Medicine
 
@@ -1110,7 +1110,7 @@ ggsave(
 )
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new winners within the last 12 months (all tenders) -------------
 
 # Quarterly - Medicine
 # Yearly - Medicine
@@ -1231,7 +1231,7 @@ ggsave(
 )
 
 
-# Decision Time  ---------------------------------------------------------------
+# Decision Time    ---------------------------------------------------------------
 
 # Yearly - Medicine
 
@@ -1292,7 +1292,7 @@ ggsave(
   device   = 'png'
 )
 
-# Decision Time  ---------------------------------------------------------------
+# Tot Process Time ---------------------------------------------------------------
 
 # Yearly - Medicine
 # Yearly - Covid-19
@@ -1353,7 +1353,7 @@ ggsave(
 )
 
 
-# Decision Time  ---------------------------------------------------------------
+# Submission Time  ---------------------------------------------------------------
 
 # Yearly - Medicine
 
@@ -1478,7 +1478,7 @@ table_product_firms_bid <- data_offer_sub %>%
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
   distinct(ID_RUT_FIRM, DT_Y, product) %>% 
   group_by(ID_RUT_FIRM, DT_Y) %>% 
-  dplyr::summarise(n_product = n()) %>% 
+  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
   group_by(DT_Y) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1486,7 +1486,7 @@ plot <- graph_trend_no_treat(
   data = table_product_firms_bid, 
   variable = n_product, 
   title = "Market Concentration",
-  subtitle = "Number of different products bidded, per firm",
+  subtitle = "Number of different products bided, per firm",
   caption = "Source: Chile Compra",
   limit_lower = 4,
   limit_upper = 6,
@@ -1511,7 +1511,7 @@ table_product_firms_bid <- data_offer_sub %>%
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
   distinct(ID_RUT_FIRM, DT_S, product) %>% 
   group_by(ID_RUT_FIRM, DT_S) %>% 
-  dplyr::summarise(n_product = n()) %>% 
+  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
   group_by(DT_S) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1519,7 +1519,7 @@ plot <- graph_trend_no_treat(
   data = table_product_firms_bid, 
   variable = n_product, 
   title = "Market Concentration",
-  subtitle = "Number of different products bidded, per firm",
+  subtitle = "Number of different products bided, per firm",
   caption = "Source: Chile Compra",
   limit_lower = 4,
   limit_upper = 6,
@@ -1545,7 +1545,7 @@ table_product_firms_win <- data_offer_sub %>%
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
   distinct(ID_RUT_FIRM, DT_Y, product) %>% 
   group_by(ID_RUT_FIRM, DT_Y) %>% 
-  dplyr::summarise(n_product = n()) %>% 
+  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
   group_by(DT_Y) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1578,7 +1578,7 @@ table_product_firms_win <- data_offer_sub %>%
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
   distinct(ID_RUT_FIRM, DT_S, product) %>% 
   group_by(ID_RUT_FIRM, DT_S) %>% 
-  dplyr::summarise(n_product = n()) %>% 
+  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
   group_by(DT_S) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1612,7 +1612,7 @@ n_bidders_sector <- data_offer_sub %>%
   mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
   distinct(ID_RUT_FIRM, DT_Y, sector, CAT_MEDICAL) %>% 
   group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_bidders_sector = n()) %>% 
+  dplyr::summarise(n_bidders_sector = n_distinct(ID_RUT_FIRM)) %>% 
   group_by(DT_Y, CAT_MEDICAL) %>% 
   dplyr::summarise(n_bidders_sector = mean(n_bidders_sector, na.rm = TRUE))
 
@@ -1649,7 +1649,7 @@ n_bidders_sector <- data_offer_sub %>%
   mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
   distinct(ID_RUT_FIRM, DT_S, sector, CAT_MEDICAL) %>% 
   group_by(sector, DT_S, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_bidders_sector = n()) %>% 
+  dplyr::summarise(n_bidders_sector = n_distinct(ID_RUT_FIRM)) %>% 
   group_by(DT_S, CAT_MEDICAL) %>% 
   dplyr::summarise(n_bidders_sector = mean(n_bidders_sector, na.rm = TRUE))
 
@@ -1686,7 +1686,7 @@ n_winners_sector <- data_offer_sub %>%
   mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
   distinct(ID_RUT_FIRM, DT_Y, sector, CAT_MEDICAL) %>% 
   group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_winner_sector = n()) %>% 
+  dplyr::summarise(n_winner_sector = n_distinct(ID_RUT_FIRM)) %>% 
   group_by(DT_Y, CAT_MEDICAL) %>% 
   dplyr::summarise(n_winner_sector = mean(n_winner_sector, na.rm = TRUE))
 
@@ -1723,7 +1723,7 @@ n_winners_sector <- data_offer_sub %>%
   mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
   distinct(ID_RUT_FIRM, DT_S, sector, CAT_MEDICAL) %>% 
   group_by(sector, DT_S, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_winner_sector = n()) %>% 
+  dplyr::summarise(n_winner_sector = n_distinct(ID_RUT_FIRM)) %>% 
   group_by(DT_S, CAT_MEDICAL) %>% 
   dplyr::summarise(n_winner_sector = mean(n_winner_sector, na.rm = TRUE))
 
@@ -2413,11 +2413,7 @@ last_bid_s_medicine <- last_bid_medicine %>%
     new_bidder_24 = mean(new_bidder_24, na.rm = TRUE)*100
   ) 
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
-
-# Quarterly - Medicine
-
-# Yearly - Medicine
+# Share of new firms bidding to the entity within the last 6 months (all tenders) -------------
 
 # Yearly - Covid-19
 
@@ -2475,6 +2471,8 @@ ggsave(
   units    = "in"                                             ,
   device   = 'png'
 )
+
+# Share of new firms bidding to the entity within the last 12 months -------------
 
 # Yearly - Covid-19
 
@@ -2695,7 +2693,7 @@ last_win_s_medicine <- last_win_medicine %>%
     new_winner_24 = mean(new_winner_24, na.rm = TRUE)*100
   ) 
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new firms winning to the entity within the last 6 months -------------
 
 # Quarterly - Medicine
 
@@ -2759,7 +2757,7 @@ ggsave(
 )
 # Quarterly - Covid-19
 
-# Share of SMEs firms bidding from same municipality (all tenders) -------------
+# Share of new firms winning to the entity within the last 12 months -------------
 
 # Quarterly - Medicine
 # Yearly - Medicine

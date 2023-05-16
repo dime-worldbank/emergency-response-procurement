@@ -101,3 +101,54 @@
 	.
 }
 .
+
+* 2: Table of products
+{
+	* 1: Getting all variables
+	{ 
+		* Reading Covid table
+		use "${path_project}/1_data/03-covid_item-item_level",clear
+		keep type_item item_5d_code  Covid_group_level Covid_item_level total total_covid rate_covid_purchase rate_covid
+		format %5.4fc rate*
+		
+		* Type item
+		rename type_item type_item_aux
+		gen 	type_item =1  if type_item_aux == "Product"
+		replace type_item =2  if type_item_aux == "Service"	
+		drop type_item_aux
+		
+		* Merging data
+		merge m:1 type_item item_5d_code using ///
+			"${procurement_data}/03-extra_sources/04-clean/01-catalog-federal-procurement.dta", ///
+			keepusing(type_item item_5d_code item_2d_code  item_2d_name   item_2d_name_eng item_5d_name item_5d_name_eng ) nogen keep(3)
+		
+		label val type_item lab_type
+	}
+	
+	* 2: Preparing to export
+	{
+	    gsort type_item -Covid_group_level -Covid_item_level   item_2d_code -total_covid 
+		order Covid_group_level Covid_item_level type_item item_2d_code item_5d_code  item_2d_name_eng item_2d_name  item_5d_name_eng item_5d_name
+		
+		format  %45s item_*d_name*
+		
+		label define lab_covid_level  3 "3-High Covid" 2 "2-Medium Covid" 1 "-low Covid" 4 "0-No Covid", replace
+		label val Covid_group_level lab_covid_level
+		label val Covid_item_level  lab_covid_level
+		
+		* Labeling variables to export to excel
+		label var Covid_item_level  "Covid level item - 5 digits"
+		label var Covid_group_level "Covid level item - 2 digits"
+		label var type_item			 "Type item - Good or service"
+		label var item_2d_code		 "item code - 2 digits"
+		label var item_5d_code 		 "item code - 5 digits"
+		label var item_2d_name_eng	 "item english name - 2 digits"
+		label var item_5d_name_eng 	 "item english name - 5 digits"
+		label var item_2d_name		 "item original name - 2 digits"
+		label var item_5d_name 		 "item original name - 5 digits"
+		
+		* Exporting
+		export excel using "${path_project}/4_outputs/2-Tables/01-table_products_covid_level.xlsx", replace firstrow(varlabels)
+				
+	}
+}

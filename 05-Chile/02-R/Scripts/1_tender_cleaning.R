@@ -107,6 +107,8 @@
         CodigoExterno,
         ComunaUnidad,
         RegionUnidad,
+        sector, 
+        `Tipo de Adquisicion`, 
         RutUnidad,
         CodigoMoneda,
         FechaCreacion,

@@ -14,8 +14,6 @@
       # Load PO data
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
 
-      data_pos_raw <- fread(file = file.path(int_data, "purchase_orders_raw.csv"), encoding = "Latin-1") 
-      
       }
     
     {# Conversion rate table as provided in their official website 
@@ -153,10 +151,7 @@
         ) %>% 
         select(-VMUSD)
       
-      data_pos_raw <- data_pos_raw %>% 
-        rename(
-          ID_ITEM_UNSPSC = codigoProductoONU 
-        )  %>% 
+      data_po <- data_po  %>% 
         mutate(
           DT_YEAR  = as.character(DT_YEAR),
           DT_MONTH = as.character(DT_MONTH),
@@ -164,12 +159,12 @@
         )
       
       #
-      data_pos_raw <- left_join(data_pos_raw, conversion_rates, by = c("DT_YEAR" = "DT_TENDER_YEAR","DT_MONTH" = "DT_TENDER_MONTH","CAT_CURRENCY" = "CAT_OFFER_CURRENCY"))
+      data_po <- left_join(data_po, conversion_rates %>% mutate(VMUSD = gsub(",", ".", VMUSD)) %>%  filter(CAT_OFFER_CURRENCY == "CLP"), by = c("DT_YEAR" = "DT_TENDER_YEAR","DT_MONTH" = "DT_TENDER_MONTH"))
       
       #
-      data_pos_raw <- data_pos_raw %>% 
+      data_po <- data_po %>% 
         mutate(
-          AMT_VALUE    = AMT_VALUE    * VMUSD
+          AMT_VALUE    = AMT_TOT_PESOS_OC    * as.numeric(VMUSD)
         ) %>% 
         select(-VMUSD)
       
@@ -193,7 +188,7 @@
         
       ) 
       
-      data_pos_raw <- data_pos_raw %>% 
+      data_po <- data_po %>% 
         
         mutate(
           AMT_VALUE = ifelse(AMT_VALUE > quantile(AMT_VALUE, 0.99, na.rm = TRUE), NA, ifelse(
@@ -203,7 +198,7 @@
       item_covid   <- readxl::read_xlsx(file.path(raw_data, "Auxiliary files/covid_label_table.xlsx"))
       item_covid_list <- item_covid %>% select(ID_ITEM_UNSPSC, CAT_MEDICAL, COVID_LABEL)
       
-      data_pos_raw = data_pos_raw %>% 
+      data_po = data_po %>% 
         left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
         mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0)) %>% 
         mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
@@ -218,7 +213,9 @@
   # We add the submission date from the PO dataset
   data_offer_sub <- data_offer_sub %>% 
     left_join(
-      data_po, by = c("ID_RUT_FIRM", "ID_TENDER")
+      data_po[, .(
+        DT_ACCEPT_OC = first(DT_ACCEPT_OC)
+        ), by = .(ID_TENDER, ID_RUT_FIRM)], by = c("ID_RUT_FIRM", "ID_TENDER")
     ) 
   
 }
@@ -246,7 +243,7 @@
                                                 if_else(DT_Y == 2021, 10, 12)))))))
   
   # Add trimmed values 
-  data_pos_raw <- data_pos_raw %>%
+  data_po <- data_po %>%
     
     # create month and year date
     mutate(
@@ -379,7 +376,7 @@
     fwrite(data_offer_sub , file.path(fin_data, "data_offer_sub.csv" ))
     
     # Save data frames
-    fwrite(data_pos_raw , file.path(fin_data, "purchase_orders_raw.csv" ))
+    fwrite(data_po , file.path(fin_data, "purchase_orders_raw.csv" ))
     
     # Remove data frames to free RAM
     rm(data_offer_sub)
