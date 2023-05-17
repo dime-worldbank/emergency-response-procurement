@@ -21,13 +21,12 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
 
   # Set working directory -----------------------------------------
       
-      if (Sys.info()["user"] == "wb595473") {
+      if (Sys.info()["user"] == "wb554125") {
   
-      scriptFolder <- file.path("/Users/wb595473/OneDrive - WBG/Documents/emergency-response-procurement/04-Honduras/02-R") 
+  scriptFolder <- file.path("C:/Users/wb554125/GitHub/emergency-response-procurement/04-Honduras")
   
-      projectFolder <- file.path("/Users/wb595473/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/1_data")
+  projectFolder <- file.path("C:/Users/wb554125/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/Data")
   
-      
       } else if (Sys.info()["user"] == "") {
       
       scriptFolder <- file.path("") 
@@ -1746,14 +1745,14 @@ knitr::opts_chunk$set(warning = TRUE, message = TRUE)
         group_by(ID_PARTY, year)%>%
         dplyr::summarise(num_unspsc = n_distinct(ID_ITEM_UNSPSC))%>%
         ungroup()
-      
+
       firm_uspsc_panel <- firm_item_year%>%
         spread(year, num_unspsc)%>%
         clean_names()%>%
-        replace(is.na(.), 0)%>%
-        mutate(product_increase = case_when(x2020 > x2015 | x2021 > x2015 ~ 1,
+        replace(is.na(.), 0)%>%  ##code change, there is not 2015 in this data, only 2016
+        mutate(product_increase = case_when(x2020 > x2016 | x2021 > x2016 ~ 1,
                                             TRUE ~ 0))%>%
-        dplyr::rename("2015" = "x2015",
+        dplyr::rename(#"2015" = "x2015",
                       "2016" = "x2016",
                       "2017" = "x2017",
                       "2018" = "x2018",

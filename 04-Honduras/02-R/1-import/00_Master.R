@@ -5,7 +5,8 @@
 #                                                                                #
 # ------------------------------------------------------------------------------ #
 # --------------------------------------- #
-#     Authors: Hao Lyu (RA - DIME)  #                                       
+#     Authors: Hao Lyu (RA - DIME)  # 
+#              Maria Arnal Canudo 
 # --------------------------------------- #
 
 # ****************************************************************************** #
@@ -14,6 +15,7 @@
 #                                                                                #
 # ****************************************************************************** #
 # 11/10/2022
+# Last update: May 12, 2023
 
 ######################
 ####   SETUP    ######
@@ -25,21 +27,23 @@ rm(list=ls())
 
 #### Set the current working directory -----------------------------------------
 
-if (Sys.info()["user"] == "haolyu") {
+if (Sys.info()["user"] == "wb554125") {
+  
+  scriptFolder <- file.path("C:/Users/wb554125/GitHub/emergency-response-procurement/04-Honduras")
+  
+  projectFolder <- file.path("C:/Users/wb554125/Dropbox/KCP_Procurement_WB/R")
+
+} else if (Sys.info()["user"] == "haolyu"){
   
   scriptFolder <- file.path("/Users/haolyu/Documents/GitHub/honduras-procurement") 
   
   projectFolder <- file.path("/Users/haolyu/Dropbox/Honduras_Procurement") 
-
-} else if (Sys.info()["user"] == ""){
-  
-  scriptFolder <- file.path("")
-  
-  projectFolder <- file.path("")
   
 } # <- put your path here 
 
-scripts     <- file.path(scriptFolder,"Scripts/Master"                                             ) # folder for the scripts
+
+
+scripts     <- file.path(scriptFolder,"02-RScripts"                                             ) # folder for the scripts
 outputs     <- file.path(projectFolder,"Outputs"                                                    ) # folder for all outputs produced
 raw_Data    <- file.path(projectFolder,"Data/Raw"                                                   ) # folder for all raw datasets
 Data        <- file.path(projectFolder,"Data/DCC/Intermediate/1 - Panel data"                       )
@@ -123,7 +127,7 @@ options(scipen=999)
 
 
     # 1) Part_1: this script will allow you to download the data and construct our folder structure
-      source(file.path(scripts, "Part_1.R"))
+      source(file.path(scripts, "1-import/Part_1.R"))
     # need to install "xlsx" package before running
 
     # 2) Part_2: this script cleans the main datasets and merge them all down to the main 5 datasets
