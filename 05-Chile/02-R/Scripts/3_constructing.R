@@ -197,11 +197,20 @@
       
       item_covid   <- readxl::read_xlsx(file.path(raw_data, "Auxiliary files/covid_label_table.xlsx"))
       item_covid_list <- item_covid %>% select(ID_ITEM_UNSPSC, CAT_MEDICAL, COVID_LABEL)
+      problematic = readxl::read_xlsx(file.path(code_doc, "problematic_items.xlsx")) %>% mutate(
+        ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)
+      )
       
       data_po = data_po %>% 
         left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
         mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0)) %>% 
         mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
+      
+      data_po = data_po %>% 
+        left_join(problematic, by = c("ID_ITEM_UNSPSC"))
+      
+      data_offer_sub = data_offer_sub %>% 
+        left_join(problematic %>% mutate(ID_ITEM_UNSPSC = as.integer(ID_ITEM_UNSPSC)), by = c("ID_ITEM_UNSPSC"))
 
     }
     
@@ -323,7 +332,7 @@
   
   
   # adjust the rut code for the firm-level data
-  test <- data_offer_sub %>% 
+  data_offer_sub <- data_offer_sub %>% 
     mutate(region = as.character(STR_FIRM_REGION)) %>% 
     mutate(region = substr(region, 0, str_locate(region, " ")[[1]] - 1)) %>% 
    mutate(
@@ -376,7 +385,7 @@
     fwrite(data_offer_sub , file.path(fin_data, "data_offer_sub.csv" ))
     
     # Save data frames
-    fwrite(data_po , file.path(fin_data, "purchase_orders_raw.csv" ))
+    fwrite(data_po , file.path(fin_data, "purchase_orders.csv" ))
     
     # Remove data frames to free RAM
     rm(data_offer_sub)
