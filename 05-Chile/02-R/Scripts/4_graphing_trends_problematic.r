@@ -888,6 +888,8 @@ ggsave(
   device   = 'png'
 )
 
+data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 1,
+                              CAT_DIRECT == "Si", 1, default = NA)]
 data_po_collapse <- data_po[DT_YEAR > 2015, 
                                  list(
                                    CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),

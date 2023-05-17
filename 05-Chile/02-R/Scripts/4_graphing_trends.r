@@ -1471,47 +1471,19 @@ ggsave(
   device   = 'png'
 )
 
-table_product_firms_bid <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
-  mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
-  distinct(ID_RUT_FIRM, DT_Y, product) %>% 
-  group_by(ID_RUT_FIRM, DT_Y) %>% 
-  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
-  group_by(DT_Y) %>% 
-  dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
-
-plot <- graph_trend_no_treat(
-  data = table_product_firms_bid, 
-  variable = n_product, 
-  title = "Market Concentration",
-  subtitle = "Number of different products bided, per firm",
-  caption = "Source: Chile Compra",
-  limit_lower = 4,
-  limit_upper = 6,
-  interval_limits_y = 0.2,
-  legend_upper = 5.8,
-  percentage = FALSE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_bid_.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
+usual_bidders = unique(data_offer_sub, by = c("ID_RUT_FIRM", "DT_Y","DT_S", "ID_ITEM"))
+usual_bidders = usual_bidders[DT_Y %in% seq(2019, 2020), if (.N > 1) .SD, by = list(ID_RUT_FIRM, DT_S)]
+usual_bidders = unique(usual_bidders, by = "ID_RUT_FIRM")
 
 table_product_firms_bid <- data_offer_sub %>% 
   
   filter(DT_Y > 2015) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
+  filter(ID_RUT_FIRM %in% usual_bidders$ID_RUT_FIRM) %>% 
+  mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)) %>% 
+  mutate(ID_ITEM_UNSPSC = ifelse(nchar(as.character(ID_ITEM_UNSPSC)) == 9, NA, ID_ITEM_UNSPSC)) %>% 
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
-  distinct(ID_RUT_FIRM, DT_S, product) %>% 
   group_by(ID_RUT_FIRM, DT_S) %>% 
-  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
+  dplyr::summarise(n_product = n_distinct(product)) %>% 
   group_by(DT_S) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1521,10 +1493,10 @@ plot <- graph_trend_no_treat(
   title = "Market Concentration",
   subtitle = "Number of different products bided, per firm",
   caption = "Source: Chile Compra",
-  limit_lower = 4,
-  limit_upper = 6,
-  interval_limits_y = 0.2,
-  legend_upper = 5.8,
+  limit_lower = 5,
+  limit_upper = 11,
+  interval_limits_y = 1,
+  legend_upper = 10,
   percentage = FALSE,
   yearly = FALSE
 )
@@ -1541,44 +1513,12 @@ ggsave(
 table_product_firms_win <- data_offer_sub %>% 
   
   filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
+  filter(ID_RUT_FIRM %in% usual_bidders$ID_RUT_FIRM) %>% 
+  mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)) %>% 
+  mutate(ID_ITEM_UNSPSC = ifelse(nchar(as.character(ID_ITEM_UNSPSC)) == 9, NA, ID_ITEM_UNSPSC)) %>% 
   mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
-  distinct(ID_RUT_FIRM, DT_Y, product) %>% 
-  group_by(ID_RUT_FIRM, DT_Y) %>% 
-  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
-  group_by(DT_Y) %>% 
-  dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
-
-plot <- graph_trend_no_treat(
-  data = table_product_firms_win, 
-  variable = n_product, 
-  title = "Market Concentration",
-  subtitle = "Number of different products awarded, per firm",
-  caption = "Source: Chile Compra",
-  limit_lower = 3,
-  limit_upper = 4.5,
-  interval_limits_y = 0.2,
-  legend_upper = 4.5,
-  percentage = FALSE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_products_win_.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-table_product_firms_win <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
-  mutate(product = substr(ID_ITEM_UNSPSC, 0, 6)) %>% 
-  distinct(ID_RUT_FIRM, DT_S, product) %>% 
   group_by(ID_RUT_FIRM, DT_S) %>% 
-  dplyr::summarise(n_product = n_distinct(ID_ITEM_UNSPSC)) %>% 
+  dplyr::summarise(n_product = n_distinct(product)) %>% 
   group_by(DT_S) %>% 
   dplyr::summarise(n_product = mean(n_product, na.rm = TRUE))
 
@@ -1589,9 +1529,9 @@ plot <- graph_trend_no_treat(
   subtitle = "Number of different products awarded, per firm",
   caption = "Source: Chile Compra",
   limit_lower = 3,
-  limit_upper = 4.5,
-  interval_limits_y = 0.2,
-  legend_upper = 4.5,
+  limit_upper = 7,
+  interval_limits_y = 0.5,
+  legend_upper = 7,
   percentage = FALSE,
   yearly = FALSE
 )
@@ -1759,51 +1699,6 @@ concentration <- data_offer_sub %>%
   mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
   filter(!is.na(ID_ITEM_UNSPSC)) %>% 
   mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
-  group_by(ID_RUT_FIRM, sector, DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(firm_sum = sum(AMT_VALUE_AWARDED, na.rm = TRUE)) %>% 
-  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  mutate(tot_sum = sum(firm_sum, na.rm = TRUE)) %>% 
-  ungroup() %>% 
-  mutate(concentration = ((firm_sum/tot_sum)*100)^2) %>% 
-  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  summarise(concentration = sum(concentration, na.rm = TRUE)) %>% 
-  group_by(CAT_MEDICAL, DT_Y) %>% 
-  summarise(concentration = mean(concentration, na.rm = TRUE))
-
-# Yearly - Medicine
-
-plot <- graph_trend(
-  data = concentration, 
-  treatment = CAT_MEDICAL,
-  variable = concentration, 
-  title = "Market Concentration",
-  subtitle = "HERFINDAHL-HIRSCHMAN INDEX, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 50,
-  limit_upper = 400,
-  interval_limits_y = 50,
-  legend_upper = 380,
-  percentage = FALSE,
-  yearly = TRUE,
-  label_treatment_legend = "Medical",
-  label_control_legend = "Non-medical"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/hhi_year_medic.png"),
-  plot = plot                                                ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-concentration <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
-  filter(!is.na(ID_ITEM_UNSPSC)) %>% 
-  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
   group_by(ID_RUT_FIRM, sector, DT_S, CAT_MEDICAL) %>% 
   dplyr::summarise(firm_sum = sum(AMT_VALUE_AWARDED, na.rm = TRUE)) %>% 
   group_by(sector, DT_S, CAT_MEDICAL) %>% 
@@ -1845,162 +1740,7 @@ ggsave(
 
 data_pos_raw <- data_pos_raw %>% 
   mutate(
-    CAT_DIRECT      = ifelse(CAT_DIRECT      == "Si", 1, 0)
-  )
-
-data_po_collapse <- data_pos_raw[DT_YEAR > 2015, 
-                                  list(
-                                    CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
-                                    CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
-                                  ), 
-                                      by = list(DT_YEAR, ID_PURCHASE_ORDER, COVID_LABEL)]
-
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)
-
-data_po_collapse <- data_po_collapse %>% 
-  group_by(DT_YEAR) %>% 
-  mutate(AMT_VALUE_SUM = sum(CAT_DIRECT_VAL, na.rm = TRUE)) %>% 
-  ungroup() 
-
-data_po_collapse <- data_po_collapse %>% 
-  mutate(
-    AMT_VALUE = CAT_DIRECT_VAL*CAT_DIRECT
-  )%>% 
-  group_by(DT_YEAR, COVID_LABEL, AMT_VALUE_SUM) %>% 
-  dplyr::summarise(
-    CAT_DIRECT_N   = mean(CAT_DIRECT, na.rm = TRUE)*100,
-    CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
-  )
-
-data_po_collapse <- data_po_collapse %>% mutate(CAT_DIRECT_VAL = CAT_DIRECT_VAL/AMT_VALUE_SUM*100) %>% select(- AMT_VALUE_SUM) %>% rename(DT_Y = DT_YEAR)
-
-plot <- graph_trend(
-  data = data_po_collapse, 
-  variable = CAT_DIRECT_N, 
-  treatment = COVID_LABEL, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (number of contracts)",
-  caption = "Source: Chile Compra",
-  limit_lower = 10,
-  limit_upper = 60,
-  interval_limits_y = 5,
-  legend_upper = 58,
-  percentage = TRUE,
-  yearly = TRUE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_covid.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-plot <- graph_trend(
-  data = data_po_collapse, 
-  variable = CAT_DIRECT_VAL, 
-  treatment = COVID_LABEL, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (value of contracts)",
-  caption = "Source: Chile Compra",
-  limit_lower = 0,
-  limit_upper = 30,
-  interval_limits_y = 2,
-  legend_upper = 28,
-  percentage = TRUE,
-  yearly = TRUE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_covid.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
-                                 list(
-                                   CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
-                                   CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
-                                 ), 
-                                 by = list(DT_YEAR, ID_PURCHASE_ORDER, CAT_MEDICAL)]
-
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)
-
-data_po_collapse <- data_po_collapse %>% 
-  group_by(DT_YEAR) %>% 
-  mutate(AMT_VALUE_SUM = sum(CAT_DIRECT_VAL, na.rm = TRUE)) %>% 
-  ungroup() 
-
-data_po_collapse <- data_po_collapse %>% 
-  mutate(
-    AMT_VALUE = CAT_DIRECT_VAL*CAT_DIRECT
-  )%>% 
-  group_by(DT_YEAR, CAT_MEDICAL, AMT_VALUE_SUM) %>% 
-  dplyr::summarise(
-    CAT_DIRECT_N   = mean(CAT_DIRECT, na.rm = TRUE)*100,
-    CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
-  )
-
-data_po_collapse <- data_po_collapse %>% mutate(CAT_DIRECT_VAL = CAT_DIRECT_VAL/AMT_VALUE_SUM*100) %>% select(- AMT_VALUE_SUM) %>% rename(DT_Y = DT_YEAR)
-
-plot <- graph_trend(
-  data = data_po_collapse, 
-  variable = CAT_DIRECT_N, 
-  treatment = CAT_MEDICAL, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (number of contracts)",
-  caption = "Source: Chile Compra",
-  label_treatment_legend = "Medical",
-  label_control_legend = "Non Medical",
-  limit_lower = 10,
-  limit_upper = 60,
-  interval_limits_y = 5,
-  legend_upper = 58,
-  percentage = TRUE,
-  yearly = TRUE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_direct_contracts_year_medical.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-plot <- graph_trend(
-  data = data_po_collapse, 
-  variable = CAT_DIRECT_VAL, 
-  treatment = CAT_MEDICAL, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (value of contracts)",
-  caption = "Source: Chile Compra",
-  label_treatment_legend = "Medical",
-  label_control_legend = "Non Medical",
-  limit_lower = 0,
-  limit_upper = 30,
-  interval_limits_y = 2,
-  legend_upper = 28,
-  percentage = TRUE,
-  yearly = TRUE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/value_direct_contracts_year_medical.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-
+    CAT_DIRECT      = ifelse(CAT_DIRECT      == "Si", 1, 0))
 
 data_po_collapse <- data_pos_raw[DT_YEAR > 2015, 
                                  list(
@@ -2155,29 +1895,6 @@ ggsave(
 )
 
 
-tender_composition_year <- data_offer_sub[DT_TENDER_YEAR > 2015, 
-                                    list(covid   = mean(COVID_LABEL, na.rm = TRUE)), 
-                                    by = list(DT_Y, ID_TENDER)]
-
-tender_composition_year <- tender_composition_year %>% 
-  mutate(
-    tender_covid = ifelse(covid == 1, "ONLY COVID",
-                        ifelse(covid == 0, "ONLY NON COVID", "MIXED"))
-  ) %>% 
-  group_by(DT_Y) %>% 
-  mutate(
-    n_tenders = n()
-  ) %>% 
-  ungroup() %>% 
-  group_by(DT_Y, tender_covid) %>% 
-  dplyr::summarise(
-    tender_covid_n = n(),
-    n_tenders        = mean(n_tenders)
-  ) %>% 
-  mutate(
-    tender_covid_n   = tender_covid_n/n_tenders*100
-  )
-
 tender_composition_semester <- data_offer_sub[DT_TENDER_YEAR > 2015, 
                                               list(covid   = mean(COVID_LABEL, na.rm = TRUE)), 
                                               by = list(DT_S, ID_TENDER)]
@@ -2246,29 +1963,6 @@ ggsave(
   units    = "in"                                             ,
   device   = 'png'
 )
-
-tender_composition_year <- data_offer_sub[DT_TENDER_YEAR > 2015, 
-                                          list(medical   = mean(CAT_MEDICAL, na.rm = TRUE)), 
-                                          by = list(DT_Y, ID_TENDER)]
-
-tender_composition_year <- tender_composition_year %>% 
-  mutate(
-    tender_medical = ifelse(medical == 1, "ONLY MEDICAL",
-                          ifelse(medical == 0, "ONLY NON MEDICAL", "MIXED"))
-  ) %>% 
-  group_by(DT_Y) %>% 
-  mutate(
-    n_tenders = n()
-  ) %>% 
-  ungroup() %>% 
-  group_by(DT_Y, tender_medical) %>% 
-  dplyr::summarise(
-    tender_medical_n = n(),
-    n_tenders        = mean(n_tenders)
-  ) %>% 
-  mutate(
-    tender_medical_n   = tender_medical_n/n_tenders*100
-  )
 
 tender_composition_semester <- data_offer_sub[DT_TENDER_YEAR > 2015, 
                                               list(medical   = mean(CAT_MEDICAL, na.rm = TRUE)), 
