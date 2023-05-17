@@ -89,9 +89,7 @@ invisible(sapply(list.files(function_code, full.names = TRUE), source, .GlobalEn
 # Load cleaned tender data
 data_offer_sub <- fread(file.path(fin_data, "data_offer_sub.csv" ), encoding = "Latin-1")
 
-data_pos_raw <- fread(file = file.path(fin_data, "purchase_orders_raw.csv"), encoding = "Latin-1") 
-
-data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1") 
+data_po <- fread(file = file.path(fin_data, "purchase_orders.csv"), encoding = "Latin-1") 
 
 # Task 1
 
@@ -1544,43 +1542,6 @@ ggsave(
   units    = "in"                                             ,
   device   = 'png'
 )
-  
-n_bidders_sector <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
-  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
-  distinct(ID_RUT_FIRM, DT_Y, sector, CAT_MEDICAL) %>% 
-  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_bidders_sector = n_distinct(ID_RUT_FIRM)) %>% 
-  group_by(DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_bidders_sector = mean(n_bidders_sector, na.rm = TRUE))
-
-plot <- graph_trend(
-  data = n_bidders_sector, 
-  treatment = CAT_MEDICAL,
-  variable = n_bidders_sector, 
-  title = "Market Concentration",
-  subtitle = "Total Number of bidders, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 1000,
-  limit_upper = 4000,
-  interval_limits_y = 500,
-  legend_upper = 4100,
-  percentage = FALSE,
-  yearly = TRUE,
-  label_treatment_legend = "Medical",
-  label_control_legend = "Non-medical"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bid_sector.png"),
-  plot = plot                                                ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
 
 n_bidders_sector <- data_offer_sub %>% 
   
@@ -1611,43 +1572,6 @@ plot <- graph_trend(
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bid_semester_sector.png"),
-  plot = plot                                                ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-n_winners_sector <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  mutate(ID_ITEM_UNSPSC = ifelse(nchar(ID_ITEM_UNSPSC) == 9, NA, ID_ITEM_UNSPSC)) %>% 
-  mutate(sector = substr(ID_ITEM_UNSPSC, 0, 2)) %>% 
-  distinct(ID_RUT_FIRM, DT_Y, sector, CAT_MEDICAL) %>% 
-  group_by(sector, DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_winner_sector = n_distinct(ID_RUT_FIRM)) %>% 
-  group_by(DT_Y, CAT_MEDICAL) %>% 
-  dplyr::summarise(n_winner_sector = mean(n_winner_sector, na.rm = TRUE))
-
-plot <- graph_trend(
-  data = n_winners_sector, 
-  treatment = CAT_MEDICAL,
-  variable = n_winner_sector, 
-  title = "Market Concentration",
-  subtitle = "Number of Suppliers, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 800,
-  limit_upper = 2400,
-  interval_limits_y = 200,
-  legend_upper = 2400,
-  percentage = FALSE,
-  yearly = TRUE,
-  label_treatment_legend = "Medical",
-  label_control_legend = "Non-medical"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_win_sector.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                             ,
@@ -1738,11 +1662,11 @@ ggsave(
   device   = 'png'
 )
 
-data_pos_raw <- data_pos_raw %>% 
+data_po <- data_po %>% 
   mutate(
     CAT_DIRECT      = ifelse(CAT_DIRECT      == "Si", 1, 0))
 
-data_po_collapse <- data_pos_raw[DT_YEAR > 2015, 
+data_po_collapse <- data_po[DT_YEAR > 2015, 
                                  list(
                                    CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
                                    CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
@@ -1816,7 +1740,7 @@ ggsave(
   device   = 'png'
 )
 
-data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
+data_po_collapse <- data_po[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
                                  list(
                                    CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
                                    CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
@@ -1940,30 +1864,6 @@ ggsave(
   units    = "in"                                             ,
   device   = 'png'
 )
-
-plot <- graph_trend_three_covid(
-  data = tender_composition_year, 
-  variable = tender_covid_n,
-  title = "Composition of tenders", 
-  subtitle = "Share of type of tenders by type of item", 
-  caption = "Source: Chile Compra",
-  limit_lower = 0,
-  limit_upper = 100, 
-  interval_limits_y = 10,
-  legend_upper = 95,
-  percentage = TRUE,
-  yearly = TRUE
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/share_tenders_covid_year.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.5                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
 tender_composition_semester <- data_offer_sub[DT_TENDER_YEAR > 2015, 
                                               list(medical   = mean(CAT_MEDICAL, na.rm = TRUE)), 
                                               by = list(DT_S, ID_TENDER)]

@@ -226,8 +226,6 @@ ggsave(
 
 # Yearly - Covid-19
 
-
-
 plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
