@@ -314,7 +314,7 @@ model_ols <- function(data, dep_var, filename, title) {
              title = title,
              gof_map = c("nobs", "r.squared"),
              add_rows = rows, fmt = f, output = "gt") %>% 
-      gt::gtsave(filename = paste0("/Users/ruggerodoino/Dropbox/COVID_19/Untitled/img/tab/", filename, ".html"), inline_css = FALSE)
+      gt::gtsave(filename = file.path(dropbox_dir, paste0("Outputs/", filename, ".html")), inline_css = FALSE)
   
 }
 
@@ -412,7 +412,7 @@ for (dep_var in c(
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/", dep_var, "_treat_", type, ".png")),
+      filename = file.path(dropbox_dir, paste0("Outputs/", dep_var, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
@@ -432,16 +432,16 @@ for (dep_var in c(
 # Time to last bid (months)
 last_bid_covid <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT) %>% 
+  group_by(ID_RUT_FIRM) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -454,16 +454,16 @@ last_bid_covid <- data_covid %>%
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT) %>% 
+  group_by(ID_RUT_FIRM) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -498,7 +498,7 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_bid_", months, "_treat_", type, ".png")),
+      filename = file.path(dropbox_dir, paste0("Outputs/","first_bid_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
@@ -519,16 +519,16 @@ for (months in c(6, 12, 24)) {
 last_win_covid <- data_covid %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT) %>% 
+  group_by(ID_RUT_FIRM) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>%  
   mutate(
@@ -542,16 +542,16 @@ last_win_covid <- data_covid %>%
 last_win_med <- data_medic %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT) %>% 
+  group_by(ID_RUT_FIRM) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -586,7 +586,7 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_win_", months, "_treat_", type, ".png")),
+      filename = file.path(dropbox_dir, paste0("Outputs/","first_win_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
@@ -607,16 +607,16 @@ for (months in c(6, 12, 24)) {
 last_win_covid <- data_covid %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT, ID_RUT_BUYER
+    MONTHS, ID_RUT_FIRM, ID_RUT_BUYER
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
+  group_by(ID_RUT_FIRM, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -630,16 +630,16 @@ last_win_covid <- data_covid %>%
 last_win_med <- data_medic %>% 
   
   filter(CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT, ID_RUT_BUYER
+    MONTHS, ID_RUT_FIRM, ID_RUT_BUYER
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
+  group_by(ID_RUT_FIRM, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_WIN_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -651,16 +651,16 @@ last_win_med <- data_medic %>%
 # Time to last bid (months)
 last_bid_covid <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
+  group_by(ID_RUT_FIRM, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -673,16 +673,16 @@ last_bid_covid <- data_covid %>%
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
   
-  distinct(ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   mutate(
     MONTHS = DT_S * 6 + DT_TENDER_MONTH
   ) %>% 
-  distinct(MONTHS, ID_FIRM_RUT, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
+  distinct(MONTHS, ID_RUT_FIRM, ID_RUT_BUYER, ID_ITEM, ID_ITEM_UNSPSC, DT_OFFER_SEND, DT_S, DT_TENDER_MONTH, treat) %>% 
   arrange(
-    MONTHS, ID_FIRM_RUT
+    MONTHS, ID_RUT_FIRM
   ) %>% 
   na.omit() %>% 
-  group_by(ID_FIRM_RUT, ID_RUT_BUYER) %>% 
+  group_by(ID_RUT_FIRM, ID_RUT_BUYER) %>% 
   mutate(before_date = lag(MONTHS, order_by = MONTHS)) %>%  
   mutate(LAST_BID_MONTHS = MONTHS - before_date) %>% 
   mutate(
@@ -717,7 +717,7 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_win_", months, "_treat_", type, ".png")),
+      filename = file.path(dropbox_dir, paste0("Outputs/","first_establishment_win_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
@@ -759,7 +759,7 @@ for (months in c(6, 12, 24)) {
       as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
-      filename = file.path(dropbox_dir, paste0("Untitled/img/graphs/","first_establishment_bid_", months, "_treat_", type, ".png")),
+      filename = file.path(dropbox_dir, paste0("Outputs/","first_establishment_bid_", months, "_treat_", type, ".png")),
       plot = plot                                                ,
       width    = 11                                            ,
       height   = 6.5                                            ,
@@ -792,7 +792,7 @@ clfe <- feols(
   
 plot <- plot_bar_errors(clfe, "Share of direct contracts (Medical Products)")
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_medic.png"),
+  filename = file.path(dropbox_dir, "Outputs/direct_treat_medic.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                            ,
@@ -819,7 +819,7 @@ clfe <- feols(
 
 plot <- plot_bar_errors(clfe, "Share of direct contracts (Covid Products)")
 ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/direct_treat_covid.png"),
+  filename = file.path(dropbox_dir, "Outputs/direct_treat_covid.png"),
   plot = plot                                                ,
   width    = 11                                            ,
   height   = 6.5                                            ,
@@ -831,116 +831,3 @@ model_ols(data = data_po_collapse %>% rename(DT_TENDER_MONTH = DT_MONTH, ID_RUT_
           dep_var = "CAT_DIRECT",
           title = "Share of direct purchases (Covid products)", 
           filename = paste0("direct_treat_covid"))
-
-data <- fread("/Users/ruggerodoino/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Final/Merged_data.csv")
-
-data_covid <- data_offer_sub %>% 
-  filter(DT_TENDER_YEAR > 2014) %>% 
-  mutate(treat = COVID_LABEL == 1)
-
-tc <- data_covid %>% distinct(ID_ITEM_UNSPSC, treat)
-
-data_covid_final <- data %>% filter(!is.na(N_PAYMENTS)) %>% 
-  mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)) %>% 
-  left_join(tc %>% mutate(ID_ITEM_UNSPSC = as.character(ID_ITEM_UNSPSC)), by = "ID_ITEM_UNSPSC") %>%
-  
-  # create month and year date
-  mutate(
-    DT_Y = year(DT_TENDER_START),
-    DT_M = month(DT_TENDER_START)) %>% 
-  
-  filter(DT_Y != 2015) %>% 
-  
-  # compute quarter for each year
-  mutate(
-    DT_S = if_else(DT_M <= 6, 1, 2) + 
-      if_else(DT_Y == 2016, 0,
-              if_else(DT_Y == 2017, 2,
-                      if_else(DT_Y == 2018, 4, 
-                              if_else(DT_Y == 2019, 6, 
-                                      if_else(DT_Y == 2020, 8,
-                                              if_else(DT_Y == 2021, 10, 12))))))) %>% 
-  filter(!is.na(treat) & !is.na(DT_S))
-
-data_covid_final <- data_covid_final[, 
-             list(
-               AMT_PAY_ACK_DD_AVG_W = mean(AMT_PAY_ACK_DD_AVG_W, na.rm = TRUE)), 
-             by = list(DT_S, treat)]
-
-plot <- graph_trend(
-  data = data_covid_final %>% filter(DT_S < 13), 
-  treatment = treat,
-  variable = AMT_PAY_ACK_DD_AVG_W, 
-  title = "Payment Executions",
-  subtitle = "Average number of days for payment",
-  caption = "Source: Chile Compra and SIGFE",
-  limit_lower = 10,
-  limit_upper = 100,
-  interval_limits_y = 10,
-  legend_upper = 99.7,
-  percentage = FALSE,
-  yearly = FALSE,
-  label_treatment_legend = "Covid items",
-  label_control_legend = "Others"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_semester_covid.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.75                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-data_covid_final <- data %>% filter(!is.na(N_PAYMENTS)) %>% 
-  left_join(tc, by = "ID_ITEM_UNSPSC") %>%
-  
-  # create month and year date
-  mutate(
-    DT_Y = year(DT_TENDER_START),
-    DT_M = month(DT_TENDER_START)) %>% 
-  
-  filter(DT_Y != 2015) %>% 
-  
-  # compute quarter for each year
-  mutate(
-    DT_S = if_else(DT_M <= 6, 1, 2) + 
-      if_else(DT_Y == 2016, 0,
-              if_else(DT_Y == 2017, 2,
-                      if_else(DT_Y == 2018, 4, 
-                              if_else(DT_Y == 2019, 6, 
-                                      if_else(DT_Y == 2020, 8,
-                                              if_else(DT_Y == 2021, 10, 12))))))) %>% 
-  filter(!is.na(treat) & !is.na(DT_Y))
-
-data_covid_final <- data_covid_final[, 
-                                     list(
-                                       AMT_PAY_ACK_DD_AVG_W = mean(AMT_PAY_ACK_DD_AVG_W, na.rm = TRUE)), 
-                                     by = list(DT_Y, treat)]
-
-plot <- graph_trend(
-  data = data_covid_final, 
-  treatment = treat,
-  variable = AMT_PAY_ACK_DD_AVG_W, 
-  title = "Payment Executions",
-  subtitle = "Average number of days for payment",
-  caption = "Source: Chile Compra and SIGFE",
-  limit_lower = 10,
-  limit_upper = 100,
-  interval_limits_y = 10,
-  legend_upper = 99.7,
-  percentage = FALSE,
-  yearly = TRUE,
-  label_treatment_legend = "Covid items",
-  label_control_legend = "Others"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Untitled/img/graphs/payment_delay_yearly_covid.png"),
-  plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 6.75                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)

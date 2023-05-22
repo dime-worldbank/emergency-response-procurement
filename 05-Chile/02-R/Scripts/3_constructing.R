@@ -202,8 +202,10 @@
       )
       
       data_po = data_po %>% 
-        left_join(item_covid_list, by = c("ID_ITEM_UNSPSC")) %>% 
-        mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42", 1, 0)) %>% 
+        left_join(item_covid, by = c("ID_ITEM_UNSPSC")) %>% 
+        mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42" | 
+                                      substr(ID_ITEM_UNSPSC, 0, 2) == "41" |
+                                      substr(ID_ITEM_UNSPSC, 0, 2) == "51", 1, 0)) %>% 
         mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
       
       data_po = data_po %>% 
