@@ -20,17 +20,17 @@
 		global path_firm   		"C:\Users\leand\Dropbox\3-Profissional\00-Base de dados\06-socios\6_clean"	
  		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
 		global path_code 		"C:\Users\leand\Dropbox\3-Profissional\08-Projetos-pessoais\10-GitHub\03-Projects\5-DIME-procurement-team\3-emergency-response-procurement\03-Brazil\01-stata"
-		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\00-Base de dados\02-Rais-estabelecimento\5-clean_data\1-rais-estabelecimento\1-stata"	
+		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\02-rais-procurement"	
  	}
 	.
 	
-	* 2:XXXX
+	* 2: XXXX
 	if "`c(username)'" == "XXXX" {
 		global path_project 	""
  	}
 	.
 	
-	* 3:ZZZZ
+	* 3: ZZZZ
 	if "`c(username)'" == "ZZZZ" {
 		global path_project 	""
  	}	
@@ -73,4 +73,17 @@ do "${path_code}/2-data_contruct/05-lot_tender_data.do"
 
 * 7: Calculating indexes
 do "${path_code}/2-data_contruct/07-Calculating_indicators.do" 
+
+
+
+* Notes:
+{
+    * 1- I removed duplicates from item data base to have it in item id level. 
+	* It is possible to have multiples items for registro de precos, but it is very rare. 
+	* For this study it is only make harder merge operation
+	
+	
+}
+
+
  

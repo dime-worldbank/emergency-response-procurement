@@ -1,93 +1,139 @@
 * Made by Leandro Veloso
-* Main: Participants data
+* Main: Preparing tender level data
 
-* reading participants data
-use "${path_KCP_BR}/1-data\2-imported/Portal-01-tender-panel.dta",clear
+* 1: Reading tender panel 
+{
+    * 1: Reading and creating relevant variables
+	{
+		* reading tender data
+		use "${path_project}/1_data/01-import-data/Portal-01-tender-panel.dta",clear
 
-*Keeping
-keep  id_bidding year_month purchase_method id_ug id_top_organ id_organ  bidding_status uf municipality bidding_object date_result date_open
-order id_bidding year_month purchase_method id_ug id_top_organ id_organ  bidding_status uf municipality bidding_object 
+		*Keeping only used variables
+		keep  tender_id  year_month ug_id  tender_status  tender_objective tender_date_result tender_date_open
+		order tender_id  year_month ug_id  tender_status  tender_objective   
+		 
+		* modality according to the code
+		gen modality = substr(tender_id,7,2)
+		tab modality
 
-* modality
-gen modality = substr(id_bidding,7,2)
-tab modality
+		* * Year month variable
+		rename year_month aux
+		gen year_month = ym(real(substr(aux,1,4)), real(substr(aux,5,2)))
+			format %tm year_month
+		drop aux
+		
+		* Checking 
+		tab year_month
 
-* Keeping auction + FA
-*keep if modality=="05"
-*drop modality 
+		* Quarter
+		gen year         = year(dofm(year_month))
+		gen year_quarter = yq(year,quarter(dofm(year_month)))
+		format %tq year_quarter
 
-* Quarter
-gen year_quarter = yq(year(dofm(year_month)),quarter(dofm(year_month)))
-format %tq year_quarter
+		* Methods
+		gen 	methods  = 1	if modality== "05" 
+		replace methods  = 2	if modality== "06" 
+		replace methods  = 3	if modality== "07" 
+		replace methods  = 4	if methods	==.
 
-* Methods
-gen 	methods  = 1	if modality== "05" 
-replace methods  = 2	if modality== "06" 
-replace methods  = 3	if modality== "07" 
-replace methods  = 4	if methods	==.
+		label define lab_method ///
+			1 "01-auction" 	  ///
+			2 "02-waiver" 	  ///
+			3 "03-unenforce"  ///
+			4 "04-others" ,replace
 
-label define lab_method ///
-	1 "01-auction" 	  ///
-	2 "02-waiver" 	  ///
-	3 "03-unenforce"  ///
-	4 "04-others" ,replace
-
-label val methods lab_method
+		label val methods lab_method
+		
+		* Tabulating 
+		tab  year methods
+	}
+	.
 	
-* Creating covid dummy tender
-gen D_covid = 	  regex(bidding_object,"(covid)([^8]*)(19)") ///
-				| regex(bidding_object,"(sars)([^8]*)(cov)") ///
-				| regex(bidding_object,"(926)([^0-9]*)(2020)") ///
-				| regex(bidding_object,"(13)([^0-9]*)(979)") ///
-				| regex(bidding_object,"coronavirus") 
-				
-				
-label var D_covid "Dummy for COVID tender"
+	* 2: Covid tender variables
+	{
+		* Creating covid dummy tender
+		gen D_covid = 	  regex(tender_objective,"(covid)([^8]*)(19)") ///
+						| regex(tender_objective,"(sars)([^8]*)(cov)") ///
+						| regex(tender_objective,"(926)([^0-9]*)(2020)") ///
+						| regex(tender_objective,"(13)([^0-9]*)(979)") ///
+						| regex(tender_objective,"coronavirus") 
+						
+		label var D_covid "Dummy for COVID tender"
 
-* Table year quarter
-tab year_quarter D_covid
+		* Table year quarter
+		tab year_quarter D_covid
 
-* Creating covid dummy tender
-gen D_law_926_2020 = regex(bidding_object,"(926)([^0-9]*)(2020)") ///
-					| regex(bidding_object,"(13)([^0-9]*)(979)")  
+		* Creating covid dummy tender
+		gen D_law_926_2020 = regex(tender_objective,"(926)([^0-9]*)(2020)") ///
+							| regex(tender_objective,"(13)([^0-9]*)(979)")  
 
-label var D_law_926_2020 "Dummy COVID emergence law 13.979"
+		label var D_law_926_2020 "Dummy COVID emergence law 13.979"
 
-* tempfile to merge
-tempfile merge_data
-save `merge_data'
-
-* Including value estimated
-use  id_bidding  value_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-item-panel",clear
-gcollapse (sum) volume_tender = value_item, by(id_bidding)
+		* Table year quarter
+		tab year_quarter D_covid	
+	}
+	.
 	
-merge 1:1 id_bidding  using `merge_data', keep(3) nogen
+	* 3: Time variables
+	{	    
+		* Decisition time variable
+		gen decision_time = tender_date_result - tender_date_open
+			label var decision_time "time between open process and having a winner"
+		gen decision_time_trim = tender_date_result - mdy(month(dofm(year_month)),1,year(dofm(year_month)))
+			label var decision_time_trim "time between trim open process and having a winner"
+	}
+	.
+	
+	* 4: Ordering and saving tempdata
+	{
+		* tempfile to merge
+ 		compress
+		save "${path_project}/4_outputs/1-data_temp/P01-tempdata-tender" ,replace
+	}
+	.
+}
+.
 
-* Decisition time variable
-gen decision_time = date_result - date_open
-	label var decision_time "time between open process and having a winner"
-gen decision_time_trim = date_result - mdy(month(dofm(year_month)),1,year(dofm(year_month)))
-	label var decision_time_trim "time between trim open process and having a winner"
+* 2: Getting extra information
+{
+	* Getting total volume in the item data
+		use    "${path_project}/1_data/01-import-data/Portal-02-item-panel.dta",clear
+		gcollapse (sum) volume_tender = item_value, by(tender_id)
+			
+		* Merging with tender temporary data of first step
+		merge 1:1 tender_id  using "${path_project}/4_outputs/1-data_temp/P01-tempdata-tender", keep(3) nogen
 
-* Including location information
-global temppath "C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil\01-portal_da_transparencia\02-import"
+	* Including location information 
+		merge m:1 ug_id using  "${path_project}/1_data/01-import-data/Portal-04-buyer_data.dta", ///
+			keep(3) nogen keepusing(ug_id ug_state ug_state_code ug_municipality_code )
+}
+.
 
-clonevar ug_id= id_ug 
+* 3: Ordering, labeling and saving data
+{
+	* Labeling data
+	label data  "Brazil tender data - 01/2013-12/2022"
 
-merge m:1 ug_id using  "${temppath}/04-buyer_data.dta", keep(3) nogen keepusing(ug_id  ug_state_code ug_munic_code )
-drop ug_id
+	* Ordering
+ 	order year year_quarter year_month tender_id methods modality ug_id D_covid D_law_926_2020 ///
+		  ug_state ug_state_code ug_municipality_code 	volume_tender 				 ///
+		  tender_date_open tender_date_result decision_time decision_time_trim ///
+		  tender_status	tender_objective 
+	
+	* Sorting
+	sort  year year_quarter year_month ug_id
+	
+	* Formating
+	format %16.0fc volume_tender 
+	format tender_id  			 %17s 
+	format ug_municipality_code  %-8s 
+	
+	* Including labels
+	label var ug_state_code 		"manage unit state code"
+	label var ug_municipality_code  "manage unit municipality code"
 
-* Labeling data
-label data  "Brazil tender data - 01/2013-06/2022"
-
-* Ordering
-order year_month id_bidding methods purchase_method  ug_state_code ug_munic_code volume_tender D_covid D_law_926_2020
-sort  year_month id_bidding
-
-label var ug_state_code "manage unit state code"
-label var ug_state_code "manage unit municipality code"
-
-* Saving
-compress
-save "${path_project}/1_data/01-tender_data",replace		
-
+	* Saving
+	compress
+	save "${path_project}/1_data/03-final/01-tender_data",replace		
+}
+.

@@ -328,7 +328,7 @@
 		label var shannon_entropy_5d "E[Shannon entropy: 5 digits item yearly]"
 		
 		* saving data
-		save "${path_project}/1_data/04-index_data/P07_HHI_index.dta", replace
+		save "${path_project}/1_data/P07_HHI_index.dta", replace
 	}
 	.
 	
