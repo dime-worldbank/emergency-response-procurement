@@ -4,32 +4,32 @@
 * 1: sample 1 
 {
 	* Period 1
-		use  "${path_project}/1_data/01-index_data/P07-semester-index.dta",clear
-		append using  "${path_project}/1_data/P07_HHI_index.dta"
+		use  "${path_project}/1_data/04-index_data/P07-semester-index.dta",clear
+		append using   "${path_project}/1_data/04-index_data/P07_HHI_index.dta"
 		keep if inrange(year,2015,2019) 
 		gen period = 1
 		tempfile period_1
 		save	`period_1'
 		 
 	* Period 2
-		use  "${path_project}/1_data/01-index_data/P07-semester-index.dta",clear
-		append using  "${path_project}/1_data/P07_HHI_index.dta"
+		use  "${path_project}/1_data/04-index_data/P07-semester-index.dta",clear
+		append using  "${path_project}/1_data/04-index_data/P07_HHI_index.dta"
 		keep  if inrange(year,2018,2019) 
 		gen period = 2
 		tempfile period_2
 		save	`period_2'
 		
 	* Period 3
-		use  "${path_project}/1_data/01-index_data/P07-semester-index.dta",clear
-		append using  "${path_project}/1_data/P07_HHI_index.dta"
+		use  "${path_project}/1_data/04-index_data/P07-semester-index.dta",clear
+		append using  "${path_project}/1_data/04-index_data/P07_HHI_index.dta"
 		keep  if inrange(year,2020,2021) 
 		gen period = 3
 		tempfile period_3
 		save	`period_3'
 		
 	* Period 4
-		use  "${path_project}/1_data/01-index_data/P07-semester-index.dta",clear
-		append using  "${path_project}/1_data/P07_HHI_index.dta"
+		use  "${path_project}/1_data/04-index_data/P07-semester-index.dta",clear
+		append using  "${path_project}/1_data/04-index_data/P07_HHI_index.dta"
 		keep  if inrange(year,2022,2022) 
 		gen period = 4
 		tempfile period_4
@@ -107,23 +107,18 @@
 	* 1: Getting all variables
 	{ 
 		* Reading Covid table
-		use "${path_project}/1_data/03-covid_item-item_level",clear
+		use "${path_project}/1_data/03-final/03-covid_item-item_level",clear
 		keep type_item item_5d_code  Covid_group_level Covid_item_level total total_covid rate_covid_purchase rate_covid
 		format %5.4fc rate*
 		
-		* Type item
-		rename type_item type_item_aux
-		gen 	type_item =1  if type_item_aux == "Product"
-		replace type_item =2  if type_item_aux == "Service"	
-		drop type_item_aux
-		
 		* Merging data
 		merge m:1 type_item item_5d_code using ///
-			"${procurement_data}/03-extra_sources/04-clean/01-catalog-federal-procurement.dta", ///
+			"${path_project}/1_data/01-import-data/Extra-01-catalog-federal-procurement.dta", ///
 			keepusing(type_item item_5d_code item_2d_code  item_2d_name   item_2d_name_eng item_5d_name item_5d_name_eng ) nogen keep(3)
 		
 		label val type_item lab_type
 	}
+	.
 	
 	* 2: Preparing to export
 	{
@@ -149,6 +144,5 @@
 		
 		* Exporting
 		export excel using "${path_project}/4_outputs/2-Tables/01-table_products_covid_level.xlsx", replace firstrow(varlabels)
-				
 	}
 }
