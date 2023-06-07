@@ -3,8 +3,8 @@
  
 * 01: Data Sample regression
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
-	keep if inrange(year_quarter,yq(2015,1),yq(2021,4))
+	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
+	keep if inrange(year_quarter,yq(2015,1),yq(2022,4))
 	
 	* year month
 	gen year  = year(dofm(year_month))
@@ -21,9 +21,9 @@
 	keep if D_sample_item_balance==1
 
 	* Covid
-	gen 	medical_product = 1 if item_2d_code == "65" & type_item==1
-	replace medical_product = 3 if item_2d_code != "65" & type_item==1
-	replace medical_product = 4 if item_2d_code != "65" & type_item==2	
+	gen 	medical_product = 1 if item_2d_code == 65 & type_item==1
+	replace medical_product = 3 if item_2d_code != 65 & type_item==1
+	replace medical_product = 4 if item_2d_code != 65 & type_item==2	
 	
 	gen byte D_tread_post = D_post * items_treat
 				
@@ -32,7 +32,7 @@
 	
 	* Sampling
 	* keep if runiform()<=0.25
-	gen log_volume_item = log(value_item)
+	gen log_volume_item = log(item_value)
 	
 	* Adjusting labels
 	label var SME					"Proportion of SME Winners"
@@ -42,23 +42,24 @@
 	label var log_unit_price_filter "log(Unit Price - filter)"
 	
 	* Outcome list	
-	global outcome D_new_winner SME share_SME decision_time decision_time_trim ///
+	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim ///
 		   unit_price log_volume_item D_same_munic_win D_same_state_win ///
-		   log_unit_price_filter  unit_price_filter N_participants ///
+		   log_unit_price_filter  unit_price_filter  ///
 		   N_SME_participants months_since_last_win
 
 	compress
-	save "${path_project}/1_data/05-Regession_data-sample", replace
+	save "${path_project}/1_data/03-final/05-Regession_data-sample", replace
 }
 .
 
 * 02: TWFE item level (DiD)
 {
 	* Sampling data
-	use "${path_project}/1_data/05-Regession_data-sample",clear
+	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
 
 	* gcollapsing
-	gcollapse (mean) $outcome (first)   medical_product type_item items_treat D_post D_tread_post Covid_group_level, by(id_item_aux year_semester)  labelformat(#sourcelabel#) 
+	gcollapse (mean) $outcome (first)   medical_product type_item items_treat D_post D_tread_post Covid_group_level, ///
+			by(id_item_aux year_semester)  labelformat(#sourcelabel#) 
 
 	* Cheking unique
 	gunique  id_item_aux year_semester
@@ -172,16 +173,16 @@
 * 03: TWFE
 {
 	* Sampling data
-	use "${path_project}/1_data/05-Regession_data-sample",clear
+	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
  
 	* 3: Regressions on wage 
 	foreach dep_var in  $outcome  	{ 
 		* Set of variables left hand side of regression
  		global FE1 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
 		global FE2 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month)"
-		global FE3 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_ug)" 
-		global FE4 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder)"
-		global FE5 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder id_ug)"		
+		global FE3 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month ug_id)" 
+		global FE4 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month bidder_id)"
+		global FE5 "D_tread_post  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month bidder_id ug_id)"		
  
 		* Running regressions in a loop
 		eststo drop *
@@ -206,11 +207,11 @@
 			else						  			estadd loc month_fe "\xmark"
 			
 			* Maker if it has Buyer
-			if regex("${FE`k'}","id_ug") 			estadd loc buyer_fe "\cmark"
+			if regex("${FE`k'}","ug_id") 			estadd loc buyer_fe "\cmark"
 			else						  			estadd loc buyer_fe "\xmark"
 			
 			* Maker if it has Seller
-			if regex("${FE`k'}","id_bidder") 		estadd loc seller_fe "\cmark"
+			if regex("${FE`k'}","bidder_id") 		estadd loc seller_fe "\cmark"
 			else						  			estadd loc seller_fe "\xmark"
 
 			
@@ -232,10 +233,10 @@
 * 04: TWFE + time interaction
 {
 	* Sampling data
-	use "${path_project}/1_data/05-Regession_data-sample",clear
+	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
   
 	global list_iter  ""
-	foreach year of numlist 2015/2021 { 
+	foreach year of numlist 2015/2022 { 
 		foreach semester in 1 2 {
 			gen byte Y`year's0`semester' = year_semester == yh(`year', `semester') *  (items_treat ==1)
 			global list_iter  "${list_iter} Y`year's0`semester'"
@@ -260,9 +261,9 @@
 		* Set of variables left hand side of regression
 		global FE1 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
 		global FE2 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month)" 
-		global FE3 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_ug)" 
-		global FE4 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder)"
-		global FE5 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month id_bidder id_ug)"		
+		global FE3 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month ug_id)" 
+		global FE4 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month bidder_id)"
+		global FE5 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester month bidder_id ug_id)"		
 		
 		* Running regressions in a loop
 		eststo drop *

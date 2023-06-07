@@ -3,7 +3,7 @@
 
 * 01: Graph bar top products
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
+	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
 	keep if inrange(year_quarter,yq(2018,1),yq(2021,4))
 	
 	* Covid items
@@ -11,15 +11,15 @@
 	keep if D_item_unit_price_sample	== 1
 		
 	* Creating variables to  graph bar
-	gen volume_post = value_item if D_post ==1
-	gen volume_pre = value_item  if D_post ==0
+	gen volume_post = item_value if D_post ==1
+	gen volume_pre  = item_value if D_post ==0
 	
 	* Summing up
 	gcollapse (sum)  volume_pre volume_post , ///
-			  by(  item_5d_code item_5d_name_eng Covid_item_level)    labelformat(#sourcelabel#) 
+			  by(item_5d_code item_5d_name_eng Covid_item_level)    labelformat(#sourcelabel#) 
   
-	* Millions
-	replace volume_pre = volume_pre/1e6
+	* Millions scale
+	replace volume_pre  = volume_pre /1e6
 	replace volume_post = volume_post/1e6
 	
 	* goptions 
@@ -51,7 +51,7 @@
 
 * 02: Summarize by period
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
+	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
 	keep if inrange(year_quarter,yq(2018,1),yq(2021,4))
 	
 	* replace
@@ -59,8 +59,8 @@
 	replace SME			   = . if methods!=1
 
 	* Extra
-	gegen total_volume = sum(value_item)  , by(D_post type_item item_5d_code    )
-	gen share = value_item/total_volume
+	gegen total_volume = sum(item_value)  , by(D_post type_item item_5d_code    )
+	gen share = item_value/total_volume
 	gen shannon_entropy  = -share*ln(share)	
 	gen HHI = share*share	
 	
@@ -74,7 +74,7 @@
 	drop item_5d_name_eng_aux
 	compress
 	
-	gcollapse (sum)  volume = value_item  	HHI				///
+	gcollapse (sum)  volume = item_value  	HHI				///
 			  (mean) avg_n_participants = N_participants 	///
 					 avg_n_win_SME = SME unit_price_filter log_unit_price_filter , 					///
 			  freq(N_lots ) 								///

@@ -24,7 +24,7 @@
 {
 	* 1: Semester covid level
 	{
-		use "${path_project}/1_data/01-index_data/P07-semester-covid-level-index.dta",clear	
+		use "${path_project}/1_data/04-index_data/P07-semester-covid-level-index.dta",clear	
 		
 		keep if year_semester >= `=yh(2015,1)'
 		
@@ -77,7 +77,7 @@
 	
 	* 2: Year covid level
 	{
-		use "${path_project}/1_data/01-index_data/P07-year-covid-level-index.dta",clear	
+		use "${path_project}/1_data/04-index_data/P07-year-covid-level-index.dta",clear	
 		
 		keep if year >= 2015
 		
@@ -94,7 +94,7 @@
 		global group_covid "Covid_item_level" 
 		
 		foreach y_dep of varlist HHI_5d shannon_entropy_5d {
-			* Preparing data
+			* Preparing data 
 			if regex("`var'","S1_") | inlist("`var'", "N_lots", "N_batches", "N_ug", "HHI_5d", "shannon_entropy_5d") {
 				label note_scatter "Sample 1: unrestricted sample"
 			}
@@ -122,8 +122,8 @@
 
 * 02: Graph trend stand
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
-	keep if inrange(year_quarter,yq(2015,1),yq(2021,4))
+	use "${path_project}/1_data/03-final/05-Lot_item_data", clear
+	keep if inrange(year_quarter,yq(2015,1),yq(2022,4))
 	
 	* Covid items
 	keep if type_item	== 1
@@ -155,8 +155,8 @@
 	
 	* Graph All class 
 	foreach y_dep of varlist  std_price std_log_price {
-		
- 		* Plotting
+
+		* Plotting
 		tw 		(scatter `y_dep'  year_semester if ${group_covid} == 3 , ${High_covid_scatter_opt}		) ///
 			|| 	(scatter `y_dep'  year_semester if ${group_covid} == 2 , ${Medium_covid_scatter_opt} 	) ///
 			||	(scatter `y_dep'  year_semester if ${group_covid} == 1 , ${Low_covid_scatter_opt} 		) ///
