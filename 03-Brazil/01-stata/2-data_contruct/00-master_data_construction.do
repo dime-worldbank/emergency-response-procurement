@@ -15,12 +15,11 @@
 	* defying path
 	* 1: Leandro Justino
 	if "`c(username)'" == "leand" {	
-		global procurement_data	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil"
-		global path_KCP_BR    	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\04-KCP\01-KCP-Brazil"
-		global path_firm   		"C:\Users\leand\Dropbox\3-Profissional\00-Base de dados\06-socios\6_clean"	
  		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
 		global path_code 		"C:\Users\leand\Dropbox\3-Profissional\08-Projetos-pessoais\10-GitHub\03-Projects\5-DIME-procurement-team\3-emergency-response-procurement\03-Brazil\01-stata"
 		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\02-rais-procurement"	
+		global procurement_data	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil"
+		global overleaf			"C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
  	}
 	.
 	

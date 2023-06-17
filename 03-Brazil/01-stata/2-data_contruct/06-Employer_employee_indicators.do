@@ -1,481 +1,191 @@
 * Made by Leandro Veloso
 * Main: Create data in the index level.
-  
-* 1: Lot data:
+
+* 1: Reading and selecting variables
 {
-	* 01: Reading data_temp/P07_hhi_2d
-	{
-		* Reading data
-		use "${path_project}/1_data/03-final/05-Lot_item_data",clear
-		* keep if runiform()<=0.01
-		* Keeping only relevant varibles
-		keep ///
-			year_month 				/// year month
-			methods 				/// methods
-			N_participants 			/// share participants
-			N_SME_participants		/// Share of SME participants
-			D_winner				/// dummy year
-			SME						/// dummy if the winner is SME
-			D_new_winner			/// dummy new winner
-			months_since			/// gap age
-			share_SME				/// share sme participants
-			D_product				/// Dummy material
-			D_auction				/// Dummy auction
-			decision_time 			/// Decision time
-			decision_time_trim		/// Decision time proxy
-			unit_price				/// unit price
-			item_value				/// item item_value
-			Covid_item_level		///  Covid item
-			tender_id ug_id			///
-			D_same_munic_win D_same_state_win ///
-			log_unit_price_filter  unit_price_filter
-			 
-		* Sample 1: ALL
-			gen share_S1_sme_win 				= SME 
-			gen share_S1_material				= D_product
-			gen share_S1_auction				= D_auction
-			gen N_S1_new_winnes 				= D_new_winner
-			gen avg_S1_win_gap 					= months_since
-			gen avg_S1_decision_time_trim 		= decision_time_trim
-			gen avg_S1_unit_price_non_restrict	= unit_price
-			gen avg_S1_value_item				= item_value
-			gen avg_S1_participants				= N_participants
-			gen share_S1_location_munic			= D_same_munic_win
-			gen share_S1_location_state			= D_same_state_win
-			gen share_S1_sme_participants 		= share_SME  
-		
-		* Sample 2: Only Auction 
-			gen N_S2_new_winnes 				= D_new_winner	 if D_auction == 1
-			gen avg_S2_participants				= N_participants if D_auction == 1
-			gen share_S2_sme_participants 		= share_SME 	 if D_auction == 1
-			gen avg_S2_decision_time 			= decision_time  if D_auction == 1
-			gen avg_S2_value_item				= item_value 	 if D_auction == 1
+	 * use "${path_project}/1_data/03-final/03-Firm_procurement_panel",clear
+	 use "${path_project}/1_data/03-final/03-Firm_procurement_panel_sample", clear
+	 drop if year<=2014
+	 
+	* Extra historgram 
+	gen log_N_emp = log(rais_N_workers)
+		label var log_N_emp "log[Total workers]"
+	gen log_wage  = log(rais_avg_wage)	
+		label var log_wage "log[Average establishment salary]"
+	 
+	* Global main vars
+	global main_Vars D_firm_exist   rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage ///
+					    log_N_emp log_wage  		
 
-		* Sample 3: ALL & Only material
-			gen avg_S3_participants				= N_participants if D_product == 1
-			gen share_S3_sme_participants 		= share_SME 	 if D_product == 1
-			gen share_S3_sme_win 				= SME 			 if D_product == 1
-			gen avg_S3_decision_time 			= decision_time  if D_product == 1
-			gen avg_S3_value_item				= item_value 	 if D_product == 1
-			gen avg_S3_unit_price_filter		= unit_price_filter	 if D_product == 1
-			gen avg_S3_log_unit_price_filter	= log_unit_price_filter	 if D_product == 1
-			gen avg_S3_value_covid_high			= item_value 	 if D_product == 1 & Covid_item_level==3
-			gen avg_S3_value_covid_med			= item_value 	 if D_product == 1 & Covid_item_level==2
-			gen avg_S3_value_covid_low			= item_value 	 if D_product == 1 & Covid_item_level==1
-			gen avg_S3_value_covid_none			= item_value 	 if D_product == 1 & Covid_item_level==0
-
-		* Sample 4: Auction & Only material	
-			gen avg_S4_participants				= N_participants if D_auction == 1 & D_product == 1
-			gen share_S4_sme_participants 		= share_SME 	 if D_auction == 1 & D_product == 1
-			gen share_S4_sme_win 				= SME 			 if D_auction == 1 & D_product == 1
-			gen avg_S4_decision_time 			= decision_time  if D_auction == 1 & D_product == 1
-			gen avg_S4_value_item				= item_value 	 if D_auction == 1 & D_product == 1
-			gen avg_S4_value_covid_high			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==3
-			gen avg_S4_value_covid_med			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==2
-			gen avg_S4_value_covid_low			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==1
-			gen avg_S4_value_covid_none			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==0
-
-		* List of measures - Fase processo
-			bys tender_id: gen byte N_batches  = _n==1
-			bys ug_id    : gen byte N_ug      = _n==1 
-						   gen byte N_lots	   =  1
-						
-		* year month
-			gen year  = year(dofm(year_month))
-			gen month = month(dofm(year_month))
-			gen year_semester = yh(year ,ceil(month/6)) 
-				format %th year_semester	
+	keep bidder_id year rais_D_simples level_catch_01 level_catch_02 D_win_covid_product* bid_sample* ///
+		 ${main_Vars} ///
+		 rais_great_sectors rais_natureza_juridica rais_uf_estab rais_cnae20 rais_munic_estab 
+		 
+	* Creating panel
+	gegen id_panel = group(bidder_id)
+	tsset id_panel year
+	 
+	* Time variables
+	foreach var in  $main_Vars {
+		local label_aux:  var label `var'
+		di as white "Time operation: `var'"
+		* gen L1_`var' = L1.`var'
+		*	label var L1_`var' "L1[`label_aux']"
+		* gen L2_`var' = L2.`var'
+		*	label var L2_`var' "L2[`label_aux']"
+		gen F1_`var' = F1.`var'
+			label var F1_`var' "F1[`label_aux']"
+		*gen F2_`var' = F2.`var'		
+		*	label var F2_`var' "L2[`label_aux']"
+	}
+	. 
+	
+	drop F1_D_firm_exist
+	clonevar   F1_D_firm_exist = D_firm_exist
+	replace D_firm_exist = L1.D_firm_exist
+	foreach var in $main_Vars { 
+		local label_aux:  var label `var'
+  		bys bidder_id (year): gen `var'_2021 = `var'[_N] if year[_N]==2021
+			label var `var'_2021 "[2021] `label_aux'"
 	}
 	.
+	
+	drop D_firm_exist_2021
+	bys bidder_id (year): gen D_firm_exist_2021 =  year[_N]==2021
+	
+	global set_vars_to_measure ""
+	foreach var in  $main_Vars { 
+		* global set_vars_to_measure "${set_vars_to_measure} L2_`var' L1_`var' `var'  F1_`var' F2_`var'"
+		 global set_vars_to_measure "${set_vars_to_measure} `var'  F1_`var' `var'_2021 "
+	}
+	.
+	
+	compress
+}
+.
  
-	* 02: Labeling it
-	{
-	    * Labeling data
-		{
-			* Geral variables ALL
-			label var year_semester 		"Year/semester of opeing tender process"
-			label var N_lots 				"N items"
-			label var N_ug 					"N lots"
-			label var N_batches		 		"N batches" 
-			
-			foreach var of varlist avg_S*_participants {
-				label var `var' "E[N SME participants by item/tender]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_win_gap {
-				label var `var' "E[Number of months between last win of winner firm]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_decision_time*  {
-				label var `var' "E[Decision time]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_unit_price*  {
-				label var `var' "E[unit price]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_value_item*  {
-				label var `var' "E[volume item]"
-			}
-			.
-			
-			foreach var of varlist share_S*_sme_win  {
-				label var `var' "Share SME winning"
-			}
-			.		
+* 2: Defyining main groups
+{
+	global sample bid_sample_dinamic 
 
-			foreach var of varlist share_S*_material  {
-				label var `var' "Share materials"
-			}
-			.				
-			
+	gen byte D_sample_win_01 =  ${sample} ==1 
+	gen byte D_sample_win_02 =  ${sample} ==1 & D_win_covid_product_high==1
+	gen byte D_sample_win_03 =  ${sample} ==1 & D_win_covid_product_high==0 & D_win_covid_product_med==1
+	gen byte D_sample_win_04 =  ${sample} ==1 & D_win_covid_product_high==0 & D_win_covid_product_med==0 & D_win_covid_product_low ==1
+	gen byte D_sample_win_05 =  ${sample} ==1 & D_win_covid_product_high==0 & D_win_covid_product_med==0 & D_win_covid_product_low ==0
+	gen byte D_sample_win_covid =  ${sample} ==1 & D_win_covid_product_high==1 | D_win_covid_product_med==1  | D_win_covid_product_low ==1
 
-			foreach var of varlist share_S*_auction  {
-				label var `var' "Share auction method"
-			}
-			.	
-			
-			foreach var of varlist N_S*_new_winnes  {
-				label var `var' "N New winners"
-			}
-			.
-			
-			foreach var of varlist avg_S*value_covid_high  {
-				label var `var' "E[volume items High Covid items]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_value_covid_med { 
-				label var `var' "E[volume items Medium Covid items]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_value_covid_low  {
-				label var `var' "E[volume items Low Covid items]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_value_covid_none  {
-				label var `var' "E[volume items no Covid items]"
-			}
-			. 
-			
-			foreach var of varlist share_S*_sme_participants  {
-				label var `var' "Share SME participants"
-			}
-			.
- 
-			foreach var of varlist share_S*_location_munic {
-				label var `var' "Share same municipality"
-			}
-			.
-			
-			foreach var of varlist share_S*_location_state {
-				label var `var' "Share same state"
-			}
-			.
-			
-			foreach var of varlist avg_S*_unit_price_filter  {
-				label var `var' "E[unit price selected products|selected products]"
-			}
-			.
-			
-			foreach var of varlist avg_S*_log_unit_price_filter  {
-				label var `var' "E[log(unit price)|selected products]"
-			}
-			.	
 
-		}
-		.
-	}
-	.
+	gen byte D_sample_try_01 =  ${sample} ==2
+	gen byte D_sample_never_try_01 =  ${sample} ==3
+	gen byte D_sample_never_try_02 =  ${sample} ==3 & level_catch_01==1
+	gen byte D_sample_never_try_03 =  ${sample} ==3 & level_catch_02==1
 	
-	* 03: Labeling ordering ans saving data
-	{	 
-		* Label data
-		label data "Indexes calculated by year/semester using lot/item data"
-		
-		* Saving
-		compress
-		save "${path_project}/1_data/04-index_data/P07_data_to_create_indexes", replace
-	}
-	.
+	gen D_sample_win_01_post = D_sample_win_01 * (year==2020)
+	gen D_sample_try_01_post = D_sample_try_01 * (year==2020)
 	
-	* 04: Collapsing measures by semesters
-	{ 
-		* Reading data
-		use "${path_project}/1_data/04-index_data/P07_data_to_create_indexes",clear
-			
-		* Collapsing by time measure (month)
-		gcollapse 	(sum)  N_S?_*  N_batches N_ug N_lots ///
-					(mean) avg_S?_* share_S?_*, by(year year_semester ) labelformat(#sourcelabel#) fast
-					
-		* saving
-		compress
-		save "${path_project}/1_data/04-index_data/P07-semester-index.dta",replace
-	}
-	.	
-	
-	* 05: Collapsing measures by semesters
-	{ 
-		* Reading data
-		use "${path_project}/1_data/04-index_data/P07_data_to_create_indexes",clear
- 		
-		* Collapsing by time measure (month)
-		gcollapse 	(sum) N_S?_*  N_batches N_ug N_lots ///
-					(mean) avg_S?_* share_S?_*, by(year year_semester Covid_item_level) labelformat(#sourcelabel#) fast
-					
-		* saving
-		compress
-		save "${path_project}/1_data/04-index_data/P07-semester-covid-level-index.dta",replace
-	}
-	.	
+	compress
+	save "${path_project}/4_outputs/1-data_temp/Data_pre_collapse",replace
 }
 .
 
-* 2: Competition indexes
-{ 
-	* 01: Index 5 digits
-	{ 
-		* reading
-		use year_month Covid_item_level type_item item_5d_code item_2d_code item_value ///
-			using "${path_project}/1_data/03-final/05-Lot_item_data",clear
-
-		* year data
-		gen year = year(dofm(year_month))
-
-		* Total
-		gegen total_volume_5d = sum(item_value)  , by(year  type_item item_5d_code)
+* 3: Collapsing measures: Average graphs
+foreach sme in "1" "0" {
+	foreach sample_data in 	D_sample_win_01 D_sample_win_02 D_sample_win_03 D_sample_win_04 D_sample_win_05  D_sample_win_covid ///
+							D_sample_try_01 D_sample_never_try_01 D_sample_never_try_02 D_sample_never_try_03 {
 		
-		* 5 digits
-		gen share_5d 			=  item_value/total_volume_5d
-		gen shannon_entropy_5d  = -share_5d*ln(share_5d)	
-		gen HHI_5d 				=  share_5d*share_5d	
-		
-		* Collapsing 
-		gcollapse (sum) shannon_entropy_5d  HHI_5d,	///
-				  freq(N_lots ) 				///
-				  by(year Covid_item_level type_item item_5d_code) 
-				  
-		* Saving 
-		compress
-		save "${path_project}/4_outputs/1-data_temp/P07_hhi_5d.dta", replace
-	}
-	.
-	
-	* 02: Index 2 digits
-	{ 
-		* reading
-		use year_month Covid_group_level type_item item_5d_code item_2d_code item_value ///
-			using "${path_project}/1_data/03-final/05-Lot_item_data",clear
-
-		* year data
-		gen year = year(dofm(year_month))
-
-		* 2 digits
-		gegen total_volume_2d = sum(item_value)  , by(year type_item item_2d_code)
-		gen share_2d 			=  item_value/total_volume_2d
-		gen shannon_entropy_2d  = -share_2d*ln(share_2d)	
-		gen HHI_2d 				=  share_2d*share_2d	
-		
-		* Collapsing 
-		gcollapse (sum) shannon_entropy_2d  HHI_2d,	///
-				  freq(N_lots ) 				///
-				  by(year Covid_group_level type_item item_2d_code) 	 labelformat(#sourcelabel#)
-				  
-		* Saving 
-		compress
-		save "${path_project}/4_outputs/1-data_temp/P07_hhi_2d.dta", replace
-	}
-	.
-	
-	* 03: Agregating to year level
-	{
-		* Reading data hhi 5 digits
-		{
-			* Using
-			use "${path_project}/4_outputs/1-data_temp/P07_hhi_5d.dta",clear
-			
-			* Collapsing 
-			gcollapse (mean) shannon_entropy_5d  HHI_5d, by(year)
-			
-			* Temping file
-			tempfile hhi_5d
-			save `hhi_5d'
+*local sample_data D_sample_win_02
+*local var_box D_firm_destruction 	
+*local sme 			1
+		* Reading filter data
+		if "`sme'" == "1" {
+			use "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" ///
+			if rais_D_simples ==1 & `sample_data'==1,clear
 		}
-		.
-		
-		* Reading data hhi 5 digits
-		{
-			* Using
-			use "${path_project}/4_outputs/1-data_temp/P07_hhi_2d.dta",clear
-			
-			* Collapsing 
-			gcollapse (mean) shannon_entropy_2d  HHI_2d, by(year) labelformat(#sourcelabel#)
-			
- 			append using `hhi_5d'
+		else {
+			use "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" ///
+			if  `sample_data'==1,clear
 		}
-		.
 		
-		* labeling data
-		label var HHI_2d "E[HHI: 2 digits item yearly]"
-		label var HHI_5d "E[HHI: 5 digits item yearly]"
-		label var shannon_entropy_2d "E[Shannon entropy: 5 digits item yearly]"
-		label var shannon_entropy_5d "E[Shannon entropy: 5 digits item yearly]"
+		save "${path_project}/4_outputs/1-data_temp/P06_Data_pre_collapse_filter",replace 
 		
-		* saving data
-		save "${path_project}/1_data/P07_HHI_index.dta", replace
-	}
-	.
-	
-	* 04: Covid level-index
-	{
-		* Using
-		use "${path_project}/4_outputs/1-data_temp/P07_hhi_5d.dta",clear
+		foreach var_box in $set_vars_to_measure {	
+			di as white "sample = `sample_data'; var = `var_box'; sme = `sme'"
+			
+			use "${path_project}/4_outputs/1-data_temp/P06_Data_pre_collapse_filter" if  !inlist(`var_box',.),clear
 
-		* Collapsing 
-		gcollapse (mean) shannon_entropy_5d  HHI_5d, by(year Covid_item_level ) labelformat(#sourcelabel#)
+			
+			local label_aux:  var label `var_box'
+			if _N>0 { 
+				* Agragagating year  and sample
+				gcollapse (count) N_non_miss  = `var_box'  (mean) avg= `var_box' ///
+							(sd)  sd = `var_box' , by(year)	freq(N_obs)
+				
+				gen var_index  	= "`var_box'"
+				gen bar_label  	= "`label_aux'"
+				gen group  		= "`sample_data'"
+				gen sme 		= "`sme'"
+				
+				* Upper and lower bound
+				gen CI_low = avg+ 1.96*sd/sqrt(N_non_miss)
+				gen CI_hig = avg- 1.96*sd/sqrt(N_non_miss)			
 		
-		* labeling data
- 		label var HHI_5d "E[HHI: 5 digits item yearly]"
- 		label var shannon_entropy_5d "E[Shannon entropy: 5 digits item yearly]"
-		
-		* saving
-		compress
-		save "${path_project}/1_data/04-index_data/P07-year-covid-level-index.dta",replace
+				save "${path_project}/4_outputs/1-data_temp/P06_temp_`sample_data'_`var_box'_sme_`sme'",replace
+			}	
+		}
 	}
-
 }
 .
 
-* 3: Firms that starts to sell covid items
-{
-		* reading
-		use year_month bidder_id year_month Covid_item_level SME type_item  item_5d_code  item_5d_name ///
-			using "${path_project}/1_data/03-final/05-Lot_item_data",clear
+* 4: Collapsing measures: Average graphs
+foreach sme in "1" "0" {
+	clear
+	foreach sample_data in 	D_sample_win_01 D_sample_win_02 D_sample_win_03 D_sample_win_04 D_sample_win_05  D_sample_win_covid///
+							D_sample_try_01 D_sample_never_try_01 D_sample_never_try_02 D_sample_never_try_03 {
+		foreach var_box in $set_vars_to_measure {
+
+			cap confirm file  "${path_project}/4_outputs/1-data_temp/P06_temp_`sample_data'_`var_box'_sme_`sme'.dta"
 			
-		* year month
-		gen year  = year(dofm(year_month))
+			di as white "sample = `sample_data'; var = `var_box'; sme = `sme'; Exist = `=_rc'"
 			
-		keep if inrange(year, 2018,2020)
-		
-		gen win =1
-		gcollapse (sum) win, by(bidder_id year Covid_item_level) 
-		reshape wide win, i(bidder_id year) j(Covid_item_level)
-		
-		gegen id_num = group(bidder_id)
-		xtset id_num year
-		
-		foreach var of varlist win* {
-			replace `var' = 0 if `var' ==.
+			if _rc==0 {
+				append using "${path_project}/4_outputs/1-data_temp/P06_temp_`sample_data'_`var_box'_sme_`sme'.dta"
+			}
+
 		}
-		
- 		
-		cap drop start_covid*
-		gen covid_product = (win1+win2+win3) >=1
-		gen start_covid_product_1     = (covid_product>0) &  L1.covid_product == 0 
-		gen start_covid_product_2     = (covid_product>0) &  L1.covid_product == . 
-		gen start_covid_product_3     = (covid_product>0) & (L1.covid_product != . & L1.covid_product > 0)
-		
-		gcollapse (sum) covid_product (mean) start_covid_product_*, by(year) freq(N)
-		order year N covid_product start_covid_product_*
-		
-		label var year					"year tender"
-		label var covid_product  		"Number of covid item sellers"
-		label var N						"Number of unique sellers"
-		label var start_covid_product_1 "Firm didn't sell covid item"
-		label var start_covid_product_2 "Firm didn't win tender"
-		label var start_covid_product_3 "Firm sold covid item"
-		
-		keep if inrange(year,2019,2020)
-		
-		format %10.3fc start_covid_*
-		
-		
-		global vars 	N	covid_product	start_covid_product_1	start_covid_product_2	start_covid_product_3
-		
- 		foreach  var of varlist start* {
-			replace `var' = `var'*100
-		}
-		.
-		 	
-		eststo drop *
-		eststo stats_2019: quietly estpost summarize $vars  if year == 2019 ,d 
-		eststo stats_2020: quietly estpost summarize $vars  if year == 2020 ,d  
-
-		esttab stats_2019 stats_2020  using 	///
-			"${overleaf}/01_tables/P2-Firms_starts_covid.tex",	/// 
-			cells("mean(fmt(%12.4gc))") mtitles("2019" "2020") nonum ///
-			label replace f booktabs brackets noobs gap ///
-			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
- 
-}
- 
- 
-* 4: Firms that starts to sell covid items
-{
-	* reading
-	use year_month bidder_id year_month Covid_item_level SME type_item  item_5d_code  item_5d_name ///
-	using "${path_project}/1_data/03-final/05-Lot_item_data",clear
-
-	* year month
-	gen year  = year(dofm(year_month))
-
-	keep if inrange(year, 2018,2020)
-
-	gen win =1
-	gcollapse (sum) win, by(bidder_id year Covid_item_level) 
-	reshape wide win, i(bidder_id year) j(Covid_item_level)
-
-	gegen id_num = group(bidder_id)
-	xtset id_num year
-
-	foreach var of varlist win* {
-	replace `var' = 0 if `var' ==.
 	}
 	.
+ 
+	* formating
+	format %12.0fc N_obs N_non_miss	
+	format %12.2fc avg	sd	CI_low	CI_hig
+	
+	* ordering data
+	order   var_index	bar_label year sme group N_obs	N_non_miss avg  sd	CI_low	CI_hig
+ 	
+	* label data
+	label data  "Yearly month index variables for employers vs procurement"
+	
+	* Saving
+	compress
+		
+	if `sme' ==0 save "${path_project}/1_data/04-index_data/P06_establishment_year-index-all",replace
+	if `sme' ==1 save "${path_project}/1_data/04-index_data/P06_establishment_year-index-sme",replace	
+}
+.
 
-	cap drop start_covid*
-	gen covid_product = ( win3) >=1
-	gen start_covid_product_1     = (covid_product>0) &  L1.covid_product == 0 
-	gen start_covid_product_2     = (covid_product>0) &  L1.covid_product == . 
-	gen start_covid_product_3     = (covid_product>0) & (L1.covid_product != . & L1.covid_product > 0)
+* 5: removing extra files
+* rm "${path_project}/4_outputs/1-data_temp/Data_pre_collapse.dta"
+rm "${path_project}/4_outputs/1-data_temp/P06_Data_pre_collapse_filter.dta"
+* 4: Collapsing measures: Average graphs
+foreach sme in "1" "0" {
+	foreach sample_data in 	D_sample_win_01 D_sample_win_02 D_sample_win_03 D_sample_win_04 D_sample_win_05  D_sample_win_covid ///
+							D_sample_try_01 D_sample_never_try_01 D_sample_never_try_02 D_sample_never_try_03 {
+		foreach var_box in $set_vars_to_measure {
 
-	gcollapse (sum) covid_product (mean) start_covid_product_*, by(year) freq(N)
-	order year N covid_product start_covid_product_*
-
-	label var year					"year tender"
-	label var covid_product  		"Number of High covid item sellers"
-	label var N						"Number of unique sellers"
-	label var start_covid_product_1 "Firm didn't sell covid item"
-	label var start_covid_product_2 "Firm didn't win tender"
-	label var start_covid_product_3 "Firm sold covid item"
-
-	keep if inrange(year,2019,2020)
-
-	format %10.3fc start_covid_*
-
-
-	global vars 	N	covid_product	start_covid_product_1	start_covid_product_2	start_covid_product_3
-
-	foreach  var of varlist start* {
-		replace `var' = `var'*100
+				cap rm using "${path_project}/4_outputs/1-data_temp/P06_temp_`sample_data'_`var_box'_sme_`sme'.dta"
+		}
 	}
 	.
-		
-	eststo drop *
-	eststo stats_2019: quietly estpost summarize $vars  if year == 2019 ,d 
-	eststo stats_2020: quietly estpost summarize $vars  if year == 2020 ,d  
-
-
-	esttab stats_2019 stats_2020  using 	///
-		"${overleaf}/01_tables/P2-Firms_starts_Highcovid.tex",	/// 
-		cells("mean(fmt(%12.2gc))") mtitles("2019" "2020" "2021" "2022") nonum ///
-		label replace f booktabs brackets noobs gap ///
-		starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
- 
 }
+.
