@@ -140,7 +140,7 @@ foreach sme in "1" "0" {
 * 4: Collapsing measures: Average graphs
 foreach sme in "1" "0" {
 	clear
-	foreach sample_data in 	D_sample_win_01 D_sample_win_02 D_sample_win_03 D_sample_win_04 D_sample_win_05  D_sample_win_covid///
+	foreach sample_data in 	D_sample_win_01 D_sample_win_02 D_sample_win_03 D_sample_win_04 D_sample_win_05  D_sample_win_covid ///
 							D_sample_try_01 D_sample_never_try_01 D_sample_never_try_02 D_sample_never_try_03 {
 		foreach var_box in $set_vars_to_measure {
 
@@ -151,11 +151,10 @@ foreach sme in "1" "0" {
 			if _rc==0 {
 				append using "${path_project}/4_outputs/1-data_temp/P06_temp_`sample_data'_`var_box'_sme_`sme'.dta"
 			}
-
 		}
 	}
 	.
- 
+
 	* formating
 	format %12.0fc N_obs N_non_miss	
 	format %12.2fc avg	sd	CI_low	CI_hig

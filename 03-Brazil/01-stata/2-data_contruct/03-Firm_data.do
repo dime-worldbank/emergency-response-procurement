@@ -35,10 +35,10 @@
 		cap drop item_5d_code
 
 		* Getting item code
-		merge  m:1 item_id using "${path_import}/Portal-02-item-panel", keep(3) nogen	keepusing(item_id type_item item_5d_code item_value)
+		merge  m:1 item_id using "${path_project}/1_data/01-import-data/Portal-02-item-panel", keep(3) nogen	keepusing(item_id type_item item_5d_code item_value)
 		
 		* merge covid item
-		merge m:1 type_item item_5d_code using "${path_project}/1_data/03-final/03-covid_item-item_level", ///
+		merge m:1 type_item item_5d_code using "${path_project}/1_data/03-final/02-covid_item-item_level", ///
 			keepusing(type_item item_5d_code  Covid_group_level Covid_item_level) nogen keep(3)	
 	}
 	.
@@ -326,7 +326,7 @@
 	}
 	.
 	  
-	* 05: Creating new variables
+	* 04: Creating new variables
 	{ 
 		cap drop D_firm_exist
  		bys bidder_id (year): gen byte D_firm_exist = (year[_n+1]-year)==1 if year<=2020
@@ -343,7 +343,8 @@
 		.
 		cap drop aux_year 
 		
-		tab year D_firm_destruction_2021 		
+		tab year D_firm_exist_2021 	
+		gen D_firm_destruction_2021 = 1-D_firm_exist_2021
 		
 	}
 	.	

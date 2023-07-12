@@ -19,7 +19,7 @@
 
 	* Firms caracteristics
 	{
-		merge m:1 bidder_id	 using "${path_final}/03-Firm_procurement_constant_characteristics", keep(1 3) ///
+		merge m:1 bidder_id	 using "${path_project}/1_data/03-final/03-Firm_procurement_constant_characteristics", keep(1 3) ///
 			keepusing(bidder_id rais_great_sectors rais_date_simples_start rais_date_simples_end )
 		drop _merge	
 		
@@ -37,7 +37,7 @@
 	.		
 	 
 	* merge covid item
-	merge m:1 type_item item_5d_code using "${path_project}/1_data/03-final/03-covid_item-item_level", ///
+	merge m:1 type_item item_5d_code using "${path_project}/1_data/03-final/02-covid_item-item_level", ///
 		keepusing(type_item item_2d_code item_5d_code  Covid_group_level Covid_item_level) nogen keep(3)		
 
 	* Ordering
@@ -47,12 +47,12 @@
 
 	* Saving participants data
 	compress
-	save "${path_project}/1_data/03-final/03-participants_data", replace
+	save "${path_project}/1_data/03-final/04-participants_data", replace
 	
 	* Creating 5% sample to run fast
 	gen random = runiform() 
 	bys  bidder_id: keep if random[1]<=0.05
 	drop random
-	save  "${path_project}/1_data/02-sample_run_fast/03-participants_data",replace
+	save  "${path_project}/1_data/02-sample_run_fast/04-participants_data",replace
 }
 .

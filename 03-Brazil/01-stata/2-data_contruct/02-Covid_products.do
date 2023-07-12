@@ -90,19 +90,19 @@
 	
 	* Final Criteria
 	twoway  /// 
-	(function y= 0  						,range(0            25) recast(area)  color("233 149 144")  base(10) )  ///
+	(function y= 0  						,range(0            25) recast(area)  color("233 149 144") base(10) )  ///
 	(function y= 1/(x+ log( 2e6))+log( 250) ,range(`=log( 2e6)' 25) recast(area)  color("104 172 32")  base(10) )  ///
 	(function y= 1/(x+ log( 6e6))+log( 400) ,range(`=log(6e6)'  25) recast(area)  color("180 182 26")  base(10) )  ///
-	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)'  25) recast(area)  color("98 190 121")  base(10) )   ///
+	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)'  25) recast(area)  color("98 190 121")  base(10) )  ///
  	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==3, m(c)  mc( gs7) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
-	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
 	 ytitle("The proportion of covid lots on covid tender")
 	 	
-	graph export "${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-region.png", replace as(png)
+	graph export "${path_project}/4_outputs/3-Figures/02-Covid_group_estimation-region.png", replace as(png)
 	 
 	* K-means
 	* Final Criteria
@@ -115,7 +115,7 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
-	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
 	 ytitle("The proportion of covid lots on covid tender")
 	
@@ -142,7 +142,7 @@
 		N_covid_purchases  total total_covid rate_covid_purchase rate_covid  D_covid_tag
 
 	* saving table
-	save "${path_project}/1_data\03-final/03-covid_items-group_level",replace
+	save "${path_project}/1_data\03-final/02-covid_items-group_level",replace
 }
 .	
  
@@ -198,7 +198,7 @@
 		N_covid_purchases  total total_covid rate_covid 
 
 	* saving table
-	save "${path_project}/1_data\03-final/03-covid_item-class_level",replace
+	save "${path_project}/1_data\03-final/02-covid_item-class_level",replace
 }
 .	
 
@@ -242,7 +242,7 @@
 		& N_purchases >=100       // It was purchase at least 100 times in
 
 	destring item_2d_code,replace 
-	merge m:1 type_item item_2d_code using "${path_project}/1_data\03-final/03-covid_items-group_level", keepusing(item_2d_code Covid_group_level) nogen
+	merge m:1 type_item item_2d_code using "${path_project}/1_data\03-final/02-covid_items-group_level", keepusing(item_2d_code Covid_group_level) nogen
 	
 	* Covid levels
 	cap drop Covid_item_level
@@ -277,11 +277,11 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==1, m(x)  mc( gs2)    msize(small))  	///
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
 	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
-	, legend(order( 1  "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
 	 ytitle("The proportion of covid lots on covid tender")   		
 	
-	graph export "${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-item.png", replace as(png)
+	graph export "${path_project}/4_outputs/3-Figures/02-Covid_group_estimation-item.png", replace as(png)
 	
 	* Labeling
 	label var D_covid_tag "Old-dummy if it is a covid item"  
@@ -308,23 +308,23 @@
 		N_covid_purchases  total total_covid rate_covid_purchase rate_covid  D_covid_tag
 	
 	* saving table
-	save "${path_project}/1_data\03-final/03-covid_item-item_level",replace
+	save "${path_project}/1_data\03-final/02-covid_item-item_level",replace
 }
 .	
 		
 * 5: Exporting to excel:
 {
-	use "${path_project}/1_data\03-final/03-covid_items-group_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("01-group_level-2 digits") ///
+	use "${path_project}/1_data\03-final/02-covid_items-group_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("01-group_level-2 digits") ///
 		replace firstrow(varlabels) 
 	
 	* 1: Item export
-	use "${path_project}/1_data\03-final/03-covid_item-item_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("03-item_level-5 digits"  ) ///
+	use "${path_project}/1_data\03-final/02-covid_item-item_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("03-item_level-5 digits"  ) ///
 		sheetreplace firstrow(varlabels) 
 
-	use "${path_project}/1_data\03-final/03-covid_item-class_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("02-class_level-4 digits" ) ///
+	use "${path_project}/1_data\03-final/02-covid_item-class_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("02-class_level-4 digits" ) ///
 		sheetreplace firstrow(varlabels) 
 }
 .

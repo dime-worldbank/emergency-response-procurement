@@ -16,10 +16,10 @@
 	* 1: Leandro Justino
 	if "`c(username)'" == "leand" {	
  		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
-		global path_code 		"C:\Users\leand\Dropbox\3-Profissional\08-Projetos-pessoais\10-GitHub\03-Projects\5-DIME-procurement-team\3-emergency-response-procurement\03-Brazil\01-stata"
-		global path_rais   		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\02-rais-procurement"	
-		global procurement_data	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil"
-		global overleaf			"C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
+		global path_code_data	"C:\Users\leand\Dropbox\3-Profissional\17-Github\04-WGB\01-procurement\3-emergency-response-procurement\03-Brazil\01-stata\2-data_contruct"
+		global path_rais 		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\02-rais-procurement"
+ 		global overleaf			"C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
+		
  	}
 	.
 	
@@ -50,30 +50,49 @@
 	* graphs configuration
 	global graph_option graphregion(color(white)) xsize(10) ysize(5) /*
 		*/ xtitle("quater/year") xlabel(`=ym(2015,2)'(2)`=ym(2022,6)', angle(90))
+		
+		
+	* Timer reboot
+	timer clear
 }
 .
 
-* 1: Prepating tender data
-do "${path_code}/2-data_contruct/01-tender_data.do"
+* 1: [003 minutes] Prepating tender data
+timer on  01
+	do "${path_code_data}/01-tender_data.do"
+timer off 01
 
-* 2: Estimating covid products
-do "${path_code}/2-data_contruct/02-Covid_products.do"
+* 2: [004 minutes]  Estimating covid products
+timer on   02
+	do "${path_code_data}/02-Covid_products.do"
+timer off  02
  
-* 3: Preparing firm data
-do "${path_code}/2-data_contruct/03-firm_procurement_data.do"
+* 3: [059 minutes] Preparing firm data
+timer on    03
+	do "${path_code_data}/03-Firm_data.do"
+timer off   03
  
-* 4: Preparing participants item level data firm data
-do "${path_code}/2-data_contruct/04-participants_data.do" 
+* 4: [025 minutes] Preparing participants item level data firm data
+timer on    04
+	do "${path_code_data}/04-participants_data.do" 
+timer off    04
 
-* 5: Create the main data  (lot/tender) with all necessary variables
-do "${path_code}/2-data_contruct/05-lot_tender_data.do" 
+* 5: [018 minutes] Create the main data  (lot/tender) with all necessary variables
+timer on    05
+	do "${path_code_data}/05-lot_tender_data.do" 
+timer off   05
 
 * 6: Preparing establishment panel to evaluation
+timer on    06
+	do "${path_code_data}/06-Employer_employee_indicators.do" 
+timer off    06
 
 * 7: Calculating indexes
-do "${path_code}/2-data_contruct/07-Calculating_indicators.do" 
+timer on    07
+	do "${path_code_data}/07-Calculating_indicators.do" 
+timer off   07
 
-
+timer list
 
 * Notes:
 {
