@@ -340,7 +340,7 @@ n_bidders_y_covid <- data_covid[DT_TENDER_YEAR > 0,
                                       DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
                                     by = list(DT_TENDER_MONTH, DT_S, ID_ITEM, ID_ITEM_UNSPSC, treat, ID_RUT_BUYER)]
 
-n_bidders_y_covid <- n_bidders_y_covid %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+n_bidders_y_covid <- n_bidders_y_covid %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 data_medic <- data_offer_sub %>% 
   filter(DT_TENDER_YEAR > 2014) %>% 
@@ -362,7 +362,7 @@ n_bidders_y_medicine <- data_medic[DT_TENDER_YEAR > 0,
                             DD_AWARD_CONTRACT        = mean(DD_AWARD_CONTRACT       , na.rm = TRUE)), 
                           by = list(DT_TENDER_MONTH, DT_S, ID_ITEM, ID_ITEM_UNSPSC, treat, ID_RUT_BUYER)]
 
-n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_else(n_bidders == 1, 1, 0)) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 for (dep_var in c(
   "only_one_bidder",
@@ -408,8 +408,8 @@ for (dep_var in c(
     title = paste0(title, type_title)
     
     clfe <- feols(
-      data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+      data = n_bidders_y_covid,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/", dep_var, "_treat_", type, ".png")),
@@ -449,7 +449,7 @@ last_bid_covid <- data_covid %>%
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
@@ -471,7 +471,7 @@ last_bid_med <- data_covid %>%
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 for (months in c(6, 12, 24)) {
   
@@ -536,7 +536,7 @@ last_win_covid <- data_covid %>%
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 # Time to last bid (months)
 last_win_med <- data_medic %>% 
@@ -559,7 +559,7 @@ last_win_med <- data_medic %>%
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 for (months in c(6, 12, 24)) {
   
@@ -624,7 +624,7 @@ last_win_covid <- data_covid %>%
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 # Time to last bid (months)
 last_win_med <- data_medic %>% 
@@ -647,7 +647,7 @@ last_win_med <- data_medic %>%
     new_winner_6  = ifelse(LAST_WIN_MONTHS >= 6, 1, 0),
     new_winner_12 = ifelse(LAST_WIN_MONTHS >= 12, 1, 0),
     new_winner_24 = ifelse(LAST_WIN_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 # Time to last bid (months)
 last_bid_covid <- data_covid %>% 
   
@@ -668,7 +668,7 @@ last_bid_covid <- data_covid %>%
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 # Time to last bid (months)
 last_bid_med <- data_covid %>% 
@@ -690,7 +690,7 @@ last_bid_med <- data_covid %>%
     new_bidder_6  = ifelse(LAST_BID_MONTHS >= 6, 1, 0),
     new_bidder_12 = ifelse(LAST_BID_MONTHS >= 12, 1, 0),
     new_bidder_24 = ifelse(LAST_BID_MONTHS >= 24, 1, 0)
-  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(1, 7))
+  ) %>% mutate(Treated = treat == TRUE & DT_S %in% seq(8, 14))
 
 for (months in c(6, 12, 24)) {
   

@@ -99,7 +99,7 @@ data_po = data_po[CAT_PROBLEMATIC != "", ]
 n_bidders_s_problematic <- data_offer_sub[DT_TENDER_YEAR > 2015, 
                                     list(
                                       n_bidders                =    .N                                      ,
-                                      sme_bidders              = mean(CAT_MSME                     , na.rm = TRUE),
+                                      sme_bidders              = mean(CAT_MSME                , na.rm = TRUE),
                                       sme_winners              = mean(sme_winner              , na.rm = TRUE),
                                       same_municipality_bidder = mean(same_municipality_bidder, na.rm = TRUE),
                                       same_region_bidder       = mean(same_region_bidder      , na.rm = TRUE),
@@ -145,7 +145,7 @@ plot <- graph_trend(
   interval_limits_y = 1,
   legend_upper = 10,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -176,7 +176,7 @@ plot <- graph_trend(
   legend_upper = 45,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -207,7 +207,7 @@ plot <- graph_trend(
   legend_upper = 70,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -239,7 +239,7 @@ plot <- graph_trend(
   legend_upper = 66,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -270,7 +270,7 @@ plot <- graph_trend(
   legend_upper = 20,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -304,7 +304,7 @@ plot <- graph_trend(
   legend_upper = 5,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -335,7 +335,7 @@ plot <- graph_trend(
   legend_upper = 35,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -365,7 +365,7 @@ plot <- graph_trend(
   legend_upper = 6,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -443,7 +443,7 @@ plot <- graph_trend(
   legend_upper = 6,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -474,7 +474,7 @@ plot <- graph_trend(
   legend_upper = 6,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -502,7 +502,7 @@ plot <- graph_trend(
   legend_upper = 4,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -578,12 +578,12 @@ plot <- graph_trend(
   subtitle = "Share of new winning firms (12 months), per tender",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 9,
+  limit_upper = 6,
   interval_limits_y = 0.5,
-  legend_upper = 9,
+  legend_upper = 6,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -608,12 +608,12 @@ plot <- graph_trend(
   subtitle = "Share of new winning firms (6 months), per tender",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 6,
+  limit_upper = 9,
   interval_limits_y = 0.5,
-  legend_upper = 6,
+  legend_upper = 9,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -645,7 +645,7 @@ plot <- graph_trend(
   legend_upper = 3,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -675,7 +675,7 @@ plot <- graph_trend(
   legend_upper = 90,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -704,7 +704,7 @@ plot <- graph_trend(
   legend_upper = 120,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -731,10 +731,10 @@ plot <- graph_trend(
   limit_lower = 8,
   limit_upper = 14,
   interval_limits_y = 1,
-  legend_upper = 13.5,
+  legend_upper = 14,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -760,12 +760,12 @@ plot <- graph_trend(
   subtitle = "Avg number of days between award and contract, per tender",
   caption = "Source: Chile Compra",
   limit_lower = 30,
-  limit_upper = 80,
+  limit_upper = 95,
   interval_limits_y = 10,
-  legend_upper = 75,
+  legend_upper = 90,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -798,7 +798,7 @@ plot <- graph_trend(
   legend_upper = 1200,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -831,7 +831,7 @@ plot <- graph_trend(
   legend_upper = 300,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -867,13 +867,13 @@ plot <- graph_trend(
   title = "Market Concentration",
   subtitle = "HERFINDAHL-HIRSCHMAN INDEX, per sector",
   caption = "Source: Chile Compra",
-  limit_lower = 400,
+  limit_lower = 0,
   limit_upper = 7000,
-  interval_limits_y = 400,
+  interval_limits_y = 1000,
   legend_upper = 7000,
   percentage = FALSE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -886,7 +886,7 @@ ggsave(
   device   = 'png'
 )
 
-data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 1,
+data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 0,
                               CAT_DIRECT == "Si", 1, default = NA)]
 data_po_collapse <- data_po[DT_YEAR > 2015, 
                                  list(
@@ -921,13 +921,13 @@ plot <- graph_trend(
   title = "Direct tenders",
   subtitle = "Share of direct tender (number of contracts)",
   caption = "Source: Chile Compra",
-  limit_lower = 10,
+  limit_lower = 0,
   limit_upper = 60,
   interval_limits_y = 5,
   legend_upper = 58,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1028,7 +1028,7 @@ plot <- graph_trend(
   legend_upper = 40,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1057,7 +1057,7 @@ plot <- graph_trend(
   legend_upper = 35,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1088,7 +1088,7 @@ plot <- graph_trend(
   legend_upper = 30,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1172,7 +1172,7 @@ plot <- graph_trend(
   legend_upper = 60,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1202,7 +1202,7 @@ plot <- graph_trend(
   legend_upper = 60,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(
@@ -1234,7 +1234,7 @@ plot <- graph_trend(
   legend_upper = 60,
   percentage = TRUE,
   yearly = FALSE,
-  label_treatment_legend = "Masks and respirators/ventilators",
+  label_treatment_legend = "Masks and respirators",
   label_control_legend = "Gloves and vests"
 )
 ggsave(

@@ -166,7 +166,6 @@ n_bidders_s_medicine <- n_bidders_s_medicine[,
 
 # Yearly - Medicine
 
-
 plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
