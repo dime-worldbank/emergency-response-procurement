@@ -296,9 +296,9 @@ plot_bar_errors <- function(clfe, title) {
 
 model_ols <- function(data, dep_var, filename, title) {
   
-  clfe <- list(feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + ID_ITEM_UNSPSC")),
+  clfe <- list(feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2))")),
                      data = data, vcov = "HC1"),
-               feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + ID_ITEM_UNSPSC + ID_RUT_BUYER")),
+               feols(as.formula(paste0(dep_var, "~ Treated | DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + ID_RUT_BUYER")),
                      data = data, vcov = "HC1"))
   
   rows <- tribble(~term,          ~OLS,  ~OLS,
@@ -408,8 +408,8 @@ for (dep_var in c(
     title = paste0(title, type_title)
     
     clfe <- feols(
-      data = n_bidders_y_covid,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + DT_S")), vcov = "HC1")
+      data = data,
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + DT_TENDER_MONTH + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/", dep_var, "_treat_", type, ".png")),
@@ -495,7 +495,7 @@ for (months in c(6, 12, 24)) {
     
     clfe <- feols(
       data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/","first_bid_", months, "_treat_", type, ".png")),
@@ -583,7 +583,7 @@ for (months in c(6, 12, 24)) {
     
     clfe <- feols(
       data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/","first_win_", months, "_treat_", type, ".png")),
@@ -714,7 +714,7 @@ for (months in c(6, 12, 24)) {
     
     clfe <- feols(
       data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/","first_establishment_win_", months, "_treat_", type, ".png")),
@@ -756,7 +756,7 @@ for (months in c(6, 12, 24)) {
     
     clfe <- feols(
       data = data,
-      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + ID_ITEM_UNSPSC + DT_S")), vcov = "HC1")
+      as.formula(paste0(dep_var, " ~ i(DT_S, treat, ref = 1)| DT_TENDER_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2)) + DT_S")), vcov = "HC1")
     plot <- plot_bar_errors(clfe, title)
     ggsave(
       filename = file.path(dropbox_dir, paste0("Outputs/","first_establishment_bid_", months, "_treat_", type, ".png")),
@@ -784,7 +784,7 @@ data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(MED_DUMMY),
                                  ), 
                                  by = list(DT_MONTH, DT_S, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, MED_DUMMY, ID_RUT_ISSUER)]
 
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)%>% mutate(Treated = MED_DUMMY == 1 & DT_S %in% seq(1, 7))
+data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)%>% mutate(Treated = MED_DUMMY == 1 & DT_S %in% seq(8, 14))
 
 clfe <- feols(
   data = data_po_collapse,
@@ -811,11 +811,11 @@ data_po_collapse <- data_pos_raw[DT_YEAR > 2015 & !is.na(COVID_LABEL),
                                  ), 
                                  by = list(DT_MONTH, DT_S, ID_PURCHASE_ORDER, ID_ITEM_UNSPSC, COVID_LABEL, ID_RUT_ISSUER)]
 
-data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1) %>% mutate(Treated = COVID_LABEL == 1 & DT_S %in% seq(1, 7))
+data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1) %>% mutate(Treated = COVID_LABEL == 1 & DT_S %in% seq(8, 14))
 
 clfe <- feols(
   data = data_po_collapse,
-  CAT_DIRECT ~ i(DT_S, COVID_LABEL, ref = 1) | DT_MONTH + ID_ITEM_UNSPSC+ DT_S, vcov = "HC1")
+  CAT_DIRECT ~ i(DT_S, COVID_LABEL, ref = 1) | DT_MONTH + as.numeric(substr(ID_ITEM_UNSPSC, 0, 2))+ DT_S, vcov = "HC1")
 
 plot <- plot_bar_errors(clfe, "Share of direct contracts (Covid Products)")
 ggsave(

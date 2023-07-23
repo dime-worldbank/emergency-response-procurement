@@ -182,9 +182,6 @@
     
     datalist[[i]] = as.data.table(datalist[[i]])
     
-    # 3.7: filtering out the intermediary cenabast R.U.T.: 61608700-2
-    datalist[[i]] = datalist[[i]][ID_RUT_BUYER != "61608700-2", ] # 17,027
-    
     # 3.8: convert the string for selected offer into dummy
     datalist[[i]] <- datalist[[i]][, CAT_OFFER_SELECT := fifelse(CAT_OFFER_SELECT == "Seleccionada", 1, 0)]
     
@@ -198,7 +195,8 @@
     left_join(item_covid, by = c("ID_ITEM_UNSPSC")) %>% 
     mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42" | 
                                   substr(ID_ITEM_UNSPSC, 0, 2) == "41" |
-                                    substr(ID_ITEM_UNSPSC, 0, 2) == "51", 1, 0)) %>% 
+                                    substr(ID_ITEM_UNSPSC, 0, 2) == "51" | 
+                                      substr(ID_ITEM_UNSPSC, 0, 2) == "85", 1, 0)) %>% 
     mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
   
   # remove list of data

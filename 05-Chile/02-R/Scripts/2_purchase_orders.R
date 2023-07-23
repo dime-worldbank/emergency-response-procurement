@@ -157,10 +157,6 @@
         ID_RUT_FIRM = gsub("\\.", "", ID_RUT_FIRM)
       )
     
-    # 3.9: filtering out the intermediary cenabast R.U.T.: 61608700-2
-    datalist[[i]] <- datalist[[i]] %>% 
-      filter(ID_RUT_ISSUER != "61608700-2")
-    
     # 3.12: drop 3 observations without an ID_PURCHASE_ORDER
     datalist[[i]] <- datalist[[i]] %>% 
       filter(!is.na(ID_PURCHASE_ORDER))
