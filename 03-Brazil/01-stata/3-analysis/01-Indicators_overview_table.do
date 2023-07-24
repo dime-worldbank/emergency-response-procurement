@@ -107,7 +107,7 @@
 	* 1: Getting all variables
 	{ 
 		* Reading Covid table
-		use "${path_project}/1_data/03-final/03-covid_item-item_level",clear
+		use "${path_project}/1_data/03-final/02-covid_item-item_level",clear
 		keep type_item item_5d_code  Covid_group_level Covid_item_level total total_covid rate_covid_purchase rate_covid
 		format %5.4fc rate*
 		

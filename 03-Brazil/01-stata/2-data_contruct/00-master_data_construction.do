@@ -82,12 +82,12 @@ timer on    05
 	do "${path_code_data}/05-lot_tender_data.do" 
 timer off   05
 
-* 6: Preparing establishment panel to evaluation
+* 6: [090 minutes] Preparing establishment panel to evaluation
 timer on    06
 	do "${path_code_data}/06-Employer_employee_indicators.do" 
 timer off    06
 
-* 7: Calculating indexes
+* 7: [005 minutes]  Calculating indexes
 timer on    07
 	do "${path_code_data}/07-Calculating_indicators.do" 
 timer off   07

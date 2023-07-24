@@ -3,9 +3,9 @@
 
 * 1: Reading and selecting variables
 {
-	 * use "${path_project}/1_data/03-final/03-Firm_procurement_panel",clear
-	 use "${path_project}/1_data/03-final/03-Firm_procurement_panel_sample", clear
-	 drop if year<=2014
+	 use "${path_project}/1_data/03-final/03-Firm_procurement_panel",clear
+	 *use "${path_project}/1_data/03-final/03-Firm_procurement_panel_sample", clear
+	 * drop if year<=2014
 	 
 	* Extra historgram 
 	gen log_N_emp = log(rais_N_workers)
@@ -50,7 +50,7 @@
 	}
 	.
 	
-	drop D_firm_exist_2021
+	cap drop D_firm_exist_2021
 	bys bidder_id (year): gen D_firm_exist_2021 =  year[_N]==2021
 	
 	global set_vars_to_measure ""

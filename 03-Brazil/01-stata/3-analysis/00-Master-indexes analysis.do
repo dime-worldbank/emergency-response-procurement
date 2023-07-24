@@ -15,50 +15,80 @@
 	* defying path
 	* 1: Leandro Justino
 	if "`c(username)'" == "leand" {	
-		global procurement_data	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\01-Brasil"
- 		global path_project 	"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
-		global path_code 		"C:\Users\leand\Dropbox\3-Profissional\08-Projetos-pessoais\10-GitHub\03-Projects\5-DIME-procurement-team\3-emergency-response-procurement\03-Brazil\01-stata"
-		global kcp_data			"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\04-KCP\01-KCP-Brazil/1-data/2-imported"
-		global overleaf			"C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
+ 		global path_project 		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
+		global path_code_analysis	"C:\Users\leand\Dropbox\3-Profissional\17-Github\04-WGB\01-procurement\3-emergency-response-procurement\03-Brazil\01-stata\3-analysis"
+ 		global overleaf				"C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
  	}
 	.
 	
 	* 2:XXXX
 	if "`c(username)'" == "XXXX" {
-		global path_project 	"C:\Users\wb543303\OneDrive - WBG\03-Procurement\02-Covid-br"
-		global overleaf			"C:\Users\wb543303\OneDrive - WBG\03-Procurement\02-Covid-br\4_outputs\3-Figures"
  	}
 	.
 	
-	* 3:ZZZZ
-	if "`c(username)'" == "ZZZZ" {
-		global path_project 	""
- 	}	
-	.
-	
 	* packages
-	ssc install ftools
-	ssc install catplot
-	ssc install gtools
-	ssc install reghdfe
-	ssc install coefplot
-	
-	* graphs configuration
-	global graph_option graphregion(color(white)) xsize(10) ysize(5)
+	cap ssc install ftools
+	cap ssc install catplot
+	cap ssc install gtools
+	cap ssc install reghdfe
+	cap ssc install coefplot
+			
+	* Timer reboot
+	timer clear
 }
 .
 
-* 01: Covid products ( jsut once)
-* do "${path_code}/3-analysis/01-Covid_products_criteria_study.do"
+* 1: [015 minutes] 
+di as white "Running 01-Indicators_overview_table"
+timer on    01
+	do "${path_code_analysis}/01-Indicators_overview_table.do"
+timer off   01
 
-* 02: Indicators table
-do "${path_code}/3-analysis/02-Indicators_overview_table.do"
+* 2: [001 minutes] 
+di as white "Running 02-tender_graphs"
+timer on    02
+	do "${path_code_analysis}/02-tender_graphs.do"
+timer off   02
+ 
+* 3: [002 minutes]
+di as white "Running 03-Indexes_graphs"
+timer on    03
+	do "${path_code_analysis}/03-Indexes_graphs.do"
+timer off   03
+ 
+* 4: [002 minutes] 
+di as white "Running 04-stat_product_visualization"
+timer on    04
+	do "${path_code_analysis}/04-stat_product_visualization.do" 
+timer off   04
 
-* 03: Tender graph
-do "${path_code}/3-analysis/03-tender_graphs.do"
+* 5: [800 minutes] Running the impact evaluation of covid product
+di as white "Running 05-Impact-evaluation"
+timer on    05
+	do "${path_code_analysis}/05-Impact-evaluation.do" 
+timer off   05
 
-* 04: Indexes graphs
-do "${path_code}/3-analysis/04-Indexes_graphs.do"
+* 6: [410 minutes] Firms analysis
+timer on    06
+	do "${path_code_analysis}/06-Employer_employee_study.do" 
+timer off   06
 
-* 05: Product visualization
-do "${path_code}/3-analysis/05-stat_product_visualization.do"
+* 7: It creates latex code for graphs
+timer on    07
+	do "${path_code_analysis}/07-Create temporaty tex file-for graphs.do" 
+timer off   07
+
+* 8:  It creates latex code for panel dashboard overleaf
+timer on    08
+	do "${path_code_analysis}/08-Tex-creator.do" 
+timer off   08
+
+timer list
+
+* Notes:
+{
+    * 1- I removed duplicates from item data base to have it in item id level. 
+	* It is possible to have multiples items for registro de precos, but it is very rare. 
+	* For this study it is only make harder merge operation
+	
+}
