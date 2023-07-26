@@ -42,7 +42,7 @@
 				 legend(order(1 "[2020-2021]" 2 "[2018-2019]" )) ///
 				 bar(1, color(dkorange) )  bar(2, color(navy) ) 
 				 
-			graph export  "${overleaf}/02_figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
+			graph export  "${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
 
 		restore 
 	}
@@ -166,7 +166,7 @@ foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "lo
 			caption("Number of items upper line = `upper_line'; Number of items lower line = `lower_line'") /// ; limited to x {&isin} (0.01,0.99) {&intersect} y {&isin} (0.01,0.99) } ") 
 			note("Size Marker: `size_aux'")
 	
-		graph export "${overleaf}/02_figures/P4-scatter_pre_post-`words'.pdf", replace as(pdf)		
+		graph export "${path_project}/4_outputs/3-Figures/P4-scatter_pre_post-`words'.pdf", replace as(pdf)		
 	restore
 }
 .

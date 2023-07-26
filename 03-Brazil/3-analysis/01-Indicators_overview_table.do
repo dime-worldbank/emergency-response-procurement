@@ -71,34 +71,122 @@
 	}
 	.
  	
-	eststo drop *
-	eststo stats_10: quietly estpost summarize $desc_sample_1  if period == 0 ,d 
-	eststo stats_11: quietly estpost summarize $desc_sample_1  if period == 1 ,d  
-	eststo stats_12: quietly estpost summarize $desc_sample_1  if period == 2 ,d  
-	eststo stats_13: quietly estpost summarize $desc_sample_1  if period == 3 ,d
-	eststo stats_14: quietly estpost summarize $desc_sample_1  if period == 4 ,d	
-	
-	esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
-		"${overleaf}/01_tables/P1-All_indicators.tex",	/// 
-		cells("mean(fmt(%12.4gc))") mtitles("sample" "[2015-2019]" "2018-2019" "[2020-2021]" "[2022]") nonum ///
-		label replace f booktabs brackets noobs gap ///
-		starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
-		
-	foreach set_var in desc_sample_2 desc_sample_3 desc_sample_4  general_N {
+	* Full table
+	{ 
 		eststo drop *
-		eststo stats_10: quietly estpost summarize ${`set_var'} if period == 0 ,d 
-		eststo stats_11: quietly estpost summarize ${`set_var'} if period == 1 ,d  
-		eststo stats_12: quietly estpost summarize ${`set_var'} if period == 2 ,d  
-		eststo stats_13: quietly estpost summarize ${`set_var'} if period == 3 ,d
-		eststo stats_14: quietly estpost summarize ${`set_var'} if period == 4 ,d	
-	
+		eststo stats_10: quietly estpost summarize $desc_sample_1  if period == 0 ,d 
+		eststo stats_11: quietly estpost summarize $desc_sample_1  if period == 1 ,d  
+		eststo stats_12: quietly estpost summarize $desc_sample_1  if period == 2 ,d  
+		eststo stats_13: quietly estpost summarize $desc_sample_1  if period == 3 ,d
+		eststo stats_14: quietly estpost summarize $desc_sample_1  if period == 4 ,d	
+		
 		esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
-		"${overleaf}/01_tables/P1-All_indicators.tex", ///
-		cells("mean(fmt(%12.0fc))") nomtitles nonum ///
-		label append f booktabs brackets noobs gap ///
-		starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none) 
+			"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex",	/// 
+			cells("mean(fmt(%12.4gc))") mtitles("sample" "[2015-2019]" "2018-2019" "[2020-2021]" "[2022]") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
+			
+		foreach set_var in desc_sample_2 desc_sample_3 desc_sample_4  general_N {
+			eststo drop *
+			eststo stats_10: quietly estpost summarize ${`set_var'} if period == 0 ,d 
+			eststo stats_11: quietly estpost summarize ${`set_var'} if period == 1 ,d  
+			eststo stats_12: quietly estpost summarize ${`set_var'} if period == 2 ,d  
+			eststo stats_13: quietly estpost summarize ${`set_var'} if period == 3 ,d
+			eststo stats_14: quietly estpost summarize ${`set_var'} if period == 4 ,d	
+		
+			esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
+			"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex", ///
+			cells("mean(fmt(%12.0fc))") nomtitles nonum ///
+			label append f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none) 
+		}
+		.
 	}
 	.
+	
+	avg_S1_participants				
+	share_S1_sme_participants
+	share_S1_sme_win
+	avg_S1_win_gap
+	avg_S1_new_winner
+	HHI_S1_5d	
+	share_S1_material 
+	share_S1_auction 
+	share_S1_location_state
+	share_S1_location_munic
+	avg_S1_decision_time_trim
+	
+	avg_S2_decision_time	
+	
+	avg_S3_unit_price_filter
+	avg_S3_log_unit_price_filter
+	avg_S3_value_item
+	
+	
+	
+	
+	* Select outputs
+	{ 
+		global desc_sample_1  	avg_S1_participants						///
+								share_S1_sme_participants               ///
+								share_S1_sme_win                        ///
+								avg_S1_win_gap                          ///
+								avg_S1_new_winner                       ///
+								HHI_S1_5d	                            ///
+								share_S1_material                       ///
+								share_S1_auction                        ///
+								share_S1_location_state                 ///
+								share_S1_location_munic                 ///
+								avg_S1_decision_time_trim   
+		
+		
+		global desc_sample_2  	avg_S2_decision_time
+		
+		global desc_sample_3 	avg_S3_unit_price_filter				///
+								avg_S3_log_unit_price_filter			///
+								avg_S3_value_item						///
+								avg_S3_value_covid_high					///
+								avg_S3_value_covid_med					///
+								avg_S3_value_covid_low 					///
+								avg_S3_value_covid_none 
+		
+		global desc_sample_3 	avg_S3_unit_price_filter				///
+								avg_S3_log_unit_price_filter			///
+								avg_S3_value_item		
+		
+		global general_N	  N_lots N_batches N_ug	    
+		
+		eststo drop *
+		eststo stats_10: quietly estpost summarize $desc_sample_1  if period == 0 ,d 
+		eststo stats_11: quietly estpost summarize $desc_sample_1  if period == 1 ,d  
+		eststo stats_12: quietly estpost summarize $desc_sample_1  if period == 2 ,d  
+		eststo stats_13: quietly estpost summarize $desc_sample_1  if period == 3 ,d
+		eststo stats_14: quietly estpost summarize $desc_sample_1  if period == 4 ,d	
+		
+		esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
+			"${path_project}/4_outputs/2-Tables/P1-All_indicators-selected.tex",	/// 
+			cells("mean(fmt(%12.2gc))") mtitles("sample" "[2015-2019]" "2018-2019" "[2020-2021]" "[2022]") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
+			
+		foreach set_var in desc_sample_2 desc_sample_3   general_N {
+			eststo drop *
+			eststo stats_10: quietly estpost summarize ${`set_var'} if period == 0 ,d 
+			eststo stats_11: quietly estpost summarize ${`set_var'} if period == 1 ,d  
+			eststo stats_12: quietly estpost summarize ${`set_var'} if period == 2 ,d  
+			eststo stats_13: quietly estpost summarize ${`set_var'} if period == 3 ,d
+			eststo stats_14: quietly estpost summarize ${`set_var'} if period == 4 ,d	
+		
+			esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
+			"${path_project}/4_outputs/2-Tables/P1-All_indicators-selected.tex", ///
+			cells("mean(fmt(%12.1fc))") nomtitles nonum ///
+			label append f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none) 
+		}
+		.
+	}
+	.	
+	
 }
 .
 

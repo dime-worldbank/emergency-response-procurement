@@ -29,34 +29,41 @@
 			tender_id ug_id			///
 			D_same_munic_win D_same_state_win ///
 			log_unit_price_filter  unit_price_filter
-			 
+				
+		* Removing outliers
+		 replace item_value 		=.    if  item_value >=1e+7
+		 replace unit_price 		=.    if  unit_price >=1e+6
+		 replace unit_price_filter 	=.    if  unit_price_filter >=1e+6
+		 * replace log_unit_price_filter =. if  unit_price_filter <=1e+6
+ 			 
 		* Sample 1: ALL
 			gen share_S1_sme_win 				= SME 
 			gen share_S1_material				= D_product
 			gen share_S1_auction				= D_auction
-			gen N_S1_new_winnes 				= D_new_winner
-			gen avg_S1_win_gap 					= months_since
+			gen avg_S1_new_winner 				= D_new_winner
+ 			gen avg_S1_win_gap 					= months_since
 			gen avg_S1_decision_time_trim 		= decision_time_trim
-			gen avg_S1_unit_price_non_restrict	= unit_price
-			gen avg_S1_value_item				= item_value
+			gen avg_S1_unit_price_non_restrict	= unit_price 
+			gen avg_S1_value_item				= item_value  
+			gen avg_S1_log_volume   	 		= log(item_value)
 			gen avg_S1_participants				= N_participants
 			gen share_S1_location_munic			= D_same_munic_win
 			gen share_S1_location_state			= D_same_state_win
 			gen share_S1_sme_participants 		= share_SME  
 		
 		* Sample 2: Only Auction 
-			gen N_S2_new_winnes 				= D_new_winner	 if D_auction == 1
+			gen avg_S2_new_winner 				= D_new_winner	 if D_auction == 1
 			gen avg_S2_participants				= N_participants if D_auction == 1
 			gen share_S2_sme_participants 		= share_SME 	 if D_auction == 1
 			gen avg_S2_decision_time 			= decision_time  if D_auction == 1
-			gen avg_S2_value_item				= item_value 	 if D_auction == 1
+			gen avg_S2_value_item				= item_value 	 if D_auction == 1  
 
 		* Sample 3: ALL & Only material
 			gen avg_S3_participants				= N_participants if D_product == 1
 			gen share_S3_sme_participants 		= share_SME 	 if D_product == 1
 			gen share_S3_sme_win 				= SME 			 if D_product == 1
 			gen avg_S3_decision_time 			= decision_time  if D_product == 1
-			gen avg_S3_value_item				= item_value 	 if D_product == 1
+			gen avg_S3_value_item				= item_value 	 if D_product == 1 
 			gen avg_S3_unit_price_filter		= unit_price_filter	 if D_product == 1
 			gen avg_S3_log_unit_price_filter	= log_unit_price_filter	 if D_product == 1
 			gen avg_S3_value_covid_high			= item_value 	 if D_product == 1 & Covid_item_level==3
@@ -69,15 +76,17 @@
 			gen share_S4_sme_participants 		= share_SME 	 if D_auction == 1 & D_product == 1
 			gen share_S4_sme_win 				= SME 			 if D_auction == 1 & D_product == 1
 			gen avg_S4_decision_time 			= decision_time  if D_auction == 1 & D_product == 1
-			gen avg_S4_value_item				= item_value 	 if D_auction == 1 & D_product == 1
+			
+			gen avg_S4_value_item				= item_value 	 if D_auction == 1 & D_product == 1 
 			gen avg_S4_value_covid_high			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==3
 			gen avg_S4_value_covid_med			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==2
 			gen avg_S4_value_covid_low			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==1
 			gen avg_S4_value_covid_none			= item_value 	 if D_auction == 1 & D_product == 1 & Covid_item_level==0
-
+			gen avg_S4_unit_price_filter     	= unit_price_filter	 if D_auction == 1 & D_product == 1
+			
 		* List of measures - Fase processo
 			bys tender_id: gen byte N_batches  = _n==1
-			bys ug_id    : gen byte N_ug      = _n==1 
+			bys ug_id    : gen byte N_ug       = _n==1 
 						   gen byte N_lots	   =  1
 						
 		* year month
@@ -123,6 +132,11 @@
 			}
 			.
 			
+			foreach var of varlist avg_S*_log_volume  {
+				label var `var' "E[log(volume item)]"
+			}
+			.
+			
 			foreach var of varlist share_S*_sme_win  {
 				label var `var' "Share SME winning"
 			}
@@ -139,10 +153,10 @@
 			}
 			.	
 			
-			foreach var of varlist N_S*_new_winnes  {
-				label var `var' "N New winners"
-			}
-			.
+		*	foreach var of varlist N_S*_new_winnes  {
+		*		label var `var' "N New winners"
+		*	}
+		*	.
 			
 			foreach var of varlist avg_S*value_covid_high  {
 				label var `var' "E[volume items High Covid items]"
@@ -179,6 +193,11 @@
 			}
 			.
 			
+			foreach var of varlist avg_S*_new_winner {
+				label var `var' "Share new winners"
+			}
+			.			
+			
 			foreach var of varlist avg_S*_unit_price_filter  {
 				label var `var' "E[unit price selected products|selected products]"
 			}
@@ -211,7 +230,7 @@
 		use "${path_project}/1_data/04-index_data/P07_data_to_create_indexes",clear
 			
 		* Collapsing by time measure (month)
-		gcollapse 	(sum)  N_S?_*  N_batches N_ug N_lots ///
+		gcollapse 	(sum)  N_batches N_ug N_lots ///
 					(mean) avg_S?_* share_S?_*, by(year year_semester ) labelformat(#sourcelabel#) fast
 					
 		* saving
@@ -226,7 +245,7 @@
 		use "${path_project}/1_data/04-index_data/P07_data_to_create_indexes",clear
  		
 		* Collapsing by time measure (month)
-		gcollapse 	(sum) N_S?_*  N_batches N_ug N_lots ///
+		gcollapse 	(sum)   N_batches N_ug N_lots ///
 					(mean) avg_S?_* share_S?_*, by(year year_semester Covid_item_level) labelformat(#sourcelabel#) fast
 					
 		* saving

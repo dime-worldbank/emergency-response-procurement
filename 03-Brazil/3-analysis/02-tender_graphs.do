@@ -54,9 +54,8 @@
 	 note("Other methods has less than 1% of tenders") title("Number of tenders process")
 		
 	* Graphing export
-	graph export "${path_project}/4_outputs/3-Figures/P2-N_tenders-method.png", replace as(png)
-	graph export "${overleaf}/02_figures/P2-N_tenders-method.pdf", replace as(pdf)		
-	
+	graph export "${path_project}/4_outputs/3-Figures/P2-N_tenders-method.pdf", replace as(pdf)
+ 	
 	* Graph All class
 	tw (scatter N_covid  year_quarter if methods == 1 , ${style_1_auction}  ) ///
 	|| (scatter N_covid  year_quarter if methods == 2 , ${style_2_waiver}   ) ///
@@ -64,8 +63,7 @@
  	, ${graph_option} ///
 		note("Other methods has less than 1% of tenders") title("Number Covid tenders tenders")		 
 		
-	graph export "${path_project}/4_outputs/3-Figures/P2-Covid_tender_n_tenders-method.png", replace as(png)
-	graph export "${overleaf}/02_figures/P2-Covid_tender_n_tenders-method.pdf", replace as(pdf)		
+	graph export "${path_project}/4_outputs/3-Figures/P2-Covid_tender_n_tenders-method.pdf", replace as(pdf)
 	
 	* Graph All class
 	tw (scatter volume_tender  year_quarter if methods == 1	, ${style_1_auction}  ) ///
@@ -75,8 +73,7 @@
 		note("Other methods has less than 1% of tenders") title("Total estimated volume by tenders")		
 		
 	* Graphing export
-	graph export "${path_project}/4_outputs/3-Figures/P2-Covid_tender_Volume-method.png", replace as(png)
-	graph export "${overleaf}/02_figures/P2-Covid_tender_Volume-method.pdf", replace as(pdf)		
+	graph export "${path_project}/4_outputs/3-Figures/P2-Covid_tender_Volume-method.pdf", replace as(pdf)
 
 }
 .

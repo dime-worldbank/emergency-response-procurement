@@ -35,6 +35,8 @@
 	gen log_volume_item = log(item_value)
 	
 	* Adjusting labels
+	label var N_participants		"Number of Participants"
+	label var N_SME_participants	"Number of Participants SME" 
 	label var SME					"Proportion of SME Winners"
 	label var log_volume_item		"log(volume item)"
 	label var unit_price		 	"Unit Price - filter"
@@ -66,17 +68,57 @@
 	
 	* generate
 	cap drop axis coef se all
+	gen outcome   = ""
+	gen label_out = ""
+	gen N_obs = .
+	gen avg  =.
 	gen axis =.
 	gen coef =.
 	gen se   =.
 	cap	gen byte all = 1
-	 
+	
+	* 
+	local line = 0
+	foreach outcome of varlist $outcome  {
+		foreach k of numlist 1/10 {
+			* Title extracted from outcome label
+			local title: var label   `outcome'
+			local line = `line' +1
+			replace outcome   = "`outcome'"	    if _n==`line'
+			replace label_out = "`title'"		if _n==`line'
+			replace axis    = `k' 				if _n==`line'	
+		}
+	}
+	.
+	
+	* Labeling axis
+	{ 
+		* Labeling Axis (inverted
+		label define names  	///
+	   10  "All"	///
+		9  "Goods"	///
+		8  "Services"	///
+		7  "Medical Goods"	///
+		6  "Non-Medical Goods" 	///
+		5  "Non-Medical Services"	/// 
+		4  "High-Covid-Group Goods"	///
+		3  "Medium-Covid-Group Goods"	///
+		2  "Low-Covid-Group Goods" 	///
+		1  "No-Covid-Group Goods" 	/// 
+		, replace	
+
+		cap drop axis_2
+		gen axis_2 = 11- axis
+		label val axis_2 names	
+	}
+	.
+ 	 
  	* Overall
 	foreach outcome of varlist $outcome  {
 		* local outcome "D_new_winner"
 		* local outcome N_participants
 		di as white "outcome=`outcome'"
- 
+		
 		local k =0
 		foreach var of varlist all type_item medical_product Covid_group_level {		
 			
@@ -84,7 +126,8 @@
 			foreach values of local values_level {
 				
 				sum `outcome' if `var'==`values'
-				loc outcome_avg: di %10.3fc r(mean)
+				replace avg     = r(mean)  if outcome == "`outcome'" & axis==`k'
+ 
 				di as white "`var' = `values' ; AVG = `outcome_avg'"			
 				
 				local k = `k'+1
@@ -104,69 +147,58 @@
 					*global adds_txt  "addtext(E[dep var|sample],`outcome_avg',error,robust error)"
 					*outreg2 using "${path}/7_output/1-estab/3-models/02-partners/01-sample_1-TWFE-`leader'.xls", `replace' ctitle(sample= `var'==`values' , Y=`outcome') ${adds_txt}
 					*local replace "append"
-				
-					* Getting N of regression
-					if "`var'" == "all" local N_obs: di %14.0fc e(N) 
-
-					* Getting N of regression
-					if "`var'" == "all" local geral_avg: di %14.2fc `outcome_avg'
-					
-					* Getting Coef				
-					replace axis =`k' 				 if _n==`k'
-					replace coef = _b[D_tread_post]  if _n==`k'
-					replace se   = _se[D_tread_post] if _n==`k'
+				  
+					* Getting Coef
+					replace N_obs   = `e(N)'  			if outcome == "`outcome'" & axis==`k'
+					replace coef    = _b[D_tread_post]  if outcome == "`outcome'" & axis==`k'
+					replace se      = _se[D_tread_post] if outcome == "`outcome'" & axis==`k'
 				}
 			
-			}
+			} // foreach values
 			.
-		}
+ 		} // foreach var
 		.
 
-		* Labeling axis
-		{ 
-			* Labeling Axis (inverted
-			label define names  	///
-		   10  "All"	///
-			9  "Goods"	///
-			8  "Services"	///
-			7  "Medical Goods"	///
-			6  "Non-Medical Goods" 	///
-			5  "Non-Medical Services"	/// 
-			4  "High-Covid-Group Goods"	///
-			3  "Medium-Covid-Group Goods"	///
-			2  "Low-Covid-Group Goods" 	///
-			1  "No-Covid-Group Goods" 	/// 
-			, replace	
-
-			cap drop axis_2
-			gen axis_2 = 11- axis
-			label val axis_2 names	
-		}
-		.
-			
-		* Creating IC upper and lower
-		cap drop IC_upper
-		gen IC_upper =  coef+  1.96*se
-		cap drop IC_lower
-		gen IC_lower =  coef-  1.96*se
+	} // foreach outcome
+	.
+	
+	
+	keep outcome label_out axis axis_2 avg N_obs coef se 
 		
-		* Title extracted from outcome label
-		local title: var label   `outcome'
+	* Creating IC upper and lower
+	cap drop IC_upper
+	gen IC_upper =  coef+  1.96*se
+	cap drop IC_lower
+	gen IC_lower =  coef-  1.96*se
+	keep if outcome !=""
+	
+	format %12.2fc  avg N_obs coef
+	
+	order outcome label_out axis axis_2 avg N_obs coef se  IC_upper IC_lower
+	
+	save "${path_project}/4_outputs/2-Tables/P5-TWFE-model.dta",replace
+	
+	* Graphing 
+	foreach outcome in $outcome  {
+ 		use "${path_project}/4_outputs/2-Tables/P5-TWFE-model.dta",clear
 		
-		* GAmbiarra ( faz o zero sempre aparecer)
+		keep if outcome == "`outcome'"
+		
+		* Gambiarra ( faz o zero sempre aparecer)
 		replace coef = 0 if _n==100
 		 
 		format %3.2fc coef
 		* Graph of efects
 		twoway 	(rcap 	IC_upper 	IC_lower	axis_2,lcolor(navy) lpattern(solid) horizontal ) || ///
 				(scatter 						axis_2 coef,mcolor(cranberry) msymbol(circle ) ) ,legend(off)		///
-		  note("IC = 95%, E[dep var] = `geral_avg', N obs =`N_obs'") graphregion(color(white))  ylabel(1/10, valuelabel angle(0) nogrid)  xtitle("TWFE-coeficient", size(small)) ///
-		xline(0 , lcolor("red") ) xline( `=coef[1]' , lcolor("gs8") lp("dot")) yline(9.5 7.5 4.5 , lcolor("black") lp("dash"))	title("`title'", size(small)) ytitle("", size(small)) ///
-		caption("TWFE heterogeneous effect}", size(small))
+			note("IC = 95%, E[dep var] = `=round(avg[1],0.01)', N obs =`=N_obs[1]'")  ///
+			graphregion(color(white))  ylabel(1/10, valuelabel angle(0) nogrid)  xtitle("TWFE-coeficient", size(small)) ///
+			xline(0 , lcolor("red") ) xline( `=coef[1]' , lcolor("gs8") lp("dot")) yline(9.5 7.5 4.5 , lcolor("black") lp("dash")) ///
+			title("`=label_out[1]'", size(small)) ytitle("", size(small)) ///
+			caption("TWFE heterogeneous effect}", size(small))
 		
-		graph export   "${overleaf}/02_figures/P5-TWFE-`outcome'.png", replace as(png)
+		graph export   "${path_project}/4_outputs/3-Figures/P5-TWFE-`outcome'.pdf", replace as(pdf)
 	}
-	.	
 }
 .
  
@@ -271,7 +303,7 @@
 			
 			* regression according X1, X2,... global
  			reghdfe `dep_var' ${FE`k'}			
-			 
+			
 			* Title
 			local title_coef: var label `dep_var'
 			

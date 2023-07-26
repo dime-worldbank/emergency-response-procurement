@@ -19,7 +19,7 @@
 	 */ xline(`=yq(2020,1) - 0.5' , lc(gs9) 		lp(dash))  
 }
 .
-
+ 
 * 1: Competition Covid tenders - Restricting to autions
 {
 	* 1: Semester covid level
@@ -34,7 +34,7 @@
 		* graphs configuration
 		global opt_semester xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  /*
 				*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
-				*/ title("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
+				*/ ytitle("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
 				
 		* Covid shadow
 		global covid_shadow_semmester /*
@@ -58,19 +58,22 @@
 			if regex("`var'","S2_") label note_scatter "Sample 2: limited to purchases through reverse auction"
 			if regex("`var'","S3_") label note_scatter "Sample 3: limited to materials"
 			if regex("`var'","S4_") label note_scatter "Sample 4: limited to materials purchased solely through auction."
-
-			* Plotting
+			
+			* Title
+			local label_y: var label `y_dep'
+			
+ 			* Plotting
 			tw 		(scatter `y_dep'  year_semester if ${group_covid} == 3 , ${High_covid_scatter_opt}		) ///
 				|| 	(scatter `y_dep'  year_semester if ${group_covid} == 2 , ${Medium_covid_scatter_opt} 	) ///
 				||	(scatter `y_dep'  year_semester if ${group_covid} == 1 , ${Low_covid_scatter_opt} 		) ///
 				|| 	(scatter `y_dep'  year_semester if ${group_covid} == 0 , ${No_covid_scatter_opt} 		) ///
 				,  legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4))   	  ///
-				note("`note_scatter'") ///
+				note("`note_scatter'") title("`label_y'", size(medium)) ///
 				${covid_shadow_semmester} ${opt_semester} 
-		
+		sleep 2000
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
@@ -113,7 +116,7 @@
 			 	
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
@@ -167,7 +170,7 @@
 			
 		* exporing
 		compress
-		graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+		graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 	}
 	.
 }
