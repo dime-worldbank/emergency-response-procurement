@@ -140,14 +140,13 @@ if (Sys.info()["user"] == "wb554125") {
      source(file.path(scripts, "01_Clean_standard.R")) 
 
     # 2) Construct Variables 
-     source(file.path(scripts, "02_Construct_standard.Rmd")) ##line 1748 code breaks, that chunck cannot be run
-      # there is also a Rmarkdown version of this script - the markdown is the most up to date one 
+     source(file.path(scripts, "02_Construct_standard.Rmd")) 
  
     # 3) Output of Descriptive Analysis 
      source(file.path(scripts, "04_Output_final.Rmd"))
       
     # 4) Regression Analysis  
-     source(file.path(scripts, "05_regression.R")) ##markdown breaks at line 322 and the R breaks in line 229, but only that regression
+     source(file.path(scripts, "05_regression.R"))
       
       
       
