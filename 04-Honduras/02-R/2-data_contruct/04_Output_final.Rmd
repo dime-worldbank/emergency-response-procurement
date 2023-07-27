@@ -18,7 +18,7 @@ knitr::opts_chunk$set(warning = TRUE, message = FALSE, fig.width=10, fig.height=
 
   # Clear the environment -----------------------------------------------------
 
-    rm(list=ls())
+   #rm(list=ls())
 
   # Set working directory -----------------------------------------
       
@@ -2494,6 +2494,14 @@ ggsave(filename = paste0(output, "/New_winner_per_month.jpeg"),
 ## 7 matching with tax data 
 ### the reference year we used is 2015-2019. We can see firms in either tax data or ONCAE data from 2015-2021. 
 
+```{r}
+
+write.csv(tender_item, file = "C:/Users/wb554125/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/Data/3_Cleaned/tender_item.csv")
+write.csv(supplier_item,file = "C:/Users/wb554125/WBG/DIME3 Files - FY23 MDTF project/Covid_datawork/03-Honduras/Data/3_Cleaned/supplier_item.csv")
+
+
+
+```
 
 
 
