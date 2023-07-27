@@ -9,7 +9,7 @@
 
       
       # Load firm data
-      data_firms <- fread("/Users/ruggerodoino/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Intermediate/Firm Registry/firm_data.csv", encoding = "Latin-1")
+      data_firms <- fread("/Users/ruggerodoino/Library/CloudStorage/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Raw/Firm Registry/firm_data.csv", encoding = "Latin-1")
       
       # Load PO data
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
@@ -205,7 +205,8 @@
         left_join(item_covid, by = c("ID_ITEM_UNSPSC")) %>% 
         mutate(CAT_MEDICAL = ifelse(substr(ID_ITEM_UNSPSC, 0, 2) == "42" | 
                                       substr(ID_ITEM_UNSPSC, 0, 2) == "41" |
-                                      substr(ID_ITEM_UNSPSC, 0, 2) == "51", 1, 0)) %>% 
+                                        substr(ID_ITEM_UNSPSC, 0, 2) == "51" |
+                                          substr(ID_ITEM_UNSPSC, 0, 2) == "85", 1, 0)) %>% 
         mutate(COVID_LABEL = ifelse(is.na(COVID_LABEL), 1, 0))
       
       data_po = data_po %>% 
@@ -317,20 +318,20 @@
     )
   
   # adjust the rut code for the firm-level data
-  data_offer_sub <- clean_string(data_offer_sub, STR_FIRM_CITY) %>% 
-    select(-STR_FIRM_CITY) %>% 
-    rename(STR_FIRM_CITY = new_string) %>% 
+  data_offer_sub <- clean_string(data_offer_sub, STR_FIRM_COMMUNE) %>% 
+    select(-STR_FIRM_COMMUNE) %>% 
+    rename(STR_FIRM_COMMUNE = new_string) %>% 
     mutate(
-      STR_FIRM_CITY = ifelse(
-        STR_FIRM_CITY == "SANVICENTETT", "SANVICENTEDETAGUATAGUA",
-        ifelse(STR_FIRM_CITY == "ESTCENTRAL", "ESTACIONCENTRAL",
-               ifelse(STR_FIRM_CITY == "QUINTATILCOCO", "QUINTADETILCOCO",
-                      ifelse(STR_FIRM_CITY == "SANFCODEMOSTAZAL", "MOSTAZAL",
-                             ifelse(STR_FIRM_CITY == "SANJOSEMAIPO", "SANJOSEDEMAIPO",
-                                    ifelse(STR_FIRM_CITY == "SAAVEDRA", "PUERTOSAAVEDRA",
-                                           ifelse(STR_FIRM_CITY == "GUAITECAS", "LASGUAITECAS",
-                                                  ifelse(STR_FIRM_CITY == "TORRESDEPAINE", "PAINE",
-                                                         ifelse(STR_FIRM_CITY == "PAGUIRRECERDA", "PEDROAGUIRRECERDA", STR_FIRM_CITY))))))))))
+      STR_FIRM_COMMUNE = ifelse(
+        STR_FIRM_COMMUNE == "SANVICENTETT", "SANVICENTEDETAGUATAGUA",
+        ifelse(STR_FIRM_COMMUNE == "ESTCENTRAL", "ESTACIONCENTRAL",
+               ifelse(STR_FIRM_COMMUNE == "QUINTATILCOCO", "QUINTADETILCOCO",
+                      ifelse(STR_FIRM_COMMUNE == "SANFCODEMOSTAZAL", "MOSTAZAL",
+                             ifelse(STR_FIRM_COMMUNE == "SANJOSEMAIPO", "SANJOSEDEMAIPO",
+                                    ifelse(STR_FIRM_COMMUNE == "SAAVEDRA", "PUERTOSAAVEDRA",
+                                           ifelse(STR_FIRM_COMMUNE == "GUAITECAS", "LASGUAITECAS",
+                                                  ifelse(STR_FIRM_COMMUNE == "TORRESDEPAINE", "PAINE",
+                                                         ifelse(STR_FIRM_COMMUNE == "PAGUIRRECERDA", "PEDROAGUIRRECERDA", STR_FIRM_COMMUNE))))))))))
   
   
   # adjust the rut code for the firm-level data
@@ -341,12 +342,12 @@
       STR_FIRM_REGION = ifelse(region == "I RE", "Región de Tarapacá",
                       ifelse(region == "II R", "Región de Antofagasta",
                              ifelse(region == "III ", "Región de Atacama",
-                                    ifelse(region == "IV R", "Región de Coquimbo ",
-                                           ifelse(region == "IX R", "Región de la Araucanía ",
+                                    ifelse(region == "IV R", "Región de Coquimbo",
+                                           ifelse(region == "IX R", "Región de la Araucanía",
                                                   ifelse(region == "V RE","Región de Valparaíso",
                                                          ifelse(region == "VI R", "Región del Libertador General Bernardo O´Higgins",
                                                                 ifelse(region == "VII ", "Región del Maule",
-                                                                       ifelse(region == "VIII", "Región del Biobío ",
+                                                                       ifelse(region == "VIII", "Región del Biobío",
                                                                               ifelse(region == "X RE", "Región de los Lagos",
                                                                                      ifelse(region == "XI R","Región Aysén del General Carlos Ibáñez del Campo",
                                                                                             ifelse(region == "XII ", "Región de Magallanes y de la Antártica",
@@ -363,7 +364,7 @@
   data_offer_sub <- data_offer_sub %>% 
     
     # One dummy for bidder being from the same municipality
-    mutate(same_municipality_bidder = ifelse(STR_BUYER_CITY == STR_FIRM_CITY, 1, 0)) %>% 
+    mutate(same_municipality_bidder = ifelse(STR_BUYER_CITY == STR_FIRM_COMMUNE, 1, 0)) %>% 
     
     # One dummy for bidder being from the same STR_FIRM_REGION
     mutate(same_region_bidder       = ifelse(STR_BUYER_REGION == STR_FIRM_REGION, 1, 0)) %>% 

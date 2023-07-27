@@ -1,0 +1,7 @@
+- check if there are duplicates
+- add definitions at the beginning 
+
+
+- top 5 sectors (need to include drugs and pharmaceutical) and then compare them VS medical VS all the other sectors 
+- graph with three trends problematic vs non-problematic vs other medical 
+- graph trends 
