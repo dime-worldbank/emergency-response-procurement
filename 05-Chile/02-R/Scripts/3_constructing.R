@@ -9,7 +9,7 @@
 
       
       # Load firm data
-      data_firms <- fread("/Users/ruggerodoino/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Intermediate/Firm Registry/firm_data.csv", encoding = "Latin-1")
+      data_firms <- fread("/Users/ruggerodoino/Library/CloudStorage/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Raw/Firm Registry/firm_data.csv", encoding = "Latin-1")
       
       # Load PO data
       data_po <- fread(file = file.path(int_data, "purchase_orders.csv"), encoding = "Latin-1")
@@ -342,12 +342,12 @@
       STR_FIRM_REGION = ifelse(region == "I RE", "Región de Tarapacá",
                       ifelse(region == "II R", "Región de Antofagasta",
                              ifelse(region == "III ", "Región de Atacama",
-                                    ifelse(region == "IV R", "Región de Coquimbo ",
-                                           ifelse(region == "IX R", "Región de la Araucanía ",
+                                    ifelse(region == "IV R", "Región de Coquimbo",
+                                           ifelse(region == "IX R", "Región de la Araucanía",
                                                   ifelse(region == "V RE","Región de Valparaíso",
                                                          ifelse(region == "VI R", "Región del Libertador General Bernardo O´Higgins",
                                                                 ifelse(region == "VII ", "Región del Maule",
-                                                                       ifelse(region == "VIII", "Región del Biobío ",
+                                                                       ifelse(region == "VIII", "Región del Biobío",
                                                                               ifelse(region == "X RE", "Región de los Lagos",
                                                                                      ifelse(region == "XI R","Región Aysén del General Carlos Ibáñez del Campo",
                                                                                             ifelse(region == "XII ", "Región de Magallanes y de la Antártica",

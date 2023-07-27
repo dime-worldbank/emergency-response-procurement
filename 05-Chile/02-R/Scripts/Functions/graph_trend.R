@@ -405,7 +405,7 @@ graph_trend_three_covid <- function(
     
     plot <- ggplot() +
       
-      ggplot2::annotate("segment", x = 7.5, xend = 7.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      ggplot2::annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
       geom_point(data = data %>% filter(tender_covid == "ONLY COVID" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_point(data = data %>% filter(tender_covid == "ONLY NON COVID" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_point(data = data %>% filter(tender_covid == "MIXED" & DT_S != 9), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#63A15D") +

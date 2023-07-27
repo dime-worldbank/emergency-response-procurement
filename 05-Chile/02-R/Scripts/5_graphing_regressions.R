@@ -314,7 +314,7 @@ model_ols <- function(data, dep_var, filename, title) {
              title = title,
              gof_map = c("nobs", "r.squared"),
              add_rows = rows, fmt = f, output = "gt") %>% 
-      gt::gtsave(filename = file.path(dropbox_dir, paste0("Outputs/", filename, ".html")), inline_css = FALSE)
+      gt::gtsave(filename = file.path(dropbox_dir, paste0("Outputs/", filename, ".png")))
   
 }
 
@@ -367,14 +367,16 @@ n_bidders_y_medicine <- n_bidders_y_medicine %>% mutate(only_one_bidder = if_els
 for (dep_var in c(
   "only_one_bidder",
   "n_bidders",
-  "sme_bidders",              
-  "sme_winners",             
-  "same_municipality_bidder", 
-  "same_municipality_winner", 
-  "DD_DECISION",              
-  "DD_SUBMISSION",            
-  "DD_TOT_PROCESS",           
-  "DD_AWARD_CONTRACT"        
+  "sme_winners",
+  "sme_bidders",
+  "same_municipality_winner",
+  "same_region_bidder",
+  "same_municipality_bidder",
+  "same_region_winner",
+  "DD_DECISION",
+  "DD_SUBMISSION",
+  "DD_TOT_PROCESS",
+  "DD_AWARD_CONTRACT"
 )) {
   
   for (type in c("covid", "medic")) {
@@ -392,7 +394,8 @@ for (dep_var in c(
     title = case_when(
         dep_var == "only_one_bidder" ~ "Share of only one bidder",
         dep_var == "n_bidders"   ~ "Number of bidders",
-        dep_var == "sme_winners" ~ "Share of SMEs winning",             
+        dep_var == "sme_winners" ~ "Share of SMEs winning",       
+        dep_var == "sme_bidders" ~ "Share of SMEs bidding",             
         dep_var == "same_municipality_bidder" ~ "Share of firms bidding from the same municipality", 
         dep_var == "same_region_bidder" ~ "Share of firms bidding from the same region",       
         dep_var == "same_municipality_winner" ~ "Share of firms winning from the same municipality", 
@@ -423,7 +426,7 @@ for (dep_var in c(
     model_ols(data = data, 
               dep_var = dep_var,
               title = title, 
-              filename = paste0(dep_var, "_treat_", type))
+              filename = paste0("table_", dep_var, "_treat_", type))
     
   }
   
