@@ -207,10 +207,8 @@
 * 3- Trends graph
 {  
 	* Variables Create D_exist 
-	global main_Vars  F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
+	global main_Vars D_firm_exist_2021 F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
 	* global main_Vars rais_N_workers 	
-	
-	local filter "all"
  
 	foreach var_box in $main_Vars {
 		
@@ -222,86 +220,33 @@
 		
 		keep if inlist(var_index,"`var_box'")
 		
-		* titles of y axis
-		replace bar_label = "Proportion of simples benefit"							if var_index == "rais_D_simples"			
-		replace bar_label = "Average number of workers throughout year"             if var_index == "rais_N_workers"          
-		replace bar_label = "Average number of hires"                               if var_index == "rais_N_hire"             
-		replace bar_label = "Average number of separations"                         if var_index == "rais_N_fire"             
- 		replace bar_label = "Average worker wage"                                   if var_index == "rais_N_workers"         
-		replace bar_label = "Average number of bidders in tender participations"    if var_index == "rais_avg_wage"           
-		replace bar_label = "Probability of don't exist up to the end of panel"     if var_index == "bid_avg_competition"     
-		replace bar_label = "Probability of don't exist in 2019"                    if var_index == "D_firm_destruction"      
-		replace bar_label = "Average log(number of workers)"                        if var_index == "D_firm_destruction_2019" 
-		replace bar_label = "Average log(worker wage)"			                    if var_index == "log_N_emp"               
-         
-		 
-		local y_title = bar_label[1]
+		replace bar_label = "Proportion of firms that exist in 2021"				if "`var_box'" == "D_firm_exist_2021"		
+		
+		replace bar_label = "Proportion of firms that exist in the next year"		if "`var_box'" == "F1_D_firm_exist"
+		replace bar_label = "Average number of workers throughout year"             if "`var_box'" == "rais_N_workers" 
+		replace bar_label = "Proportion of simples benefit"							if "`var_box'" == "rais_D_simples"
+		
+		replace bar_label = "Average number of hires"								if "`var_box'" == "rais_N_hire"
+		replace bar_label = "Average number of separations"							if "`var_box'" == "rais_N_fire"
+		replace bar_label = "Average of salary"						    			if "`var_box'" == "rais_avg_wage"           
+		replace bar_label = "Average of Logarithmic of number of workers"		    if "`var_box'" == "log_N_emp"  
+		replace bar_label = "Average of Logarithmic of salary"	    				if "`var_box'" == "log_wage"   
 		
 		* scatter
 		local col_int 0.5
-		tw	   (scatter   avg year 					if group=="D_sample_win_01"			, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
+		tw	   (scatter   avg year 					if group=="D_sample_win_covid"		, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
+			|| (scatter   avg year 					if group=="D_sample_win_05"			, sort mcolor(orange *`col_int') c(l) lcolor(orange*`col_int')  lp(dash))   ///
 			|| (scatter   avg year 					if group=="D_sample_try_01" 		, sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
 			|| (scatter   avg year 					if group=="D_sample_never_try_01" 	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_01"			, color(maroon%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_try_01"	 		, color(navy%10))   												///
+			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_covid"		, color(maroon%10))   											///
+			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_05"			, color(orange%10))   											///
+			|| (rarea     CI_hig CI_low year 		if group=="D_sample_try_01"	 		, color(navy%10))   											///
 			|| (rarea     CI_hig CI_low year 		if group=="D_sample_never_try_01"   , color(emerald%10))   											///
-			, legend(order(1 `"Winners"' 2 `"Try"' 3 "Never Try") col(3)) 									///
-			ytitle("`y_title'", size(small)) xtitle("") xlabel(2015(1)2021)														///
+			, legend(order(1 "Covid product" 2 "No covid product" 3 "Try" 4 "Never Try-catchment") col(4))    											///
+			title("`=bar_label[1]'", size(medium)) ytitle("") xtitle("")  xlabel(2015(1)2021)															///
 			 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid) 
-		graph export  "${path_project}/4_outputs/3-Figures/P06-avg-`var_box'-`filter'-level_0.png", as(png) replace
-			 
-		* scatter
-		local col_int 0.5
-		tw	   (scatter   avg year 					if group=="D_sample_win_01"			, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_try_01" 		, sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_never_try_02" 	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_01"			, color(maroon%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_try_01"	 		, color(navy%10))   												///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_never_try_02"   , color(emerald%10))   											///
-			, legend(order(1 `"Winners"' 2 `"Try"' 3 "Never Try") col(3)) 									///
-			ytitle("`y_title'", size(small)) xtitle("") xlabel(2015(1)2021)														///
-			 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid) 
-		graph export  "${path_project}/4_outputs/3-Figures/P06-avg-`var_box'-`filter'-level_1.png", as(png) replace
-			 
-
-		* scatter
-		local col_int 0.5
-		tw	   (scatter   avg year 					if group=="D_sample_win_01"			, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_try_01" 		, sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_never_try_03" 	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_01"			, color(maroon%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_try_01"	 		, color(navy%10))   												///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_never_try_03"   , color(emerald%10))   											///
-			, legend(order(1 `"Winners"' 2 `"Try"' 3 "Never Try") col(3)) 									///
-			ytitle("`y_title'", size(small)) xtitle("") xlabel(2015(1)2021)														///
-			 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid) 
-		graph export  "${path_project}/4_outputs/3-Figures/P06-avg-`var_box'-`filter'-level_2.png", as(png) replace
-
-	
-	* scatter (covid vs no covid)
-	tw	   (scatter   avg year if group=="D_sample_win_02" , sort mcolor(blue%95 ) c(l) lcolor(blue%95 ) lp(dash))   ///
-		|| (scatter   avg year if group=="D_sample_win_03" , sort mcolor(blue%50 ) c(l) lcolor(blue%50 ) lp(dash))   ///
-		|| (scatter   avg year if group=="D_sample_win_04" , sort mcolor(blue%20 ) c(l) lcolor(blue%20 ) lp(dash))   ///
-		|| (scatter   avg year if group=="D_sample_win_05" , sort mcolor(red%90  ) c(l) lcolor(red%90  ) lp(dash))   ///
-		|| (scatter   avg year if group=="D_sample_try_01" , sort mcolor(red%50  ) c(l) lcolor(red%50  ) lp(dash))   ///
-		|| (scatter   avg year if group=="D_sample_never_try_02", sort mcolor(red%20  ) c(l) lcolor(red%20  ) lp(dash))   ///
-		, legend(order(1 "High-covid" 2 "Med-covid" 3 "low-covid" 4 "No-covid" 5 "Try" 6 "Never Try-catchment") col(3))    		///
-		ytitle("`y_title'", size(small)) xtitle("") xlabel(2015(1)2021)															///
-		 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid)  
-
-		graph export  "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'.png", as(png) replace		
-			
-	* scatter (covid vs no covid)
-	tw	   (scatter   avg year if group== "D_sample_win_covid" 		 , sort mcolor(blue%95 ) c(l) lcolor(blue%95 ) lp(dash))   /// 
-    	|| (scatter   avg year if group== "D_sample_win_05" 			 , sort mcolor(green%90  ) c(l) lcolor(green%90  ) lp(dash))   ///
-		|| (scatter   avg year if group== "D_sample_try_01"			 , sort mcolor(orange%50  ) c(l) lcolor(orange%50  ) lp(dash))   ///
-		|| (scatter   avg year if group== "D_sample_never_try_02"	 , sort mcolor(red%50  ) c(l) lcolor(red%50  ) lp(dash))   ///
-		, legend(order(1 "Covid product" 2 "No covid product" 3 "Try" 4 "Never Try-catchment") col(4))    		///
-		ytitle("`y_title'", size(small)) xtitle("") xlabel(2015(1)2021)															///
-		 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid)  
-
-		graph export  "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'.png", as(png) replace		
-		
+		graph export  "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'.png", as(png) replace
+ 		
 	}
 	.	
 }

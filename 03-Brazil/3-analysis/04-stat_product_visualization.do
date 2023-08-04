@@ -22,11 +22,17 @@
 	replace volume_pre  = volume_pre /1e6
 	replace volume_post = volume_post/1e6
 	
+	
+	sort  Covid_item_level -volume_post
+	by Covid_item_level: keep if _n<=10 
+	
+	
 	* goptions 
 	global graph_opts ///
 		graphregion(color(white) ) /// <- remove la(center) for Stata < 15
 		ylab(,angle(0) nogrid)   ///
 		legend(region(lc(none) fc(none))) xsize(10) ysize(5)
+	 
 	
 	foreach k in 0 1 2 3 { 
 		preserve
@@ -41,11 +47,66 @@
 				 over(item_5d_name_eng, sort(1) descending ) $graph_opts ytitle("Millions reais") plotregion(margin(medlarge)) ///
 				 legend(order(1 "[2020-2021]" 2 "[2018-2019]" )) ///
 				 bar(1, color(dkorange) )  bar(2, color(navy) ) 
-				 
+				 www
 			graph export  "${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
 
 		restore 
 	}
+	
+	* graph combine graph_0.gph graph_1.gph graph_2.gph graph_3.gph,graphregion(color(white) ) xsize(20) ysize(10)
+}
+.
+
+* 02: Graph bar top products
+{
+	use "${path_project}/1_data\03-final/02-covid_item-item_level",clear
+	
+	gen log_covid_value 	= log(total_covid)
+	gen log_covid_purchase	= log(N_covid_purchases)
+	
+	logit D_covid_tag log_covid_value log_covid_purchase
+	
+	predict pr_covid, pr
+	keep if pr_covid!=.
+	
+	gen cov_est = pr_covid>=0.5
+	
+	tab cov_est D_covid_tag
+	gen correct  =  cov_est==D_covid_tag
+	gen sensibilidade  = cov_est     if D_covid_tag==1
+	gen specificidade  = cov_est==0  if D_covid_tag==0
+	  
+	
+	gen any_covid = Covid_item_level >=1
+ 	  
+	table any_covid 	   , stat(mean correct sensibilidade specificidade) nformat(%5.3f)
+	table Covid_item_level , stat(mean correct sensibilidade specificidade) nformat(%5.3f)
+ 	 
+	* Final Criteria
+	twoway  /// 
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==1, m(x)  mc( gs2)    msize(small))  	///
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==0,       mc( pink)   msize(tiny)) 	///	
+	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
+	, legend(order( 1  "D Covid =1"  2  "D Covid =0")  col(4)) ///
+	graphregion(color(white)) xtitle("Log(Covid Expenses) vs Log(Covid Purchases)") ///		
+	 ytitle("Log(Covid Expenses)")  xtitle("Log(Covid Purchases)")   	///
+	 note("Tenders opened in [2020,2021,2022]")
+	
+ 
+	* Final Criteria
+	twoway  /// 
+	(function y= 0  						,range(0              25) recast(area)  color("233 149 144")  base(9) )  ///
+	(function y= 1/(x+ log( 10000))+log( 5) ,range(`=log( 10000)' 25) recast(area)  color("104 172 32")  base(9) )  ///
+	(function y= 1/(x+ log( 50000))+log(15) ,range(`=log( 50000)' 25) recast(area)  color("180 182 26")  base(9) )  ///
+	(function y= 1/(x+ log(300000))+log(50) ,range(`=log(300000)' 25) recast(area) color("98 190 121")  base(9) )   ///
+ 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==3, m(c)  mc( gs16)    msize(small)) 				///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==2, m(d)  mc( gs8)    msize(small)) 				///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==1, m(x)  mc( gs2)    msize(small))  	///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
+	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
+	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
+	 ytitle("The proportion of covid lots on covid tender")  	 
 }
 .
 

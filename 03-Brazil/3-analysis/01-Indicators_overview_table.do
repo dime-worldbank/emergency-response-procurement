@@ -82,7 +82,7 @@
 		
 		esttab stats_10 stats_11 stats_12 stats_13 stats_14    using 	///
 			"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex",	/// 
-			cells("mean(fmt(%12.4gc))") mtitles("sample" "[2015-2019]" "2018-2019" "[2020-2021]" "[2022]") nonum ///
+			cells("mean(fmt(%12.2fc))") mtitles("sample" "[2015-2019]" "2018-2019" "[2020-2021]" "[2022]") nonum ///
 			label replace f booktabs brackets noobs gap ///
 			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
 			
@@ -103,27 +103,7 @@
 		.
 	}
 	.
-	
-	avg_S1_participants				
-	share_S1_sme_participants
-	share_S1_sme_win
-	avg_S1_win_gap
-	avg_S1_new_winner
-	HHI_S1_5d	
-	share_S1_material 
-	share_S1_auction 
-	share_S1_location_state
-	share_S1_location_munic
-	avg_S1_decision_time_trim
-	
-	avg_S2_decision_time	
-	
-	avg_S3_unit_price_filter
-	avg_S3_log_unit_price_filter
-	avg_S3_value_item
-	
-	
-	
+ 
 	
 	* Select outputs
 	{ 
@@ -132,15 +112,20 @@
 								share_S1_sme_win                        ///
 								avg_S1_win_gap                          ///
 								avg_S1_new_winner                       ///
-								HHI_S1_5d	                            ///
 								share_S1_material                       ///
 								share_S1_auction                        ///
 								share_S1_location_state                 ///
 								share_S1_location_munic                 ///
+								HHI_S1_5d	                            ///
+								HHI_S1_2d								///
 								avg_S1_decision_time_trim   
 		
 		
-		global desc_sample_2  	avg_S2_decision_time
+		global desc_sample_2  	avg_S2_participants  		///
+								share_S2_sme_participants 	///
+								avg_S2_new_winner 			///
+								avg_S2_value_item 			///
+								share_S2_sme_participants 
 		
 		global desc_sample_3 	avg_S3_unit_price_filter				///
 								avg_S3_log_unit_price_filter			///
@@ -150,9 +135,9 @@
 								avg_S3_value_covid_low 					///
 								avg_S3_value_covid_none 
 		
-		global desc_sample_3 	avg_S3_unit_price_filter				///
-								avg_S3_log_unit_price_filter			///
-								avg_S3_value_item		
+		*global desc_sample_3 	avg_S3_unit_price_filter				///
+		*						avg_S3_log_unit_price_filter			///
+		*						avg_S3_value_item		
 		
 		global general_N	  N_lots N_batches N_ug	    
 		
@@ -234,3 +219,103 @@
 		export excel using "${path_project}/4_outputs/2-Tables/01-table_products_covid_level.xlsx", replace firstrow(varlabels)
 	}
 }
+.
+
+* 3: Firms that starts to sell covid items
+{
+		* reading
+		use year_month bidder_id year_month Covid_item_level SME type_item  item_5d_code  item_5d_name ///
+			using "${path_project}/1_data/03-final/05-Lot_item_data",clear
+			
+		* year month
+		gen year  = year(dofm(year_month))
+			
+		keep if inrange(year, 2018,2020)
+		
+		gen win =1
+		gcollapse (sum) win, by(bidder_id year Covid_item_level) 
+		reshape wide win, i(bidder_id year) j(Covid_item_level)
+		
+		gegen id_num = group(bidder_id)
+		xtset id_num year
+		
+		foreach var of varlist win* {
+			replace `var' = 0 if `var' ==.
+		}
+		.
+ 		
+		cap drop start_covid*
+		gen covid_product = (win1+win2+win3) >=1
+		
+		* didn't win previous year
+			gen start_covid_product_1     = (covid_product>0) &  L1.covid_product == . 
+		
+		* didn't sell previous year
+			gen start_covid_product_2     = (covid_product>0) &  L1.covid_product == 0  
+		
+		* didn't win previous year
+			gen start_covid_product_3     = (covid_product>0) & (L1.covid_product != . & L1.covid_product > 0)
+		
+		gen Hcovid_product = (win3) >=1
+		* didn't win previous year
+			gen start_Hcovid_product_1     = (Hcovid_product>0) &  L1.Hcovid_product == . 
+		
+		* didn't sell previous year
+			gen start_Hcovid_product_2     = (Hcovid_product>0) &  L1.Hcovid_product == 0  
+		
+		* didn't win previous year
+			gen start_Hcovid_product_3     = (Hcovid_product>0) & (L1.Hcovid_product != . & L1.Hcovid_product > 0)
+				
+		gcollapse (sum) covid_product Hcovid_product (mean) start_covid_product_* start_Hcovid_product*, by(year) freq(N)
+		order year N covid_product start_covid_product_*
+		
+		label var year					"year tender"
+		label var N						"Total Number of Winner Firms"
+		
+		label var covid_product  		"Number of Firms Selling COVID-19-Related Items"
+		label var start_covid_product_1 "Firm share: didn't win a tender"
+		label var start_covid_product_2 "Firm share: Sold Only Non-COVID-19 Items"
+		label var start_covid_product_3 "Firm share: Sold COVID-19-Related Items"
+		
+		label var Hcovid_product  		 "Number of Firms Selling High-Level COVID-19 Items"
+		label var start_Hcovid_product_1 "Firm share: didn't win a tender"
+		label var start_Hcovid_product_2 "Firm share: Sold Only Non-High-Level COVID-19 Items"
+		label var start_Hcovid_product_3 "Firm share: Sold High-Level COVID-19 Items"
+		
+		keep if inrange(year,2019,2020)
+		
+		format %10.3fc start_covid_*		 
+		 	
+		eststo drop *
+		eststo stats_2019: quietly estpost summarize   N   if year == 2019 ,d 
+		eststo stats_2020: quietly estpost summarize   N   if year == 2020 ,d  
+
+		esttab stats_2019 stats_2020  using 	///
+			"${path_project}/4_outputs/2-Tables/P1-Firms_starts_covid.tex",	/// 
+			cells("mean(fmt(%12.0fc))") mtitles("2019" "2020") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
+ 
+
+		eststo drop *
+		eststo stats_2019: quietly estpost summarize covid_product start_covid_product_1 start_covid_product_2 start_covid_product_3  if year == 2019 ,d 
+		eststo stats_2020: quietly estpost summarize covid_product start_covid_product_1 start_covid_product_2 start_covid_product_3  if year == 2020 ,d  
+		
+ 		esttab stats_2019 stats_2020   using 	///
+			"${path_project}/4_outputs/2-Tables/P1-Firms_starts_covid.tex", ///
+			cells("mean(fmt(%12.3fc))") nomtitles nonum ///
+			label append f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none) 
+			
+	
+		eststo drop *
+		eststo stats_2019: quietly estpost summarize Hcovid_product start_Hcovid_product_1 start_Hcovid_product_2 start_Hcovid_product_3  if year == 2019 ,d 
+		eststo stats_2020: quietly estpost summarize Hcovid_product start_Hcovid_product_1 start_Hcovid_product_2 start_Hcovid_product_3  if year == 2020 ,d  
+		
+ 		esttab stats_2019 stats_2020   using 	///
+			"${path_project}/4_outputs/2-Tables/P1-Firms_starts_covid.tex", ///
+			cells("mean(fmt(%12.3fc))") nomtitles nonum ///
+			label append f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)  
+}
+.

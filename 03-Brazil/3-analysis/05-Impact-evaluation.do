@@ -34,6 +34,26 @@
 	* keep if runiform()<=0.25
 	gen log_volume_item = log(item_value)
 	
+	* Extra variables to regressions
+	{ 
+		* Total
+		gegen total_volume_5d = sum(item_value)   , by(year_semester  type_item item_5d_code)
+		gegen n_5d 			  = count(item_value) , by(year_semester  type_item item_5d_code)
+		
+		* 5 digits
+		gen share_5d 			=  item_value/total_volume_5d
+		
+		gen HHI_5d 				=  n_5d*share_5d*share_5d	
+		*replace HHI_5d = 1 	if HHI_5d>=1
+		
+		
+		gegen X_barr = mean(log_unit_price_filter)  , by(year_semester  type_item item_5d_code)
+
+		gen sd_log_unit_price = (log_unit_price_filter -X_barr)^2		
+	}
+	.
+
+	
 	* Adjusting labels
 	label var N_participants		"Number of Participants"
 	label var N_SME_participants	"Number of Participants SME" 
@@ -43,18 +63,64 @@
 	label var unit_price_filter 	"Unit Price - filter"
 	label var log_unit_price_filter "log(Unit Price - filter)"
 	
+	label var HHI_5d				"HHI item index by year semester"
+	label var D_auction				"Proportion of reverse auction method"
+	label var sd_log_unit_price			"var(log(Unit Price - filter))"
+	
 	* Outcome list	
-	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim ///
-		   unit_price log_volume_item D_same_munic_win D_same_state_win ///
-		   log_unit_price_filter  unit_price_filter  ///
-		   N_SME_participants months_since_last_win
+	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim 	///
+		   unit_price log_volume_item D_same_munic_win D_same_state_win 						///
+		   log_unit_price_filter  unit_price_filter  											///
+		   N_SME_participants months_since_last_win D_auction HHI_5d sd_log_unit_price
+		   
+		
+	 global outcome	   HHI_5d
 
 	compress
 	save "${path_project}/1_data/03-final/05-Regession_data-sample", replace
 }
 .
 
-* 02: TWFE item level (DiD)
+* 02: Plotting average graph trend
+{
+ 	use "${path_project}/1_data/03-final/05-Regession_data-sample", clear
+	
+	gcollapse (mean) ${outcome}, by(year_semester Covid_item_level) labelformat(#sourcelabel#) fast freq(n)
+
+	global High_covid_scatter_opt	connect(l) sort mcolor("98 190 121")   lcolor("98 190 121")  lp(solid)
+	global No_covid_scatter_opt 	connect(l) sort mcolor("233 149 144")  lcolor("233 149 144") lp(dash)
+
+
+	* graphs configuration
+	global opt_semester xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  /*
+		*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
+		*/ ytitle("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
+		
+	* Covid shadow
+	global covid_shadow_semmester /*
+	*/	xline(`=yh(2020,2)' , lwidth(4.5)  lc(gs14))  /* 
+	*/	xline(`=yh(2021,2)' , lwidth(9)    lc(gs14))    /*
+	*/	xline(`=yh(2022,1)' , lwidth(2.25) lc(gs14)) /*
+	*/	xline(`=yh(2022,2)' , lwidth(4.5)  lc(gs14)) 	
+
+	* Title
+	foreach y_dep of varlist $outcome { 
+		* local y_dep N_participants
+		local label_y: var label `y_dep'	
+		
+		tw 		(scatter `y_dep'  year_semester if Covid_item_level == 3 , ${High_covid_scatter_opt}		) /// 
+			|| 	(scatter `y_dep'  year_semester if Covid_item_level == 0 , ${No_covid_scatter_opt} 		) ///
+			,  legend(order( 1 "High Covid" 2 "No Covid")  col(2))   	  ///
+			note("Data limited to Regression sample") title("E[`label_y']", size(medium)) ///
+			${covid_shadow_semmester} ${opt_semester} 
+		sleep 2000
+		graph export "${path_project}/4_outputs/3-Figures/P5-avg_graph_`y_dep'.pdf", replace as(pdf)
+	}
+	.
+}
+.
+
+* 03: TWFE item level (DiD)
 {
 	* Sampling data
 	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
@@ -202,7 +268,7 @@
 }
 .
  
-* 03: TWFE
+* 04: TWFE
 {
 	* Sampling data
 	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
@@ -251,7 +317,7 @@
 		.
 
 		* exporting
-		esttab using "${overleaf}/01_tables/P5-TWFE-`dep_var'.tex", replace f booktabs se(3) b(3) star(* 0.10 ** 0.05 *** 0.01) nomtitles ///
+		esttab using "${path_project}/4_outputs/2-Tables/P5-TWFE-`dep_var'.tex", replace f booktabs se(3) b(3) star(* 0.10 ** 0.05 *** 0.01) nomtitles ///
 			   coeflabels(D_tread_post "`dep_var'")   keep(D_tread_post) ///
 				   sfmt(%12.0fc %9.3fc %9.3fc ) ///
 			   scalars("N Observations" "r2 R-Squared" "mean Dep. Var. mean "  "item_fe Item FE?" "ym_fe ym FE?" "month_fe month FE?"  "buyer_fe Buyer FE?" "seller_fe Seller FE?") ///
@@ -262,7 +328,7 @@
 }
 .
 
-* 04: TWFE + time interaction
+* 05: TWFE + time interaction
 {
 	* Sampling data
 	use "${path_project}/1_data/03-final/05-Regession_data-sample",clear
@@ -312,7 +378,7 @@
 			graphregion(color(white)) xsize(10) ysize(5)  xline(9.5 ,  lc(gs8) lp(dash)) note("Reference-Y2015s01") ///
 			title("`title_coef'")
 			
-			graph export "${overleaf}/02_figures/P05-TWFE-time-`dep_var'-FE`k'.png",replace as(png)
+			graph export "${path_project}/4_outputs/2-Tables/P05-TWFE-time-`dep_var'-FE`k'.png",replace as(png)
  		}
 		. 
  	}

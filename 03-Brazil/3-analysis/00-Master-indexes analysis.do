@@ -90,4 +90,36 @@ timer list
 	* It is possible to have multiples items for registro de precos, but it is very rare. 
 	* For this study it is only make harder merge operation
 	
+	* Read before come back to project
+	Index =>> sample
+
+"Decision time"
+
+INclude N participants
+
+Table 2 
+Table 3 
+
+Keep the bad results
+
+Meeting with Chile goverment
+
+To include
+Dummy - "Open method"
+
+I can include my opnion*
+
+Check if I have more. 
+
+
+Put in the dashboard a board introduction with the big picture.
+
+Dashboard with all
+
+01-Dashboards - all we tried 
+02-Report Firms ( review the graphs label) - Review
+03-Big excel table
+
+	
+	
 }

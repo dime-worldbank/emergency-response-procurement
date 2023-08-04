@@ -1,18 +1,34 @@
 * Made by Leandro Veloso
 * Main: Historic to copy and paste the relevant outputs
  
- global overleaf	 "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
- global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-dashboard"
+global overleaf	 "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-Brazil"
+global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-dashboard"
  
 * From: 01-Indicators_overview_table.do
 {
 	* Line 96
-	copy 	"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex" ///
-			"${overleaf}/01_tables/P1-All_indicators.tex",replace
-			
-			
+	{
+		copy 	"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex" ///
+				"${overleaf}/01_tables/P1-All_indicators.tex",replace
+				
+		copy 	"${path_project}/4_outputs/2-Tables/P1-All_indicators.tex" ///
+				"${overleafdash}/02-table/01-table/P1-All_indicators.tex",replace	
+	}
+	
 	copy "${path_project}/4_outputs/2-Tables/P1-All_indicators-selected.tex"	///
 		 "${overleaf}/01_tables/P1-All_indicators-selected.tex",replace
+		 
+	
+	* Line 96
+	{
+		copy 	"${path_project}/4_outputs/2-Tables/P1-Firms_starts_covid.tex" ///
+				"${overleaf}/01_tables/P1-Firms_starts_covid.tex" ,replace
+				
+		copy 	"${path_project}/4_outputs/2-Tables/P1-Firms_starts_covid.tex" ///
+				"${overleafdash}/02-table/01-table/P1-Firms_starts_covid.tex" ,replace	
+	}
+		 
+		 
 			
 	
 }
@@ -85,6 +101,10 @@
 	foreach k in 0 1 2 3 { 
 		copy 	"${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf" ///
 				"${overleaf}/02_figures/P4-graph_bar-level_covid-`k'.pdf",replace
+				
+		copy 	"${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf" ///
+				"${overleafdash}/01-figures/03-graph_avg/P4-graph_bar-level_covid-`k'.pdf",replace
+				
 	}
 	.
 	
@@ -93,6 +113,11 @@
 		copy 	"${path_project}/4_outputs/3-Figures/P4-scatter_pre_post-`words'.pdf" ///
 				"${overleaf}/02_figures/P4-scatter_pre_post-`words'.pdf",replace
 				
+				
+		copy 	"${path_project}/4_outputs/3-Figures/P4-scatter_pre_post-`words'.pdf" ///
+				"${overleafdash}/01-figures/03-graph_avg/P4-scatter_pre_post-`words'.pdf" ,replace
+	
+				
  	}
 	. 
 }
@@ -100,6 +125,21 @@
 
 * From: 05-impact evaluation
 {
+	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim 	///
+		   unit_price log_volume_item D_same_munic_win D_same_state_win 						///
+		   log_unit_price_filter  unit_price_filter  											///
+		   N_SME_participants months_since_last_win D_auction HHI_5d sd_log_unit_price
+		   
+	* Copy first 
+	foreach outcome in $outcome  {
+		copy "${path_project}/4_outputs/3-Figures/P5-avg_graph_`outcome'.pdf" ///
+			 "${overleaf}/02_figures/P5-avg_graph_`outcome'.pdf", replace
+			 
+		copy "${path_project}/4_outputs/3-Figures/P5-avg_graph_`outcome'.pdf" ///
+			 "${overleafdash}/01-figures/03-graph_avg/P5-avg_graph_`outcome'.pdf", replace
+	}
+	.		    
+	
 	* Copy first 
 	foreach outcome in $outcome  {
 		copy "${path_project}/4_outputs/3-Figures/P5-TWFE-`outcome'.pdf" ///
@@ -142,7 +182,7 @@
 	
 	 
 	* Variables Create D_exist 
-	global main_Vars  F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
+	global main_Vars D_firm_exist_2021 F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
 	* global main_Vars rais_N_workers 	
 	
 	local filter "all"
@@ -156,3 +196,8 @@
 }
 .
 
+* 
+
+	copy 	"${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-item.png" ///
+			"${overleafdash}/01-figures/03-graph_avg/05-Covid_group_estimation-item.png",replace
+	
