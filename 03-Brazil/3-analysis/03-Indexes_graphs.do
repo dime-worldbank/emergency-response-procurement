@@ -19,12 +19,12 @@
 	 */ xline(`=yq(2020,1) - 0.5' , lc(gs9) 		lp(dash))  
 }
 .
-
+ 
 * 1: Competition Covid tenders - Restricting to autions
 {
 	* 1: Semester covid level
 	{
-		use "${path_project}/1_data/01-index_data/P07-semester-covid-level-index.dta",clear	
+		use "${path_project}/1_data/04-index_data/P07-semester-covid-level-index.dta",clear	
 		
 		keep if year_semester >= `=yh(2015,1)'
 		
@@ -34,7 +34,7 @@
 		* graphs configuration
 		global opt_semester xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  /*
 				*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
-				*/ title("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
+				*/ ytitle("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
 				
 		* Covid shadow
 		global covid_shadow_semmester /*
@@ -58,26 +58,29 @@
 			if regex("`var'","S2_") label note_scatter "Sample 2: limited to purchases through reverse auction"
 			if regex("`var'","S3_") label note_scatter "Sample 3: limited to materials"
 			if regex("`var'","S4_") label note_scatter "Sample 4: limited to materials purchased solely through auction."
-
-			* Plotting
+			
+			* Title
+			local label_y: var label `y_dep'
+			
+ 			* Plotting
 			tw 		(scatter `y_dep'  year_semester if ${group_covid} == 3 , ${High_covid_scatter_opt}		) ///
 				|| 	(scatter `y_dep'  year_semester if ${group_covid} == 2 , ${Medium_covid_scatter_opt} 	) ///
 				||	(scatter `y_dep'  year_semester if ${group_covid} == 1 , ${Low_covid_scatter_opt} 		) ///
 				|| 	(scatter `y_dep'  year_semester if ${group_covid} == 0 , ${No_covid_scatter_opt} 		) ///
 				,  legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4))   	  ///
-				note("`note_scatter'") ///
+				note("`note_scatter'") title("`label_y'", size(medium)) ///
 				${covid_shadow_semmester} ${opt_semester} 
-		
+		sleep 2000
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
 	
 	* 2: Year covid level
 	{
-		use "${path_project}/1_data/01-index_data/P07-year-covid-level-index.dta",clear	
+		use "${path_project}/1_data/04-index_data/P07-year-covid-level-index.dta",clear	
 		
 		keep if year >= 2015
 		
@@ -94,7 +97,7 @@
 		global group_covid "Covid_item_level" 
 		
 		foreach y_dep of varlist HHI_5d shannon_entropy_5d {
-			* Preparing data
+			* Preparing data 
 			if regex("`var'","S1_") | inlist("`var'", "N_lots", "N_batches", "N_ug", "HHI_5d", "shannon_entropy_5d") {
 				label note_scatter "Sample 1: unrestricted sample"
 			}
@@ -113,7 +116,7 @@
 			 	
 			* exporing
 			compress
-			graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 		}
 	}
 	.
@@ -122,8 +125,8 @@
 
 * 02: Graph trend stand
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
-	keep if inrange(year_quarter,yq(2015,1),yq(2021,4))
+	use "${path_project}/1_data/03-final/05-Lot_item_data", clear
+	keep if inrange(year_quarter,yq(2015,1),yq(2022,4))
 	
 	* Covid items
 	keep if type_item	== 1
@@ -155,8 +158,8 @@
 	
 	* Graph All class 
 	foreach y_dep of varlist  std_price std_log_price {
-		
- 		* Plotting
+
+		* Plotting
 		tw 		(scatter `y_dep'  year_semester if ${group_covid} == 3 , ${High_covid_scatter_opt}		) ///
 			|| 	(scatter `y_dep'  year_semester if ${group_covid} == 2 , ${Medium_covid_scatter_opt} 	) ///
 			||	(scatter `y_dep'  year_semester if ${group_covid} == 1 , ${Low_covid_scatter_opt} 		) ///
@@ -167,7 +170,7 @@
 			
 		* exporing
 		compress
-		graph export "${overleaf}/02_figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+		graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
 	}
 	.
 }

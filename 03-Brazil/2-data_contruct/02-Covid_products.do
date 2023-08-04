@@ -3,17 +3,28 @@
  
 * 1: data preparation
 {	
-	use "${path_KCP_BR}/1-data\2-imported\Portal-02-item-code",clear
-
-	merge 1:1 id_item using "${path_KCP_BR}/1-data\2-imported\Portal-02-item-panel", keepusing(id_item value_item year_month)  keep(3) nogen
-
-	gen id_bidding = substr(id_item ,1,17)
-
-	merge m:1 id_bidding using "${path_project}/1_data/01-tender_data", ///
-	 keepusing(id_bidding D_covid )  keep(3) nogen
-	 
+    * Reading data
+	use    "${path_project}/1_data/01-import-data/Portal-02-item-panel.dta",clear
+	
 	* Restring to the pandemic period 
-	keep if year_month >=`=ym(2020,1)'
+	rename year_month aux
+	gen year_month = ym(real(substr(aux,1,4)), real(substr(aux,5,2)))
+		format %tm year_month
+	drop aux	
+	
+	* Filtering relevant information
+		keep if year_month >=`=ym(2020,1)'
+	
+	* Getting covid tag from data from program 01
+	merge m:1 tender_id using "${path_project}/1_data/03-final/01-tender_data", ///
+	 keepusing(tender_id D_covid )  keep(3) nogen
+	 
+	* getting item information
+	merge m:1 type_item item_5d_code  using "${path_project}/1_data/01-import-data/Extra-01-catalog-federal-procurement", ///
+		keepusing(type_item item_5d_* item_4d_* item_2d_* ) keep(1 3) 
+	
+	* Dropping extra data
+	cap drop item_5d_code_aux
 		 
 	* Products
 	* keep if type_item=="prod"		
@@ -24,30 +35,30 @@
 	gegen covid_item = max(D_covid) , by(item_5d_code type_item)
   
     * Keeping relevant variables 
-	keep D_covid covid_item type_item item_5d_* item_4d_* item_2d_* value_item
+	keep D_covid covid_item type_item item_5d_* item_4d_* item_2d_* item_value
 	
+	* Saving auxiliar data
 	compress
-	save  "${path_project}/4_outputs/1-data_temp/covid_product_temp",replace
+	save  "${path_project}/4_outputs/1-data_temp/P02-covid_product_temp",replace
 }
 .
 	
 * 2: Group products:	
 {
 	* reading item/tender data sample
-	use  "${path_project}/4_outputs/1-data_temp/covid_product_temp", clear
+	use  "${path_project}/4_outputs/1-data_temp/P02-covid_product_temp", clear
 	
 	* Collapsing the measures
 	cap drop total_covid
 	
-	gen total_covid = value_item if D_covid==1
+	gen total_covid = item_value if D_covid==1
 	gen N_covid_purchases = D_covid==1
-	gcollapse (sum) total = value_item total_covid  N_covid_purchases ///
-	(first) item_2d_name, by(type_item item_2d_code) freq(N_purchases)
+	gcollapse (sum) total = item_value total_covid  N_covid_purchases ///
+	    , by(type_item item_2d_code item_2d_name) freq(N_purchases)
 	
   	* Ordering
 	compress
 	order item_2d_code item_2d_name
-	format %50.0g item_2d_name
 
 	* Keeping:
 	gen rate_covid = total_covid/ total
@@ -79,21 +90,20 @@
 	
 	* Final Criteria
 	twoway  /// 
-	(function y= 0  						,range(0            25) recast(area)  color("233 149 144")  base(10) )  ///
+	(function y= 0  						,range(0            25) recast(area)  color("233 149 144") base(10) )  ///
 	(function y= 1/(x+ log( 2e6))+log( 250) ,range(`=log( 2e6)' 25) recast(area)  color("104 172 32")  base(10) )  ///
 	(function y= 1/(x+ log( 6e6))+log( 400) ,range(`=log(6e6)'  25) recast(area)  color("180 182 26")  base(10) )  ///
-	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)'  25) recast(area)  color("98 190 121")  base(10) )   ///
+	(function y= 1/(x+ log( 2e7))+log(1000) ,range(`=log(2e7)'  25) recast(area)  color("98 190 121")  base(10) )  ///
  	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==3, m(c)  mc( gs7) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
-	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
 	 ytitle("The proportion of covid lots on covid tender")
 	 	
-	graph export "${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-region.png", replace as(png)
-	
- 
+	graph export "${path_project}/4_outputs/3-Figures/02-Covid_group_estimation-region.png", replace as(png)
+	 
 	* K-means
 	* Final Criteria
 	twoway  /// 
@@ -105,7 +115,7 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==2, m(X)  mc( gs4) ) ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==1, m(x)  mc( gs2)   msize(small))  ///
 	(scatter log_covid_purchase log_covid_value  if Covid_group_level   ==0, m(x)  mc( pink)   msize(tiny)) ///
-	, legend(order( 1 "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(2)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///
 	 ytitle("The proportion of covid lots on covid tender")
 	
@@ -132,30 +142,29 @@
 		N_covid_purchases  total total_covid rate_covid_purchase rate_covid  D_covid_tag
 
 	* saving table
-	save "${path_project}/1_data/03-covid_items-group_level",replace
+	save "${path_project}/1_data\03-final/02-covid_items-group_level",replace
 }
 .	
  
 * 3: Class products:	
 {
 	* reading item/tender data sample
-	use  "${path_project}/4_outputs/1-data_temp/covid_product_temp", clear
+	use  "${path_project}/4_outputs/1-data_temp/P02-covid_product_temp", clear
 	
 	* Collapsing the measures
 	cap drop total_covid	
 	
-	gen total_covid = value_item if D_covid==1
+	gen total_covid = item_value if D_covid==1
 	gen N_covid_purchases = D_covid==1
-	gcollapse (sum) total = value_item total_covid  N_covid_purchases ///
-	(first) item_4d_name item_2d_code, by(type_item item_4d_code ) freq(N_purchases)
+	gcollapse (sum) total = item_value total_covid  N_covid_purchases ///
+		, by(type_item item_4d_code item_4d_name item_2d_code ) freq(N_purchases)
 	
 	tostring item_2d_code, replace format(%02.0f)
 	
 	* Ordering
 	compress
 	order item_4d_code item_4d_name
-	format %50.0g item_4d_name
-
+ 
 	* Keeping:
 	gen rate_covid = total_covid/ total
 
@@ -189,22 +198,22 @@
 		N_covid_purchases  total total_covid rate_covid 
 
 	* saving table
-	save "${path_project}/1_data/03-covid_item-class_level",replace
+	save "${path_project}/1_data\03-final/02-covid_item-class_level",replace
 }
 .	
 
 * 4: Covid items: Assign a "covid tag"
 {
 	* reading item/tender data sample
-	use  "${path_project}/4_outputs/1-data_temp/covid_product_temp", clear
+	use  "${path_project}/4_outputs/1-data_temp/P02-covid_product_temp", clear
 	
 	* Collapsing the measures
 	cap drop total_covid
 	
-	gen total_covid = value_item if D_covid==1
+	gen total_covid = item_value if D_covid==1
 	gen N_covid_purchases = D_covid==1
-	gcollapse (sum) total = value_item total_covid  N_covid_purchases ///
-	(first) item_5d_name item_4d_code item_2d_code, by(type_item item_5d_code) freq(N_purchases)
+	gcollapse (sum) total = item_value total_covid  N_covid_purchases ///
+		, by(type_item item_5d_code item_5d_name item_4d_code item_2d_code) freq(N_purchases)
 	
 	tostring item_2d_code, replace format(%02.0f)
 	tostring item_4d_code, replace format(%04.0f)
@@ -212,8 +221,7 @@
 	* Ordering
 	compress
 	order item_5d_code item_5d_name
-	format %50.0g item_5d_name
-
+ 
 	* Keeping:
 	gen rate_covid = total_covid/ total
 	gen rate_covid_purchase = N_covid_purchases/N_purchases 
@@ -234,7 +242,7 @@
 		& N_purchases >=100       // It was purchase at least 100 times in
 
 	destring item_2d_code,replace 
-	merge m:1 type_item item_2d_code using "${path_project}/1_data/03-covid_items-group_level", keepusing(item_2d_code Covid_group_level) nogen
+	merge m:1 type_item item_2d_code using "${path_project}/1_data\03-final/02-covid_items-group_level", keepusing(item_2d_code Covid_group_level) nogen
 	
 	* Covid levels
 	cap drop Covid_item_level
@@ -269,11 +277,11 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==1, m(x)  mc( gs2)    msize(small))  	///
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
 	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
-	, legend(order( 1  "High Covid" 2 "Medium Covid" 3 "low Covid" 4 "No Covid")  col(4)) ///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
 	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
 	 ytitle("The proportion of covid lots on covid tender")   		
 	
-	graph export "${path_project}/4_outputs/3-Figures/05-Covid_group_estimation-item.png", replace as(png)
+	graph export "${path_project}/4_outputs/3-Figures/02-Covid_group_estimation-item.png", replace as(png)
 	
 	* Labeling
 	label var D_covid_tag "Old-dummy if it is a covid item"  
@@ -298,24 +306,25 @@
 	* Keeping
 	keep type_item item_2d_code item_4d_code item_5d_code item_5d_name Covid_group_level Covid_item_level  N_purchases  ///
 		N_covid_purchases  total total_covid rate_covid_purchase rate_covid  D_covid_tag
+	
 	* saving table
-	save "${path_project}/1_data/03-covid_item-item_level",replace
+	save "${path_project}/1_data\03-final/02-covid_item-item_level",replace
 }
 .	
 		
 * 5: Exporting to excel:
 {
-	use "${path_project}/1_data/03-covid_items-group_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("01-group_level-2 digits") ///
+	use "${path_project}/1_data\03-final/02-covid_items-group_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("01-group_level-2 digits") ///
 		replace firstrow(varlabels) 
 	
 	* 1: Item export
-	use "${path_project}/1_data/03-covid_item-item_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("03-item_level-5 digits"  ) ///
+	use "${path_project}/1_data\03-final/02-covid_item-item_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("03-item_level-5 digits"  ) ///
 		sheetreplace firstrow(varlabels) 
 
-	use "${path_project}/1_data/03-covid_item-class_level",clear
-	export excel "${path_project}/4_outputs/2-Tables/01_covid_items-v2.xlsx", sheet("02-class_level-4 digits" ) ///
+	use "${path_project}/1_data\03-final/02-covid_item-class_level",clear
+	export excel "${path_project}/4_outputs/2-Tables/02_covid_items.xlsx", sheet("02-class_level-4 digits" ) ///
 		sheetreplace firstrow(varlabels) 
 }
 .

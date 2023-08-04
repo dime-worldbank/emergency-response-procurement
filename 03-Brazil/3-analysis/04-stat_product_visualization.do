@@ -3,7 +3,7 @@
 
 * 01: Graph bar top products
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
+	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
 	keep if inrange(year_quarter,yq(2018,1),yq(2021,4))
 	
 	* Covid items
@@ -11,22 +11,28 @@
 	keep if D_item_unit_price_sample	== 1
 		
 	* Creating variables to  graph bar
-	gen volume_post = value_item if D_post ==1
-	gen volume_pre = value_item  if D_post ==0
+	gen volume_post = item_value if D_post ==1
+	gen volume_pre  = item_value if D_post ==0
 	
 	* Summing up
 	gcollapse (sum)  volume_pre volume_post , ///
-			  by(  item_5d_code item_5d_name_eng Covid_item_level)    labelformat(#sourcelabel#) 
+			  by(item_5d_code item_5d_name_eng Covid_item_level)    labelformat(#sourcelabel#) 
   
-	* Millions
-	replace volume_pre = volume_pre/1e6
+	* Millions scale
+	replace volume_pre  = volume_pre /1e6
 	replace volume_post = volume_post/1e6
+	
+	
+	sort  Covid_item_level -volume_post
+	by Covid_item_level: keep if _n<=10 
+	
 	
 	* goptions 
 	global graph_opts ///
 		graphregion(color(white) ) /// <- remove la(center) for Stata < 15
 		ylab(,angle(0) nogrid)   ///
 		legend(region(lc(none) fc(none))) xsize(10) ysize(5)
+	 
 	
 	foreach k in 0 1 2 3 { 
 		preserve
@@ -41,17 +47,72 @@
 				 over(item_5d_name_eng, sort(1) descending ) $graph_opts ytitle("Millions reais") plotregion(margin(medlarge)) ///
 				 legend(order(1 "[2020-2021]" 2 "[2018-2019]" )) ///
 				 bar(1, color(dkorange) )  bar(2, color(navy) ) 
-				 
-			graph export  "${overleaf}/02_figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
+				 www
+			graph export  "${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
 
 		restore 
 	}
+	
+	* graph combine graph_0.gph graph_1.gph graph_2.gph graph_3.gph,graphregion(color(white) ) xsize(20) ysize(10)
+}
+.
+
+* 02: Graph bar top products
+{
+	use "${path_project}/1_data\03-final/02-covid_item-item_level",clear
+	
+	gen log_covid_value 	= log(total_covid)
+	gen log_covid_purchase	= log(N_covid_purchases)
+	
+	logit D_covid_tag log_covid_value log_covid_purchase
+	
+	predict pr_covid, pr
+	keep if pr_covid!=.
+	
+	gen cov_est = pr_covid>=0.5
+	
+	tab cov_est D_covid_tag
+	gen correct  =  cov_est==D_covid_tag
+	gen sensibilidade  = cov_est     if D_covid_tag==1
+	gen specificidade  = cov_est==0  if D_covid_tag==0
+	  
+	
+	gen any_covid = Covid_item_level >=1
+ 	  
+	table any_covid 	   , stat(mean correct sensibilidade specificidade) nformat(%5.3f)
+	table Covid_item_level , stat(mean correct sensibilidade specificidade) nformat(%5.3f)
+ 	 
+	* Final Criteria
+	twoway  /// 
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==1, m(x)  mc( gs2)    msize(small))  	///
+	(scatter log_covid_purchase log_covid_value  if D_covid_tag   ==0,       mc( pink)   msize(tiny)) 	///	
+	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
+	, legend(order( 1  "D Covid =1"  2  "D Covid =0")  col(4)) ///
+	graphregion(color(white)) xtitle("Log(Covid Expenses) vs Log(Covid Purchases)") ///		
+	 ytitle("Log(Covid Expenses)")  xtitle("Log(Covid Purchases)")   	///
+	 note("Tenders opened in [2020,2021,2022]")
+	
+ 
+	* Final Criteria
+	twoway  /// 
+	(function y= 0  						,range(0              25) recast(area)  color("233 149 144")  base(9) )  ///
+	(function y= 1/(x+ log( 10000))+log( 5) ,range(`=log( 10000)' 25) recast(area)  color("104 172 32")  base(9) )  ///
+	(function y= 1/(x+ log( 50000))+log(15) ,range(`=log( 50000)' 25) recast(area)  color("180 182 26")  base(9) )  ///
+	(function y= 1/(x+ log(300000))+log(50) ,range(`=log(300000)' 25) recast(area) color("98 190 121")  base(9) )   ///
+ 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==3, m(c)  mc( gs16)    msize(small)) 				///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==2, m(d)  mc( gs8)    msize(small)) 				///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==1, m(x)  mc( gs2)    msize(small))  	///
+	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
+	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
+	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
+	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
+	 ytitle("The proportion of covid lots on covid tender")  	 
 }
 .
 
 * 02: Summarize by period
 {
-	use "${path_project}/1_data/05-Lot_item_data",clear
+	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
 	keep if inrange(year_quarter,yq(2018,1),yq(2021,4))
 	
 	* replace
@@ -59,8 +120,8 @@
 	replace SME			   = . if methods!=1
 
 	* Extra
-	gegen total_volume = sum(value_item)  , by(D_post type_item item_5d_code    )
-	gen share = value_item/total_volume
+	gegen total_volume = sum(item_value)  , by(D_post type_item item_5d_code    )
+	gen share = item_value/total_volume
 	gen shannon_entropy  = -share*ln(share)	
 	gen HHI = share*share	
 	
@@ -74,7 +135,7 @@
 	drop item_5d_name_eng_aux
 	compress
 	
-	gcollapse (sum)  volume = value_item  	HHI				///
+	gcollapse (sum)  volume = item_value  	HHI				///
 			  (mean) avg_n_participants = N_participants 	///
 					 avg_n_win_SME = SME unit_price_filter log_unit_price_filter , 					///
 			  freq(N_lots ) 								///
@@ -166,7 +227,7 @@ foreach words in "avg_n_participants volume" "log_volume avg_n_participants" "lo
 			caption("Number of items upper line = `upper_line'; Number of items lower line = `lower_line'") /// ; limited to x {&isin} (0.01,0.99) {&intersect} y {&isin} (0.01,0.99) } ") 
 			note("Size Marker: `size_aux'")
 	
-		graph export "${overleaf}/02_figures/P4-scatter_pre_post-`words'.pdf", replace as(pdf)		
+		graph export "${path_project}/4_outputs/3-Figures/P4-scatter_pre_post-`words'.pdf", replace as(pdf)		
 	restore
 }
 .

@@ -31,5 +31,15 @@ https://www.gov.br/compras/pt-br/acesso-a-informacao/consulta-detalhada/planilha
   Services are detailed up to 5 digits levels. The materials are classifications that are aggregable by 1, 2, 3, and 4 digits level.
  
 # 3: Programs
-
 The import proccess were made in the KCP project and FA project.=
+
+
+# 4: Outputs
+In this sections the usefull outputs that is not in the overleaf file.
+
+* **01-table_products_covid_level.xlsx**: Table of Covid products levels (code, name, covid level, total expenses)
+
+
+
+
+| "2-Tables/01-table_products_covid_level.xlsx" |
