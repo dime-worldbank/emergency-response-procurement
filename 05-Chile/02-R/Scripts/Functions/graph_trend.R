@@ -3,7 +3,6 @@ graph_trend <- function(
     variable, 
     treatment, 
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -31,7 +30,6 @@ graph_trend <- function(
       geom_point(data = data %>% filter(!!treatment == 2), aes(x = DT_S, y = !!variable), shape = 18, size = 4, color = "#A89F93") +
       geom_line(data = data %>% filter(!!treatment == 2), aes(x = DT_S, y = !!variable), size = 0.7, color = "#A89F93", linetype = 2)  +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -125,7 +123,6 @@ graph_trend <- function(
       geom_line(data = data %>% filter(!!treatment == 1), aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#FF0100") +
       geom_line(data = data %>% filter(!!treatment == 0), aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#18466E", linetype = 2) +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -210,7 +207,6 @@ graph_trend_no_treat <- function(
     data, 
     variable, 
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -229,7 +225,6 @@ graph_trend_no_treat <- function(
       geom_point(data = data, aes(x = as.numeric(DT_Y), y = !!variable), shape = 18, size = 4, color = "#18466E") +
       geom_line(data = data, aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#18466E", linetype = 2) +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -304,7 +299,6 @@ graph_trend_no_treat <- function(
       geom_point(data = data, aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_line(data = data, aes(x = DT_S, y = !!variable), size = 0.7, color = "#FF0100") +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -389,7 +383,6 @@ graph_trend_three_covid <- function(
     data, 
     variable,
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -413,7 +406,6 @@ graph_trend_three_covid <- function(
       geom_line(data = data %>% filter(tender_covid == "ONLY NON COVID"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#18466E", linetype = 2)  +
       geom_line(data = data %>% filter(tender_covid == "MIXED"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#63A15D", linetype = 2)  +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -511,7 +503,6 @@ graph_trend_three_covid <- function(
       geom_line(data = data %>% filter(tender_covid == "ONLY NON COVID"), aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#18466E", linetype = 2) +
       geom_line(data = data %>% filter(tender_covid == "MIXED"), aes(x = as.numeric(DT_Y), y = !!variable), size = 0.7, color = "#63A15D", linetype = 2) +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -598,7 +589,6 @@ graph_trend_three_medical <- function(
     data, 
     variable,
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -619,7 +609,6 @@ graph_trend_three_medical <- function(
       geom_line(data = data %>% filter(tender_medical == "ONLY NON MEDICAL"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#18466E", linetype = 2)  +
       geom_line(data = data %>% filter(tender_medical == "MIXED"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#63A15D", linetype = 2)  +
       labs(title    = title,
-           subtitle = subtitle,
            caption  = caption,
            x = NULL,
            y = NULL) +
@@ -713,7 +702,6 @@ graph_sector <- function(
     data, 
     variable,
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -734,7 +722,6 @@ graph_sector <- function(
     geom_line(data = data %>% filter(tender_medical == "ONLY NON MEDICAL"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#18466E", linetype = 2)  +
     geom_line(data = data %>% filter(tender_medical == "MIXED"), aes(x = DT_S, y = !!variable), size = 0.7, color = "#63A15D", linetype = 2)  +
     labs(title    = title,
-         subtitle = subtitle,
          caption  = caption,
          x = NULL,
          y = NULL) +
