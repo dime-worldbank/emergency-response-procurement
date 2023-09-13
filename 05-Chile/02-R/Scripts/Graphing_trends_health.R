@@ -88,7 +88,6 @@ graph_trend <- function(
     variable, 
     treatment, 
     title, 
-    subtitle, 
     caption,
     limit_lower,
     limit_upper, 
@@ -114,6 +113,7 @@ graph_trend <- function(
     plot <- ggplot() +
       
       ggplot2::annotate("segment", x = 8.5, xend = 8.5, y = limit_lower - limit_lower*0.1, yend = limit_upper, color = "black", alpha = 0.5, size = 1, linetype = 2) +
+      
       geom_point(data = data %>% filter(!!treatment == 1), aes(x = DT_S, y = !!variable), shape = 16, size = 3, color = "#FF0100") +
       geom_line(data = data %>% filter(!!treatment == 1), aes(x = DT_S, y = !!variable), size = 0.7, color = "#FF0100") +
       geom_point(data = data %>% filter(!!treatment == 0), aes(x = DT_S, y = !!variable), shape = 17, size = 3, color = "#18466E") +
@@ -174,7 +174,6 @@ graph_trend <- function(
       
       labs(
         title = title,
-        subtitle = subtitle,
         caption = caption,
         x = "",
         y = ""
@@ -328,14 +327,14 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = n_bidders, 
-  title = "Tender Competiviness",
-  subtitle = "Avg Number of Bidders, per tender",
+  title = "Average number of bidders per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 5,
   interval_limits_y = 1,
-  legend_upper = 4.6,
-  yearly = FALSE
+  legend_upper = 4,
+  yearly = FALSE,
+  adjust_value = 0.2
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/n_bidders_semester_health.png"),
@@ -362,8 +361,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = only_one_bidder, 
-  title = "Tender Competiviness",
-  subtitle = "Share of Tenders with only one Bidder",
+  title = "Share of lots (ItemXLicitacion) with only one bidder",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 70,
@@ -393,8 +391,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = sme_bidders, 
-  title = "SMEs participation",
-  subtitle = "Share of SMEs firms bidding, per tender",
+  title = "Share of bidding firms per lot (ItemXLicitacion) that are SMEs",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 100,
@@ -428,8 +425,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = sme_winners, 
-  title = "SMEs participation",
-  subtitle = "Share of SMEs firms winning, per contract",
+  title = "Share of winning bidders per lot (ItemXLicitacion) that are SMEs",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 100,
@@ -465,8 +461,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = same_region_bidder, 
-  title = "Geography of Tenders",
-  subtitle = "Share of bidding firms from the same region, per tender",
+  title = "Share of winning firms per lot (ItemXLicitacion) that are from the same region",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 100,
@@ -503,8 +498,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = same_municipality_bidder, 
-  title = "Geography of Tenders",
-  subtitle = "Share of bidding firms from the same municipality, per tender",
+  title = "Share of bidding firms per lot (ItemXLicitacion) that are from the same municipality",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 35,
@@ -539,8 +533,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = same_region_winner, 
-  title = "Geography of Tenders",
-  subtitle = "Share of winning firms from the same region, per tender",
+  title = "Share of winning firms per lot (ItemXLicitacion) that are from the same region",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 100,
@@ -550,7 +543,7 @@ plot <- graph_trend(
   yearly = FALSE,
   label_treatment_legend = "Medical",
   label_control_legend = "Non-medical",
-  adjust = 0.3
+  adjust = 0.35
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/region_win_semester_health.png"),
@@ -576,8 +569,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = same_municipality_winner, 
-  title = "Geography of Tenders",
-  subtitle = "Share of winning firms from the same municipality, per tender",
+  title = "Share of winning firms per lot (ItemXLicitacion) that are from the same municipality",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 40,
@@ -663,11 +655,10 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (6 months), per tender",
+  title = "Share of new bidding firms (6 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 12,
+  limit_upper = 15,
   interval_limits_y = 3,
   legend_upper = 4.7,
   percentage = TRUE,
@@ -699,8 +690,7 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (12 months), per tender",
+  title = "Share of new bidding firms (12 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 8,
@@ -725,8 +715,7 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (24 months), per tender",
+  title = "Share of new bidding firms (24 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 7,
@@ -734,7 +723,7 @@ plot <- graph_trend(
   legend_upper = 2.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_health.png"),
@@ -813,8 +802,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (12 months), per tender",
+  title = "Share of new winning firms (12 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 15,
@@ -851,8 +839,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (6 months), per tender",
+  title = "Share of new winning firms (6 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 25,
@@ -882,8 +869,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (24 months), per tender",
+  title = "Share of new winning firms (24 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 10,
@@ -917,8 +903,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = DD_DECISION, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for decision time, per tender",
+  title = "Decision time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 90,
@@ -955,8 +940,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = DD_TOT_PROCESS, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for total process time, per tender",
+  title = "Total processing time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 110,
@@ -988,8 +972,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = DD_SUBMISSION, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for submission time, per tender",
+  title = "Submission time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 20,
@@ -1017,8 +1000,7 @@ plot <- graph_trend(
   data = n_bidders_s_medicine, 
   treatment = MED_DUMMY,
   variable = DD_AWARD_CONTRACT, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days between award and contract, per tender",
+  title = "Awarding time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 90,
@@ -1074,9 +1056,8 @@ plot <- graph_trend(
   data = data_po_collapse, 
   variable = CAT_DIRECT_N, 
   treatment = MED_DUMMY, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (number of contracts)",
-  caption = "Source: Chile Compra",
+  title = "Share of number of contracts (órdenes de compra) contracted through direct",
+  caption = "Source: Chile Compra", 
   limit_lower = 0,
   limit_upper = 80,
   interval_limits_y = 10,
@@ -1098,12 +1079,11 @@ plot <- graph_trend(
   data = data_po_collapse, 
   variable = CAT_DIRECT_VAL, 
   treatment = MED_DUMMY, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (value of contracts)",
+  title = "Share of volume of contracts (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 20,
-  interval_limits_y = 2,
+  limit_upper = 25,
+  interval_limits_y = 5,
   legend_upper = 28,
   percentage = TRUE,
   yearly = FALSE,
@@ -1177,8 +1157,7 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (6 months), per tender",
+  title = "Share of bidders that are bidding for the first time in the last 6 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 45,
@@ -1186,7 +1165,7 @@ plot <- graph_trend(
   legend_upper = 3.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_6_semester_health_2.png"),
@@ -1206,8 +1185,7 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (12 months), per tender",
+  title = "Share of bidders that are bidding for the first time in the last 12 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 40,
@@ -1215,7 +1193,7 @@ plot <- graph_trend(
   legend_upper = 2.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_12_semester_health_2.png"),
@@ -1236,8 +1214,7 @@ plot <- graph_trend(
   data = last_bid_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_bidder_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (24 months), per tender",
+  title = "Share of bidders that are bidding for the first time in the last 24 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 35,
@@ -1245,7 +1222,7 @@ plot <- graph_trend(
   legend_upper = 1.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_bid_24_semester_health_2.png"),
@@ -1323,8 +1300,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (12 months), per tender",
+  title = "Share of firms winning for the first time in the last 12 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 50,
@@ -1332,7 +1308,7 @@ plot <- graph_trend(
   legend_upper = 24.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_12_semester_health_2.png"),
@@ -1356,8 +1332,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (6 months), per tender",
+  title = "Share of firms winning for the first time in the last 6 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 55,
@@ -1365,7 +1340,7 @@ plot <- graph_trend(
   legend_upper = 29.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_6_semester_health_2.png"),
@@ -1385,8 +1360,7 @@ plot <- graph_trend(
   data = last_win_s_medicine, 
   treatment = MED_DUMMY,
   variable = new_winner_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (24 months), per tender",
+  title = "Share of firms winning for the first time in the last 24 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 40,
@@ -1394,7 +1368,7 @@ plot <- graph_trend(
   legend_upper = 19.7,
   percentage = TRUE,
   yearly = FALSE,
-  adjust = 0.3
+  adjust = 0.5
 )
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/new_win_24_semester_health_2.png"),

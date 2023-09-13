@@ -141,8 +141,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = n_bidders, 
-  title = "Tender Competiviness",
-  subtitle = "Avg Number of Bidders, per tender",
+  title = "Average number of bidders per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 10,
@@ -171,8 +170,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = only_one_bidder, 
-  title = "Tender Competiviness",
-  subtitle = "Share of Tenders with only one Bidder",
+  title = "Share of lots (ItemXLicitacion) with only one bidder",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 45,
@@ -202,8 +200,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = sme_bidders, 
-  title = "SMEs participation",
-  subtitle = "Share of SMEs firms bidding, per tender",
+  title = "Share of bidders per lot (ItemXLicitacion) that are SMEs",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 70,
@@ -234,8 +231,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = sme_winners, 
-  title = "SMEs participation",
-  subtitle = "Share of SMEs firms winning, per contract",
+  title = "Share of winning bidders per lot (ItemXLicitacion) that are SMEs",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 70,
@@ -265,8 +261,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = same_region_bidder, 
-  title = "Geography of Tenders",
-  subtitle = "Share of bidding firms from the same region, per tender",
+  title = "Share of bidding firms per lot (ItemXLicitacion) that are from the same region",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 45,
@@ -299,8 +294,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = same_municipality_bidder, 
-  title = "Geography of Tenders",
-  subtitle = "Share of bidding firms from the same municipality, per tender",
+  title = "Share of bidding firms per lot (ItemXLicitacion) that are from the same municipality",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 5,
@@ -330,13 +324,12 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = same_region_winner, 
-  title = "Geography of Tenders",
-  subtitle = "Share of winning firms from the same region, per tender",
+  title = "Share of winning firms per lot (ItemXLicitacion) that are from the same region",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 65,
-  interval_limits_y = 5,
-  legend_upper = 65,
+  limit_upper = 70,
+  interval_limits_y = 10,
+  legend_upper = 70,
   percentage = TRUE,
   yearly = FALSE,
   label_treatment_legend = "Masks and respirators",
@@ -360,8 +353,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = same_municipality_winner, 
-  title = "Geography of Tenders",
-  subtitle = "Share of winning firms from the same municipality, per tender",
+  title = "Share of winning firms per lot (ItemXLicitacion) that are from the same municipality",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 6,
@@ -438,8 +430,7 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (6 months), per tender",
+  title = "Share of new bidding firms (6 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 3,
@@ -469,8 +460,7 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (12 months), per tender",
+  title = "Share of new bidding firms (12 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 3,
@@ -497,13 +487,12 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms (24 months), per tender",
+  title = "Share of new bidding firms (24 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 2.5,
   interval_limits_y = 0.5,
-  legend_upper = 3,
+  legend_upper = 2.5,
   percentage = TRUE,
   yearly = FALSE,
   label_treatment_legend = "Masks and respirators",
@@ -578,8 +567,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (12 months), per tender",
+  title = "Share of new winning firms (12 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 2,
@@ -608,8 +596,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (6 months), per tender",
+  title = "Share of new winning firms (6 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 4,
@@ -640,8 +627,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms (24 months), per tender",
+  title = "Share of new winning firms (24 months) per lot (ItemXLicitacion)",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 1,
@@ -670,8 +656,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = DD_DECISION, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for decision time, per tender",
+  title = "Decision time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 100,
@@ -699,8 +684,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = DD_TOT_PROCESS, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for total process time, per tender",
+  title = "Total processing time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 120,
@@ -729,8 +713,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = DD_SUBMISSION, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days for submission time, per tender",
+  title = "Submission time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 18,
@@ -760,8 +743,7 @@ plot <- graph_trend(
   data = n_bidders_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = DD_AWARD_CONTRACT, 
-  title = "Tender process duration",
-  subtitle = "Avg number of days between award and contract, per tender",
+  title = "Awarding time",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 95,
@@ -775,114 +757,6 @@ plot <- graph_trend(
 ggsave(
   filename = file.path(dropbox_dir, "Outputs/dd_award_contract_semester_problematic.png"),
   plot = plot                                                 ,
-  width    = 11                                            ,
-  height   = 7                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-n_bidders_sector <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015) %>% 
-  distinct(ID_RUT_FIRM, DT_S, CAT_PROBLEMATIC) %>% 
-  group_by(DT_S, CAT_PROBLEMATIC) %>% 
-  dplyr::summarise(n_bidders_sector = n_distinct(ID_RUT_FIRM))
-
-plot <- graph_trend(
-  data = n_bidders_sector, 
-  treatment = CAT_PROBLEMATIC,
-  variable = n_bidders_sector, 
-  title = "Market Concentration",
-  subtitle = "Total Number of bidders, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 0,
-  limit_upper = 5000,
-  interval_limits_y = 250,
-  legend_upper = 5000,
-  percentage = FALSE,
-  yearly = FALSE,
-  label_treatment_legend = "Masks and respirators",
-  label_control_legend = "Gloves and vests"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_bid_semester_sector.png"),
-  plot = plot                                                ,
-  width    = 11                                            ,
-  height   = 7                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-n_winners_sector <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  distinct(ID_RUT_FIRM, DT_S, CAT_PROBLEMATIC) %>% 
-  group_by(DT_S, CAT_PROBLEMATIC) %>% 
-  dplyr::summarise(n_winner_sector = n_distinct(ID_RUT_FIRM))
-
-plot <- graph_trend(
-  data = n_winners_sector, 
-  treatment = CAT_PROBLEMATIC,
-  variable = n_winner_sector, 
-  title = "Market Concentration",
-  subtitle = "Number of Suppliers, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 0,
-  limit_upper = 3500,
-  interval_limits_y = 250,
-  legend_upper = 3500,
-  percentage = FALSE,
-  yearly = FALSE,
-  label_treatment_legend = "Masks and respirators",
-  label_control_legend = "Gloves and vests"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/n_win_semester_sector.png"),
-  plot = plot                                                ,
-  width    = 11                                            ,
-  height   = 7                                             ,
-  dpi      = 250                                              ,
-  units    = "in"                                             ,
-  device   = 'png'
-)
-
-concentration <- data_offer_sub %>% 
-  
-  filter(DT_Y > 2015 & CAT_OFFER_SELECT == 1) %>% 
-  group_by(ID_RUT_FIRM, DT_S, CAT_PROBLEMATIC) %>% 
-  dplyr::summarise(firm_sum = sum(AMT_VALUE_AWARDED, na.rm = TRUE)) %>% 
-  group_by(DT_S, CAT_PROBLEMATIC) %>% 
-  mutate(tot_sum = sum(firm_sum, na.rm = TRUE)) %>% 
-  ungroup() %>% 
-  mutate(concentration = ((firm_sum/tot_sum)*100)^2) %>% 
-  group_by(DT_S, CAT_PROBLEMATIC) %>% 
-  summarise(concentration = sum(concentration, na.rm = TRUE)) %>% 
-  group_by(CAT_PROBLEMATIC, DT_S) %>% 
-  summarise(concentration = mean(concentration, na.rm = TRUE))
-
-# Yearly - Medicine
-
-plot <- graph_trend(
-  data = concentration, 
-  treatment = CAT_PROBLEMATIC,
-  variable = concentration, 
-  title = "Market Concentration",
-  subtitle = "HERFINDAHL-HIRSCHMAN INDEX, per sector",
-  caption = "Source: Chile Compra",
-  limit_lower = 0,
-  limit_upper = 7000,
-  interval_limits_y = 1000,
-  legend_upper = 7000,
-  percentage = FALSE,
-  yearly = FALSE,
-  label_treatment_legend = "Masks and respirators",
-  label_control_legend = "Gloves and vests"
-)
-ggsave(
-  filename = file.path(dropbox_dir, "Outputs/hhi_semester_medic.png"),
-  plot = plot                                                ,
   width    = 11                                            ,
   height   = 7                                             ,
   dpi      = 250                                              ,
@@ -922,13 +796,12 @@ plot <- graph_trend(
   data = data_po_collapse, 
   variable = CAT_DIRECT_N, 
   treatment = CAT_PROBLEMATIC, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (number of contracts)",
+  title = "Share of number of contracts (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 60,
-  interval_limits_y = 5,
-  legend_upper = 58,
+  limit_upper = 80,
+  interval_limits_y = 10,
+  legend_upper = 85,
   percentage = TRUE,
   yearly = FALSE,
   label_treatment_legend = "Masks and respirators",
@@ -948,13 +821,12 @@ plot <- graph_trend(
   data = data_po_collapse, 
   variable = CAT_DIRECT_VAL, 
   treatment = CAT_PROBLEMATIC, 
-  title = "Direct tenders",
-  subtitle = "Share of direct tender (value of contracts)",
+  title = "Share of volume of contracts (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 40,
-  interval_limits_y = 5,
-  legend_upper = 40,
+  limit_upper = 50,
+  interval_limits_y = 10,
+  legend_upper = 50,
   percentage = TRUE,
   yearly = FALSE
 )
@@ -1023,8 +895,7 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (6 months), per tender",
+  title = "Share of firms bidding for the first time in the last 6 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 25,
@@ -1052,8 +923,7 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (12 months), per tender",
+  title = "Share of firms bidding for the first time in the last 12 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 20,
@@ -1083,8 +953,7 @@ plot <- graph_trend(
   data = last_bid_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_bidder_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new bidding firms to entity (24 months), per tender",
+  title = "Share of firms bidding for the first time in the last 24 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 20,
@@ -1167,8 +1036,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_12, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (12 months), per tender",
+  title = "Share of firms winning for the first time in the last 12 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 40,
@@ -1197,8 +1065,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_6, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (6 months), per tender",
+  title = "Share of firms winning for the first time in the last 6 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 40,
@@ -1229,8 +1096,7 @@ plot <- graph_trend(
   data = last_win_s_problematic, 
   treatment = CAT_PROBLEMATIC,
   variable = new_winner_24, 
-  title = "Firms Participation",
-  subtitle = "Share of new winning firms to entity (24 months), per tender",
+  title = "Share of firms winning for the first time in the last 24 months to a buyer",
   caption = "Source: Chile Compra",
   limit_lower = 0,
   limit_upper = 35,

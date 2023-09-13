@@ -274,10 +274,10 @@
     
   data_offer_sub <- data_offer_sub %>% 
     mutate(
-      DD_TOT_PROCESS    = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"),
-      DD_SUBMISSION     = difftime(DT_OFFER_END, DT_OFFER_START, units = "days"),
-      DD_DECISION       = difftime(DT_ACCEPT_OC, DT_OFFER_END, units = "days"),
-      DD_AWARD_CONTRACT = difftime(DT_ACCEPT_OC, DT_TENDER_AWARD, units = "days")
+      DD_TOT_PROCESS    = difftime(DT_ACCEPT_OC, DT_TENDER_START, units = "days"), # Total processing time
+      DD_SUBMISSION     = difftime(DT_OFFER_END, DT_OFFER_START, units = "days"),  # Submission time
+      DD_DECISION       = difftime(DT_ACCEPT_OC, DT_OFFER_END, units = "days"),    # Decision time
+      DD_AWARD_CONTRACT = difftime(DT_ACCEPT_OC, DT_TENDER_AWARD, units = "days")  # Awarding time
     ) %>% 
     mutate(
       DD_TOT_PROCESS    = ifelse(CAT_OFFER_SELECT == 1, DD_TOT_PROCESS, NA),
