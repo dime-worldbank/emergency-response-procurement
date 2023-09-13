@@ -4,42 +4,24 @@
 * 1- Table- data - preparation
 {
 	* 1: Reshaping the measures
-	{
+	foreach year of numlist 2019/2021 {
 	    global list_vars bidder_id year rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage 
 		
-	    use $list_vars using "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if year== 2021 , clear
+	    use $list_vars using "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if year== `year' , clear
 		drop year
 		
-		gen byte D_exist_2021= 1
+		gen byte D_exist_`year'= 1
 		
 		foreach var of varlist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage {
-		    rename `var'  `var'_2021
+		    rename `var'  `var'_`year'
 		}
 		.
 		
-		save "${path_project}/4_outputs/1-data_temp/Data_temp_2021",replace
+		save "${path_project}/4_outputs/1-data_temp/Data_temp_`year'",replace
 	}
 	.
 	
-	* 2: Reshaping the measures
-	{
-	    global list_vars bidder_id year rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage 
-		
-	    use $list_vars using "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if year== 2020 , clear
-		drop year
-		
-		gen byte D_exist_2020= 1
-		
-		foreach var of varlist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage {
-		    rename `var'  `var'_2020
-		}
-		.
-		
-		save "${path_project}/4_outputs/1-data_temp/Data_temp_2020",replace
-	}
-	.
-	
-	* 3: Calculating bid 
+	* 2: Calculating bid 
 	{ 
 		use  bidder_id   year N_item_part N_item_wins  using "${path_project}/1_data/03-final/03-Firm_procurement_panel" if inlist(year,2018,2019,2020), clear
 		gcollapse (sum)  N_item_part N_item_wins , by(bidder_id)
@@ -71,27 +53,6 @@
 		save "${path_project}/4_outputs/1-data_temp/P06-stat_rais",replace
 	}
 	.
-	
-	* 5: exis
-	{
-   		use  bidder_id   year using "${path_project}/1_data/03-final/03-Firm_procurement_panel" if inlist(year,2017,2018,2019,2020), clear
-		merge m:1 bidder_id using "${path_project}/4_outputs/1-data_temp/P06-temp_sample_table", keep(3) nogen
-		
-		* Getting Dumy if it exist
-		merge m:1 bidder_id using "${path_project}/4_outputs/1-data_temp/Data_temp_2020", keep(1 3) nogen keepusing(bidder_id D_exist_2020)
-		merge m:1 bidder_id using "${path_project}/4_outputs/1-data_temp/Data_temp_2021", keep(1 3) nogen keepusing(bidder_id D_exist_2021)
-		
-		* Replacing missing to zero
-		replace D_exist_2020 =0 if D_exist_2020==.
-		replace D_exist_2021 =0 if D_exist_2021==.
-		
-		gcollapse (mean) propab_exist_2020_= D_exist_2020 propab_exist_2021_=D_exist_2021, by(bid_sample_table year)  
-		
-		reshape wide propab_exist_2020_ propab_exist_2021_  , i(bid_sample_table) j(year)
-		
-		save "${path_project}/4_outputs/1-data_temp/P06-stat_survival",replace
-	}
-	.	
 }
 .
 
@@ -114,12 +75,7 @@
 	label var rais_D_simples_2021  "Percentage of SMEs in 2021"                 
 
 	label var N_bidders            	 "Number of Distinct Establishments in 2018, 2019, and 2020"
-	label var propab_exist_2021_2020 "Survival Rate of 2020 Firms into 2021"
-	label var propab_exist_2021_2019 "Survival Rate of 2019 Firms into 2021"
-	label var propab_exist_2021_2018 "Survival Rate of 2018 Firms into 2021"
-	label var propab_exist_2020_2019 "Survival Rate of 2019 Firms into 2020"
-	label var propab_exist_2020_2018 "Survival Rate of 2018 Firms into 2020"
-	label var propab_exist_2020_2017 "Survival Rate of 2017 Firms into 2020"
+
 		
 		
 	* 4: Exporting to latex
@@ -140,13 +96,7 @@
 		
 		* Block 3 Fims counting 
 			rename N_bidders              blocksurv_1
-			rename propab_exist_2021_2020 blocksurv_2 
-			rename propab_exist_2021_2019 blocksurv_3
-			rename propab_exist_2021_2018 blocksurv_4
-			rename propab_exist_2020_2019 blocksurv_5
-			rename propab_exist_2020_2018 blocksurv_6
-			rename propab_exist_2020_2017 blocksurv_7
- 		
+
 		* Global to separate variables
 		global set_1  block2020* 
 		global set_2  block2021* 	
@@ -204,55 +154,150 @@
 }
 .
 
-* 3- Trends graph
-{  
+* 3- Survival table export existing
+{
+	use  bidder_id   year bid_sample_dinamic D_firm_exi*  using "${path_project}/1_data/03-final/03-Firm_procurement_panel" if inlist(year,2017, 2018,2019,2020), clear
+	
+	* Summarize death probab
+	gcollapse (mean) propab_exist_2019_ = D_firm_exist_2019 ///
+					 propab_exist_2020_ = D_firm_exist_2020 ///
+					 propab_exist_2021_ = D_firm_exist_2021, by(bid_sample_dinamic year)  
+	
+	* Reshapping
+	reshape wide propab_exist_2019_ propab_exist_2020_ propab_exist_2021_  , i(bid_sample_dinamic) j(year)
+
+	* Labeling 
+	label var propab_exist_2021_2020 "Survival Rate of 2020 Firms into 2021"
+	label var propab_exist_2021_2019 "Survival Rate of 2019 Firms into 2021"
+	label var propab_exist_2021_2018 "Survival Rate of 2018 Firms into 2021"
+	label var propab_exist_2020_2019 "Survival Rate of 2019 Firms into 2020"
+	label var propab_exist_2020_2018 "Survival Rate of 2018 Firms into 2020"
+	label var propab_exist_2020_2017 "Survival Rate of 2017 Firms into 2020"
+	label var propab_exist_2019_2017 "Survival Rate of 2017 Firms into 2019"	
+	
+	* Renaming
+	rename propab_exist_2021_2020 blocksurv_2 
+	rename propab_exist_2021_2019 blocksurv_3
+	rename propab_exist_2021_2018 blocksurv_4
+	rename propab_exist_2020_2019 blocksurv_5
+	rename propab_exist_2020_2018 blocksurv_6
+	rename propab_exist_2020_2017 blocksurv_7
+	rename propab_exist_2019_2017 blocksurv_8
+	
+	* Global to separate variables 
+	global set_3  blocksurv*
+	
+	* Ordering variables in the table
+	order bid_sample_dinamic blocksurv*, alphabetic 
+	
+	* part 1 table		
+	{ 
+		eststo drop *
+		eststo main_1: quietly estpost summarize $set_3  if bid_sample_dinamic == 1 ,d
+		eststo main_2: quietly estpost summarize $set_3  if bid_sample_dinamic == 2 ,d
+		eststo main_3: quietly estpost summarize $set_3  if bid_sample_dinamic == 3 ,d
+	
+		esttab main_1 main_2  main_3   using 	///
+			 "${path_project}/4_outputs/2-Tables/P06-firms_procurement-survival.tex", ///
+			cells("mean(fmt(%15.2fc))") mtitles("Winners" "Participants" "Never try") nonum ///
+			label replace f booktabs brackets noobs gap ///
+			starlevels(* 0.1 ** 0.05 *** 0.01) collabels(none)
+	}
+	.
+}	
+.
+
+* 4- Trends graph
+{
+	* Reading data
+	use "${path_project}/1_data/04-index_data/P06_establishment_year-index-all", clear
+	
+	* Keeping
+	keep if year>=2015
+	
+	* Keeping only relevant groups
+	keep if inlist( group, "D_sample_win_covid", "D_sample_win_05", "D_sample_try_01", "D_sample_never_try_01" )
+	
+	* Renaming
+	replace group = "sold covid products"    if group == "D_sample_win_covid"		
+	replace group = "sold no-covid products" if group == "D_sample_win_05"			
+	replace group = "try"					 if group == "D_sample_try_01" 		
+	replace group = "never try-catchment"    if group == "D_sample_never_try_01" 
+
+	* Keeping only relant variables
+	keep if inlist(var_index,"D_firm_exist_2021", /// 
+							 "F1_D_firm_exist"  , /// 
+							 "rais_N_workers"   , /// 
+							 "rais_D_simples"   , /// 
+							 "rais_N_hire"      , /// 
+							 "rais_N_fire"      , /// 
+							 "rais_avg_wage"    , /// 
+							 "log_N_emp"        , /// 
+							 "log_wage" )
+
+	* Labeling it
+	{	
+		replace bar_label = "Proportion of firms that exist in 2021"				if var_index == "D_firm_exist_2021"		
+		
+		replace bar_label = "Proportion of firms that exist in the next year"		if var_index == "F1_D_firm_exist"
+		replace bar_label = "Average number of workers throughout year"             if var_index == "rais_N_workers" 
+		replace bar_label = "Proportion of SME (proxy simples fiscal benefit)"		if var_index == "rais_D_simples"
+		
+		replace bar_label = "Average number of hires"								if var_index == "rais_N_hire"
+		replace bar_label = "Average number of separations"							if var_index == "rais_N_fire"
+		replace bar_label = "Average of salary"						    			if var_index == "rais_avg_wage"           
+		replace bar_label = "Average of Logarithmic of number of workers"		    if var_index == "log_N_emp"  
+		replace bar_label = "Average of Logarithmic of salary"	    				if var_index == "log_wage"   
+	}
+	
+	drop sme	
+	
+	* Exporting to excel
+	export excel "${path_project}/4_outputs/2-Tables/P06-table_trend_stats.xlsx", replace  firstrow(variables)
+	
+	* Temporary data
+	save "${path_project}/4_outputs/1-data_temp/P06-table_trend_stats.dta" ,replace
+	 	
 	* Variables Create D_exist 
 	global main_Vars D_firm_exist_2021 F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
-	* global main_Vars rais_N_workers 	
- 
+	
 	foreach var_box in $main_Vars {
-		
-		local filter "all"
-		use "${path_project}/1_data/04-index_data/P06_establishment_year-index-`filter'", clear
-		keep if year>=2015
-		
-		* local var_box "F1_D_firm_exist"
-		
+		use "${path_project}/4_outputs/1-data_temp/P06-table_trend_stats.dta" , clear
 		keep if inlist(var_index,"`var_box'")
-		
-		replace bar_label = "Proportion of firms that exist in 2021"				if "`var_box'" == "D_firm_exist_2021"		
-		
-		replace bar_label = "Proportion of firms that exist in the next year"		if "`var_box'" == "F1_D_firm_exist"
-		replace bar_label = "Average number of workers throughout year"             if "`var_box'" == "rais_N_workers" 
-		replace bar_label = "Proportion of simples benefit"							if "`var_box'" == "rais_D_simples"
-		
-		replace bar_label = "Average number of hires"								if "`var_box'" == "rais_N_hire"
-		replace bar_label = "Average number of separations"							if "`var_box'" == "rais_N_fire"
-		replace bar_label = "Average of salary"						    			if "`var_box'" == "rais_avg_wage"           
-		replace bar_label = "Average of Logarithmic of number of workers"		    if "`var_box'" == "log_N_emp"  
-		replace bar_label = "Average of Logarithmic of salary"	    				if "`var_box'" == "log_wage"   
-		
-		* scatter
+ 
+ 		* scatter
 		local col_int 0.5
-		tw	   (scatter   avg year 					if group=="D_sample_win_covid"		, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_win_05"			, sort mcolor(orange *`col_int') c(l) lcolor(orange*`col_int')  lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_try_01" 		, sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
-			|| (scatter   avg year 					if group=="D_sample_never_try_01" 	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_covid"		, color(maroon%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_win_05"			, color(orange%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_try_01"	 		, color(navy%10))   											///
-			|| (rarea     CI_hig CI_low year 		if group=="D_sample_never_try_01"   , color(emerald%10))   											///
-			, legend(order(1 "Covid product" 2 "No covid product" 3 "Try" 4 "Never Try-catchment") col(4))    											///
+		tw	   (scatter   avg year if group=="sold covid products"   	, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
+			|| (scatter   avg year if group=="sold no-covid products"	, sort mcolor(orange *`col_int') c(l) lcolor(orange*`col_int')  lp(dash))   ///
+			|| (scatter   avg year if group=="try"					    , sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
+			|| (scatter   avg year if group=="never try-catchment"    	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
+			, legend(order(1 "sold covid products" 2 "sold no-covid products" 3 "try" 4 "never try-catchment") col(4))    											///
 			title("`=bar_label[1]'", size(medium)) ytitle("") xtitle("")  xlabel(2015(1)2021)															///
 			 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid) 
-		graph export  "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'.png", as(png) replace
+		graph export  "${path_project}/4_outputs/3-Figures/P06-all-Covid-avg-`var_box'-no_ci.png", as(png) replace	
+ 
+		* scatter
+		local col_int 0.5
+		tw	   (scatter   avg year 					if group=="sold covid products"   	, sort mcolor(maroon *`col_int') c(l) lcolor(maroon*`col_int')  lp(dash))   ///
+			|| (scatter   avg year 					if group=="sold no-covid products"	, sort mcolor(orange *`col_int') c(l) lcolor(orange*`col_int')  lp(dash))   ///
+			|| (scatter   avg year 					if group=="try"					    , sort mcolor(navy   *`col_int') c(l) lcolor(navy   *`col_int') lp(dash))   ///
+			|| (scatter   avg year 					if group=="never try-catchment"    	, sort mcolor(emerald*`col_int') c(l) lcolor(emerald*`col_int') lp(dash))   ///
+			|| (rarea     CI_hig CI_low year 		if group=="sold covid products"   	, color(maroon%10))   											///
+			|| (rarea     CI_hig CI_low year 		if group=="sold no-covid products"	, color(orange%10))   											///
+			|| (rarea     CI_hig CI_low year 		if group=="try"					    , color(navy%10))   											///
+			|| (rarea     CI_hig CI_low year 		if group=="never try-catchment"    	, color(emerald%10))   											///
+			, legend(order(1 "sold covid products" 2 "sold no-covid products" 3 "Try" 4 "Never Try-catchment") col(4))    											///
+			title("`=bar_label[1]'", size(medium)) ytitle("") xtitle("")  xlabel(2015(1)2021)															///
+			 graphregion(color(white)) xsize(10) ysize(5) ylabel(,angle(0) nogrid) 
+			 
+		graph export  "${path_project}/4_outputs/3-Figures/P06-all-Covid-avg-`var_box'.png", as(png) replace
  		
 	}
 	.	
 }
 .
 
-* 4: Naive regressions
+* 5: Naive regressions
 {  	   
 
 	*global dep_vars  D_firm_exist_next_year F1_rais_avg_wage  F1_rais_N_fire F1_rais_N_hire F1_rais_N_workers

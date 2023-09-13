@@ -34,20 +34,26 @@ global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-d
 }
 .
 
-* From: 02-tender_graphs
+* From: 02-tender_graphs: 
 {
-	
-	* Line 57
-	copy 	"${path_project}/4_outputs/3-Figures/P2-N_tenders-method.png" ///
-			"${overleaf}/02_figures/P2-N_tenders-method.pdf",replace
+	foreach graphs in 	"P2-quarter-N_tenders-method.pdf"				///
+						"P2-quarter-Covid_tender_n_tenders-method.pdf"  ///
+						"P2-quarter-Covid_tender_Volume-method.pdf"     ///
+						"P2-semester-N_tenders-method.pdf"              ///
+						"P2-semester-Covid_tender_n_tenders-method.pdf" ///
+						"P2-semester-Covid_tender_Volume-method.pdf"    ///
+						"P2-quarter-Covid_item-Volume.pdf"              ///
+						"P2-quarter-Covid_item-freq.pdf"                ///
+						"P2-semester-Covid_item-Volume.pdf"             ///
+						"P2-semester-Covid_item-freq.pdf" { 
+							
+	 
+			copy "${path_project}/4_outputs/3-Figures/`graphs'"	 ///
+				 "${overleaf}/02_figures/`graphs'"	 ,replace 
 
-	* Line 66
-	copy 	"${path_project}/4_outputs/3-Figures/P2-Covid_tender_n_tenders-method.pdf" ///
-			"${overleaf}/02_figures/P2-Covid_tender_n_tenders-method.pdf",replace
-
-	* Line 76
-	copy "${path_project}/4_outputs/3-Figures/P2-Covid_tender_Volume-method.pdf"	 ///
-		 "${overleaf}/02_figures/P2-Covid_tender_Volume-method.pdf"	 ,replace
+			copy "${path_project}/4_outputs/3-Figures/`graphs'"	 ///
+				 "${overleafdash}/01-figures/03-graph_avg/`graphs'"	 ,replace 			 
+	}
 }
 .
 
@@ -179,8 +185,10 @@ global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-d
 	* Line 96
 	copy 	"${path_project}/4_outputs/2-Tables/P06-firms_procurement.tex" ///
 			"${overleaf}/01_tables/P06-firms_procurement.tex",replace
+			
+	copy 	"${path_project}/4_outputs/2-Tables/P06-firms_procurement-survival.tex" ///
+			"${overleaf}/01_tables/P06-firms_procurement-survival.tex",replace
 	
-	 
 	* Variables Create D_exist 
 	global main_Vars D_firm_exist_2021 F1_D_firm_exist rais_N_workers rais_D_simples rais_N_hire  rais_N_fire   rais_avg_wage log_N_emp log_wage
 	* global main_Vars rais_N_workers 	
@@ -191,6 +199,11 @@ global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-d
 		di as white "P06-`filter'-Covid-avg-`var_box'.png"
 		copy "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'.png" ///
 			 "${overleaf}/02_figures/P06-`filter'-Covid-avg-`var_box'.png", replace
+			 
+		copy "${path_project}/4_outputs/3-Figures/P06-`filter'-Covid-avg-`var_box'-no_ci.png" ///
+			 "${overleaf}/02_figures/P06-`filter'-Covid-avg-`var_box'-no_ci.png", replace
+			 
+		
 	}	
 	.	
 }
