@@ -1,121 +1,58 @@
-
-# Rut checkin
+#' Check and process the Chilean RUT (Rol Único Tributario)
+#'
+#' @param data A data.table containing the data
+#' @param variable The column name containing the RUT strings to be checked
+#' @param without_dots A logical value indicating whether the RUT strings contain dots or not
+#'
+#' @return A data.table with processed RUT strings
+#' @export
+#' 
+#' @import data.table 
+#' @import stringr 
+#'
+#' @examples
+#' dt <- data.table(id = c("12.345.678-9", "98.765.432-1"))
+#' rut_check(dt, id)
+#' 
 
 rut_check <- function(data, variable, without_dots = FALSE) {
   
-  variable <- enquo(variable)
+  variable <- substitute(variable)  # Replacing enquo
+  data <- as.data.table(data)  # Ensure the data is a data.table
   
-  if(without_dots == TRUE) {
+  if(nchar(id_rut_firm) == 9) {
     
-    # We do a first cleaning
-    data <- data %>% 
-      dplyr::mutate(
-        var = substr(!!variable, 0, nchar(!!variable) - 1) # we remove the digit check
-      ) %>% 
-      dplyr::mutate(
-        var = str_remove_all(var, pattern = SPACE) # remove space
-      ) 
-    
-  } else {
-    
-    # We code one and two digits 
-    one_two_dgt <- or(DGT, DGT %R% DGT)
-    three_dgt   <- DGT %R% DGT %R% DGT
-    
-    # This should be the pattern
-    pattern_rut <- one_two_dgt %R%  "." %R% three_dgt %R% "." %R% three_dgt %R% "-"
-    
-    # We do a first cleaning
-    data <- data %>% 
-      dplyr::mutate(
-        var = substr(!!variable, 0, nchar(!!variable) - 1) # we remove the digit check
-      ) %>% 
-      dplyr::mutate(
-        var = str_remove_all(var, pattern = SPACE) # remove space
-      ) %>% 
-      dplyr::mutate(
-        var = ifelse(str_detect(var, pattern = pattern_rut), var, NA) # remove all variables that do not match the pattern
-      ) 
     
   }
   
-  # Now, we can recompute the check digit 
-  data <- data %>% 
-    mutate(
-      check_digit = gsub('[^[:alnum:] ]','', var) # we keep only the numbers
-    ) %>% 
-    # we seperate each digit in columns 
-    separate(check_digit, into = c('digit_9', 'digit_8', 'digit_7', 'digit_6', 'digit_5', 'digit_4', 'digit_3', 'digit_2', 'digit_1'), sep = seq(1, 9, by = 1), remove = FALSE) %>% 
-    # replace missing digit with a 0 
-    mutate(across(starts_with("digit"), ~ as.numeric(.x))) %>% 
-    mutate(check_digit = as.numeric(check_digit)) %>% 
-    # we compute the formula
-    mutate(
-      digit_1     = case_when(
-        !is.na(digit_1) ~ digit_1 * 2, 
-        is.na(digit_1) ~ digit_1
-      ),
-      digit_2     = case_when(
-        !is.na(digit_1)                   ~ digit_1 * 3, 
-        is.na(digit_1) &  is.na(digit_2) ~     digit_2,
-        is.na(digit_1) & !is.na(digit_2) ~ digit_2 * 2
-      ),
-      digit_3     = case_when(
-        !is.na(digit_1)                                     ~ digit_3 * 4, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~     digit_3,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_3 * 2,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_3 * 3
-      ),
-      digit_4     = case_when(
-        !is.na(digit_1)                                     ~ digit_4 * 5, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_4 * 2,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_4 * 3,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_4 * 4
-      ),
-      digit_5     = case_when(
-        !is.na(digit_1)                                     ~ digit_5 * 6, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_5 * 3,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_5 * 4,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_5 * 5
-      ),
-      digit_6     = case_when(
-        !is.na(digit_1)                                     ~ digit_6 * 7, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_6 * 4,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_6 * 5,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_6 * 6
-      ),
-      digit_7     = case_when(
-        !is.na(digit_1)                                     ~ digit_7 * 2, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_7 * 5,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_7 * 6,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_7 * 7
-      ),
-      digit_8     = case_when(
-        !is.na(digit_1)                                     ~ digit_8 * 3, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_8 * 6,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_8 * 7,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_8 * 2
-      ),
-      digit_9     = case_when(
-        !is.na(digit_1)                                     ~ digit_9 * 4, 
-        is.na(digit_1) &  is.na(digit_2) &  is.na(digit_3) ~ digit_9 * 7,
-        is.na(digit_1) &  is.na(digit_2) & !is.na(digit_3) ~ digit_9 * 2,
-        is.na(digit_1) & !is.na(digit_2)                   ~ digit_9 * 3
-      ),
-      sum         = rowSums(across(c(digit_1, digit_2, digit_3, digit_4, digit_5, digit_6, digit_7, digit_8, digit_9)), na.rm = TRUE),
-      check_digit = (11 - (sum - (11*(trunc(sum/11)))))) %>% 
-    mutate(
-      check_digit = ifelse(check_digit == 11, 0, ifelse(
-        check_digit == 10, "K", check_digit
-      ))
-    ) %>% 
-    mutate(
-      var = paste0(var, check_digit)
-    ) %>% 
-    dplyr::select(
-      -c("check_digit", "sum", starts_with("digit"))
-    ) 
+  if(without_dots == TRUE) {
+    data[, (variable) := str_remove_all(substr(get(variable), 0, nchar(get(variable)) - 1), pattern = "\\s")]
+  } else {
+    one_two_dgt <- "[0-9]{1,2}"
+    three_dgt   <- "[0-9]{3}"
+    pattern_rut <- paste0(one_two_dgt, "\\.", three_dgt, "\\.", three_dgt, "\\-")
+    
+    data[, (variable) := substr(get(variable), 0, nchar(get(variable)) - 1)]
+    data[, (variable) := str_remove_all(get(variable), pattern = "\\s")]
+    data[, (variable) := ifelse(str_detect(get(variable), pattern = pattern_rut), get(variable), NA)]
+  }
+  
+  # Compute check digit
+  data[, check_digit := gsub("[^0-9]", "", get(variable))]
+  digits <- lapply(1:9, function(x) as.numeric(substr(data$check_digit, x, x)))
+  setnames(data, "check_digit", "sum")
+  
+  for (i in 1:9) {
+    set(data, j = paste0("digit_", i), value = digits[[i]])
+  }
+  
+  weights <- c(2, 3, 4, 5, 6, 7, 2, 3, 4)
+  data[, sum := rowSums(mapply(`*`, .SD, weights), na.rm = TRUE), .SDcols = paste0("digit_", 1:9)]
+  data[, check_digit := 11 - (sum - (11 * (sum %/% 11)))]
+  data[, check_digit := fifelse(check_digit == 11, 0, fifelse(check_digit == 10, "K", check_digit))]
+  data[, (variable) := paste0(get(variable), check_digit)]
+  
+  data[, c("sum", paste0("digit_", 1:9)) := NULL]
   
   return(data)
-  
 }
