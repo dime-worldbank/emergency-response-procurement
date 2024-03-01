@@ -933,10 +933,10 @@ data_po <- data_po %>%
 
 data_po_collapse <- data_po[DT_YEAR > 2015, 
                                  list(
-                                   CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
-                                   CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
+                                   CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
+                                   CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
                                  ), 
-                                 by = list(DT_S, ID_PURCHASE_ORDER, COVID_LABEL)]
+                                 by = list(DT_S, id_purchase_order, COVID_LABEL)]
 
 data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)
 
@@ -964,9 +964,9 @@ plot <- graph_trend(
   title = "Share of number of contracts (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra",
   limit_lower = 0,
-  limit_upper = 60,
-  interval_limits_y = 10,
-  legend_upper = 58,
+  limit_upper = 30,
+  interval_limits_y = 5,
+  legend_upper = 28,
   percentage = TRUE,
   yearly = FALSE
 )

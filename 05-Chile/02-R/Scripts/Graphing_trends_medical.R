@@ -285,7 +285,7 @@ graph_trend <- function(
 # Load cleaned tender data
 data_offer_sub <- fread(file.path(fin_data, "data_offer_sub.csv" ), encoding = "Latin-1")
 
-data_po <- fread(file = file.path(fin_data, "purchase_orders.csv"), encoding = "Latin-1") 
+data_po <- fread(file = file.path(fin_data, "dt_pos_reg.csv"), encoding = "Latin-1") 
 data = data_po[DT_YEAR > 2015, 
                list(
                  N_CONTRACTS  = .N,
@@ -1091,10 +1091,10 @@ data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 0,
 
 data_po_collapse <- data_po[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
                             list(
-                              CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
-                              CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
+                              CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
+                              CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
                             ), 
-                            by = list(DT_S, ID_PURCHASE_ORDER, CAT_MEDICAL)]
+                            by = list(DT_S, id_purchase_order, CAT_MEDICAL)]
 
 data_po_collapse <- data_po_collapse %>% 
   group_by(DT_S) %>% 
@@ -1122,9 +1122,9 @@ plot <- graph_trend(
   label_treatment_legend = "Medical",
   label_control_legend = "Non Medical",
   limit_lower = 0,
-  limit_upper = 70,
+  limit_upper = 40,
   interval_limits_y = 10,
-  legend_upper = 65,
+  legend_upper = 35,
   percentage = TRUE,
   yearly = FALSE
 )
@@ -1147,9 +1147,9 @@ plot <- graph_trend(
   label_treatment_legend = "Medical",
   label_control_legend = "Non Medical",
   limit_lower = 0,
-  limit_upper = 30,
-  interval_limits_y = 2,
-  legend_upper = 28,
+  limit_upper = 25,
+  interval_limits_y = 5,
+  legend_upper = 23,
   percentage = TRUE,
   yearly = FALSE
 )
