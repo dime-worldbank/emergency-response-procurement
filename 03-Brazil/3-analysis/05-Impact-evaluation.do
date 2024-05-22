@@ -1,6 +1,19 @@
 * Made by Leandro Veloso
 * Main: Competitions - based on partipants data
  
+* 0 Setting
+{
+	global outcome_selected N_participants SME share_SME log_unit_price_filter D_auction decision_time_trim D_new_winner
+	
+	* Outcome list	
+	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim 	///
+		   unit_price log_volume_item D_same_munic_win D_same_state_win 						///
+		   log_unit_price_filter  unit_price_filter  											///
+		   N_SME_participants months_since_last_win D_auction HHI_5d sd_log_unit_price
+		   
+		 
+}
+ 
 * 01: Data Sample regression
 {
 	use "${path_project}/1_data/03-final/05-Lot_item_data",clear
@@ -66,15 +79,6 @@
 	label var HHI_5d				"HHI item index by year semester"
 	label var D_auction				"Proportion of reverse auction method"
 	label var sd_log_unit_price			"var(log(Unit Price - filter))"
-	
-	* Outcome list	
-	global outcome N_participants  D_new_winner SME share_SME decision_time decision_time_trim 	///
-		   unit_price log_volume_item D_same_munic_win D_same_state_win 						///
-		   log_unit_price_filter  unit_price_filter  											///
-		   N_SME_participants months_since_last_win D_auction HHI_5d sd_log_unit_price
-		   
-		
-	 global outcome	   HHI_5d
 
 	compress
 	save "${path_project}/1_data/03-final/05-Regession_data-sample", replace
@@ -85,16 +89,15 @@
 {
  	use "${path_project}/1_data/03-final/05-Regession_data-sample", clear
 	
-	gcollapse (mean) ${outcome}, by(year_semester Covid_item_level) labelformat(#sourcelabel#) fast freq(n)
+	gcollapse (mean) ${outcome_selected}, by(year_semester Covid_item_level) labelformat(#sourcelabel#) fast freq(n)
 
 	global High_covid_scatter_opt	connect(l) sort mcolor("98 190 121")   lcolor("98 190 121")  lp(solid)
 	global No_covid_scatter_opt 	connect(l) sort mcolor("233 149 144")  lcolor("233 149 144") lp(dash)
 
-
 	* graphs configuration
 	global opt_semester xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  /*
 		*/ graphregion(color(white)) xsize(10) ysize(5) ylabel(, angle(0) nogrid) /*
-		*/ ytitle("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
+		*/  title("")  xline(`=yh(2019,2)+0.5' ,  lc(gs8) lp(dash))
 		
 	* Covid shadow
 	global covid_shadow_semmester /*
@@ -103,18 +106,90 @@
 	*/	xline(`=yh(2022,1)' , lwidth(2.25) lc(gs14)) /*
 	*/	xline(`=yh(2022,2)' , lwidth(4.5)  lc(gs14)) 	
 
+
+	
+	* Open a new file called example.txt for writing, assign handle named myfile
+	cap file close table
+	file open table using "${path_project}/4_outputs/2-Tables/P5-average_numbersTable_model_day.txt", write text replace
+  
 	* Title
-	foreach y_dep of varlist $outcome { 
-		* local y_dep N_participants
-		local label_y: var label `y_dep'	
+	*foreach y_dep of varlist $outcome { 
+		foreach y_dep of varlist $outcome_selected { 
+		
+		* local y_dep decision_time_trim
+		* Adjusting labels
+		if "`y_dep'" =="N_participants"				local title_graph "number of bidders"
+		if "`y_dep'" =="N_SME_participants"			local title_graph "E[Number of Participants SME]" 
+		if "`y_dep'" =="SME"						local title_graph "share of winners that are small/micro firms"
+		if "`y_dep'" =="share_SME"					local title_graph "share of bidders that are small/micro firms"
+		if "`y_dep'" =="D_new_winner"				local title_graph "Dummy if the firm didn't win a lot more than 24 months'"
+		if "`y_dep'" =="log_volume_item"			local title_graph "E[log(volume item)]"
+		if "`y_dep'" =="unit_price"		 			local title_graph "E[Unit Price]"
+		if "`y_dep'" =="unit_price_filter" 			local title_graph "E[Unit Price - filter]"
+		if "`y_dep'" =="log_unit_price_filter" 		local title_graph "unit prices (log)"
+		if "`y_dep'" =="HHI_5d"						local title_graph "E[HHI item index by year semester]"
+		if "`y_dep'" =="D_auction"					local title_graph "Share of tenders using the reverse auction method"
+		if "`y_dep'" =="sd_log_unit_price"			local title_graph "E[var(log(Unit Price - filter))]"	
+		if "`y_dep'" =="decision_time"				local title_graph "time between starts of the process and contract award"	
+		if "`y_dep'" =="decision_time_trim"			local title_graph "time between starts of the process and contract award"	
+	 
+		* local y_dep unit_price_filter
+		file write table "`y_dep': `title_graph' " _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2019,1)
+ 		file write table "	2019h1: `=round(r(mean),0.01)'" _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2019,2)
+		file write table "	2019h2: `=round(r(mean),0.01)'" _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2020,1)
+		file write table "	2020h1: `=round(r(mean),0.01)'" _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2020,2)
+		file write table "	2020h2: `=round(r(mean),0.01)'" _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2021,1)
+		file write table "	2021h1: `=round(r(mean),0.01)'" _n
+		qui sum `y_dep'   if Covid_item_level == 3 & year_semester==yh(2021,2)
+		file write table "	2021h2: `=round(r(mean),0.01)'" _n
 		
 		tw 		(scatter `y_dep'  year_semester if Covid_item_level == 3 , ${High_covid_scatter_opt}		) /// 
 			|| 	(scatter `y_dep'  year_semester if Covid_item_level == 0 , ${No_covid_scatter_opt} 		) ///
-			,  legend(order( 1 "High Covid" 2 "No Covid")  col(2))   	  ///
-			note("Data limited to Regression sample") title("E[`label_y']", size(medium)) ///
+**# Bookmark #1
+			,  legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) )   	  ///
+			ytitle("`title_graph'", size(small)) ///
 			${covid_shadow_semmester} ${opt_semester} 
-		sleep 2000
-		graph export "${path_project}/4_outputs/3-Figures/P5-avg_graph_`y_dep'.pdf", replace as(pdf)
+		* sleep 2000
+		
+		graph export "${path_project}/4_outputs/3-Figures/P5-avg_graph_`y_dep'.png", replace as(png)
+	}
+	.
+	cap file close table
+	
+	{ 
+		cap drop n
+		
+		foreach y_dep of varlist $outcome_selected {
+			rename `y_dep' avg`y_dep'
+		}
+		
+		reshape long avg, i(year_semester	Covid_item_level) j(variables) s
+		
+			
+		gen label	= ""	
+		replace label = "number of bidders"													if variables =="N_participants"			
+		replace label = "E[Number of Participants SME]"                                     if variables =="N_SME_participants"		
+		replace label = "share of winners that are small/micro firms"                       if variables =="SME"					
+		replace label = "share of bidders that are small/micro firms"                       if variables =="share_SME"				
+		replace label = "Dummy if the firm didn't win a lot more than 24 months'"           if variables =="D_new_winner"			
+		replace label = "E[log(volume item)]"                                               if variables =="log_volume_item"		
+		replace label = "E[Unit Price]"                                                     if variables =="unit_price"		 		
+		replace label = "E[Unit Price - filter]"                                            if variables =="unit_price_filter" 		
+		replace label = "unit prices (log)"                                                 if variables =="log_unit_price_filter" 	
+		replace label = "E[HHI item index by year semester]"                                if variables =="HHI_5d"					
+		replace label = "Share of tenders using the reverse auction method"                 if variables =="D_auction"				
+		replace label = "E[var(log(Unit Price - filter))]"	                                if variables =="sd_log_unit_price"		
+		replace label = "time between starts of the process and contract award"	            if variables =="decision_time"			
+		replace label = "time between starts of the process and contract award"	            if variables =="decision_time_trim"		
+		
+		order Covid_item_level 	variables label year_semester var
+		sort variables  year_semester Covid_item_level
+
 	}
 	.
 }
@@ -354,7 +429,7 @@
 	*  	graphregion(color(white)) xsize(10) ysize(5)  xline(9.5 ,  lc(gs8) lp(dash)) note("Reference-Y2015s01")
 		
 	* 3: Regressions on wage 
-	foreach dep_var in $outcome  {   	
+	foreach dep_var in $outcome_selected  {   	
 				
 		* Set of variables left hand side of regression
 		global FE1 "${list_iter}  items_treat   ,  vce(robust) absorb(id_item_aux year_semester)"
@@ -365,19 +440,31 @@
 		
 		* Running regressions in a loop
 		eststo drop *
-		foreach k in 1 2 3 4 5 {
+		foreach k in  3 { // 1 2 3 4 5 {
 			
 			* regression according X1, X2,... global
  			reghdfe `dep_var' ${FE`k'}			
 			
-			* Title
-			local title_coef: var label `dep_var'
+			* Title 
+			if "`dep_var'" =="N_participants"				local title_graph "number of bidders"
+			if "`dep_var'" =="N_SME_participants"			local title_graph "E[Number of Participants SME]" 
+			if "`dep_var'" =="SME"							local title_graph "share of winners that are small/micro firms"
+			if "`dep_var'" =="share_SME"					local title_graph "share of bidders that are small/micro firms"
+			if "`dep_var'" =="D_new_winner"					local title_graph "Dummy if the firm didn't win a lot more than 24 months'"
+			if "`dep_var'" =="log_volume_item"				local title_graph "E[log(volume item)]"
+			if "`dep_var'" =="unit_price"		 			local title_graph "E[Unit Price]"
+			if "`dep_var'" =="unit_price_filter" 			local title_graph "E[Unit Price - filter]"
+			if "`dep_var'" =="log_unit_price_filter" 		local title_graph "unit prices (log)"
+			if "`dep_var'" =="HHI_5d"						local title_graph "E[HHI item index by year semester]"
+			if "`dep_var'" =="D_auction"					local title_graph "Share of tenders using the reverse auction method"
+			if "`dep_var'" =="sd_log_unit_price"			local title_graph "E[var(log(Unit Price - filter))]"	
+			if "`dep_var'" =="decision_time"				local title_graph "time between starts of the process and contract award"						
 			
 			* Coeficient graph					
 			coefplot, levels(95) keep( ${list_iter}) vertical  xlabel(,angle(90)) yline(0)  ///
 			graphregion(color(white)) xsize(10) ysize(5)  xline(9.5 ,  lc(gs8) lp(dash)) note("Reference-Y2015s01") ///
-			title("`title_coef'")
-			
+			ytitle("`title_graph'", size(small)) title("")
+			 
 			graph export "${path_project}/4_outputs/2-Tables/P05-TWFE-time-`dep_var'-FE`k'.png",replace as(png)
  		}
 		. 

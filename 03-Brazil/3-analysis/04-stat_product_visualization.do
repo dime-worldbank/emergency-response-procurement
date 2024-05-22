@@ -8,7 +8,14 @@
 	
 	* Covid items
 	keep if type_item	== 1
-	keep if D_item_unit_price_sample	== 1
+	keep if D_item_unit_price_sample	== 1 | ///
+		inlist(item_5d_code ///
+				, "00433" /// surgical mask 
+				, "18189" /// ethyl alcohol 
+				, "00406" /// hospital apron 
+				, "13831" /// swab 
+				, "14569" /// individual protection goggles
+				)	
 		
 	* Creating variables to  graph bar
 	gen volume_post = item_value if D_post ==1
@@ -23,8 +30,8 @@
 	replace volume_post = volume_post/1e6
 	
 	
-	sort  Covid_item_level -volume_post
-	by Covid_item_level: keep if _n<=10 
+	gsort  Covid_item_level -volume_post
+	by Covid_item_level: keep if _n<=20
 	
 	
 	* goptions 
@@ -37,17 +44,17 @@
 	foreach k in 0 1 2 3 { 
 		preserve
 			
-			keep if Covid_item_level== `k'
+			keep if Covid_item_level==3
 			
 			gsort -volume_post 
-			keep if _n<=10
+			keep if _n<=20
 			
 			* Graph bar
 			graph hbar (sum)  volume_post volume_pre , blabel(bar , format(%15.0fc))    ///
 				 over(item_5d_name_eng, sort(1) descending ) $graph_opts ytitle("Millions reais") plotregion(margin(medlarge)) ///
 				 legend(order(1 "[2020-2021]" 2 "[2018-2019]" )) ///
 				 bar(1, color(dkorange) )  bar(2, color(navy) ) 
-				 www
+				  
 			graph export  "${path_project}/4_outputs/3-Figures/P4-graph_bar-level_covid-`k'.pdf", as(pdf) replace
 
 		restore 
@@ -105,8 +112,11 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
 	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
 	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
-	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
-	 ytitle("The proportion of covid lots on covid tender")  	 
+	graphregion(color(white))  xtitle("Log[number purchases on covid tender]") ///		
+	 ytitle("Log[total expenses on covid tender]")   xsize(10) ysize(5)	 	 
+	 
+	graph export  "${path_project}/4_outputs/3-Figures/P4-Covid_product-criteria.pdf", as(pdf) replace
+
 }
 .
 

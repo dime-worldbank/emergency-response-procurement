@@ -321,14 +321,6 @@
 	global adds_5 	   "addtext(Level catchment, 1, Sector controls, Yes, Munic controls, Yes,  Nature Firm controls, Yes) e(all) label(insert)"
 	global adds_6 	   "addtext(Level catchment, 2, Sector controls, Yes, Munic controls, Yes,  Nature Firm controls, Yes) e(all) label(insert)"
 
-	* Set of variables left hand side of regression
-	global Xdid1 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year)"
-	global Xdid2 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 )" 
-	global Xdid3 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 rais_munic_estab)"
-	global Xdid4 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica )"
-	global Xdid5 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 	if level_catch_01==1	,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica )"
-	global Xdid6 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 	if level_catch_02==1	,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica )"
-	
 	* Model 2020
 	local replace "replace"
 	foreach Y in $dep_vars {
@@ -348,7 +340,7 @@
 			outreg2 using "${path_project}/4_outputs/2-Tables/P06-firm_models.xls", append    	ctitle(year:2018,robust, F1[`Y']) ${adds_`k'} 
 			
 			use  "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if inlist(year,2018, 2020),clear
-			reghdfe  F1_`Y'  ${X`k'}
+ 			reghdfe  F1_`Y'  ${Xdid`k'}
 			outreg2 using "${path_project}/4_outputs/2-Tables/P06-firm_models.xls", append   	ctitle(DiD,robust,`Y') ${adds_`k'} 
 			
 			use  "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if year ==2018,clear
@@ -362,5 +354,30 @@
 		}
 	}
 	.	
+	
+	* Model DiD
+	* Set of variables left hand side of regression
+	global Xdid1 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year)"
+	global Xdid2 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 )" 
+	global Xdid3 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 rais_munic_estab)"
+	global Xdid4 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 							,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica )"
+	global Xdid5 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01     if level_catch_01==1	,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica ) nocons"
+	global Xdid6 "D_sample_win_01_post D_sample_try_01_post D_sample_win_01 D_sample_try_01 	if level_catch_02==1	,  vce(robust) absorb(year rais_cnae20 rais_munic_estab rais_natureza_juridica )"
+		
+	use  "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if inlist(year,2018, 2020),clear
+ 	
+	local replace "replace"
+	foreach Y in $dep_vars {
+		*foreach k in 1 2 3 4 5 6 {
+			local k 5
+			
+			*local k 1
+			*local Y D_firm_exist
+			reghdfe  F1_`Y'  ${Xdid`k'}
+			outreg2 using "${path_project}/4_outputs/2-Tables/P06-firm_models-DiD.xls", `replace' ctitle(DiD,robust,`Y') ${adds_`k'} 
+			local replace "append"
+		*}
+	}
+	
 }
 .

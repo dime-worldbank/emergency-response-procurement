@@ -73,7 +73,7 @@
 		sleep 2000
 			* exporing
 			compress
-			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.png", replace as(png)
 		}
 	}
 	.
@@ -116,7 +116,7 @@
 			 	
 			* exporing
 			compress
-			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+			graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.png", replace as(png)
 		}
 	}
 	.
@@ -170,7 +170,7 @@
 			
 		* exporing
 		compress
-		graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.pdf", replace as(pdf)
+		graph export "${path_project}/4_outputs/3-Figures/P3-Covid-`y_dep'.png", replace as(png)
 	}
 	.
 }

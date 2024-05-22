@@ -125,7 +125,16 @@ global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-d
 	
 				
  	}
-	. 
+	. 	
+	
+	copy 	"${path_project}/4_outputs/3-Figures/P4-Covid_product-criteria.pdf" ///
+			"${overleaf}/02_figures/P4-Covid_product-criteria.pdf",replace
+			
+			
+	copy 	"${path_project}/4_outputs/3-Figures/P4-Covid_product-criteria.pdf" ///
+			"${overleafdash}/01-figures/03-graph_avg/P4-Covid_product-criteria.pdf" ,replace
+	 
+	
 }
 .
 
@@ -206,6 +215,34 @@ global overleafdash "C:\Users\leand\Dropbox\5-Aplicativos\01-Overleaf\03-COVID-d
 		
 	}	
 	.	
+	
+	* Model selections
+	import delim "${path_project}/4_outputs/2-Tables/P06-firm_models.txt",clear
+	
+	global keep_list "v1"
+	
+	
+	
+	foreach var of varlist * {
+		if (regex(`var'[2],"year:2018") & regex(`var'[4],"F1")) | (regex(`var'[2],"year:2020") & regex(`var'[4],"F1")) {
+			global keep_list "${keep_list} `var'"			
+		}		
+	}
+	
+	keep ${keep_list}
+	
+	global keep_list "v1"
+	 
+	foreach var of varlist * {
+		if regex(`var'[15],"1") {
+			global keep_list "${keep_list} `var'"			
+		}		
+	}
+	
+	
+	di as white "${keep_list}"
+	
+	keep ${keep_list}
 }
 .
 

@@ -31,15 +31,15 @@
 		format %tq year_quarter
 
 		* Methods
-		gen 	methods  = 1	if modality== "05" 
-		replace methods  = 2	if modality== "06" 
-		replace methods  = 3	if modality== "07" 
+		gen 	methods  = 1	if modality== "05" // Reverse Auction (pregão)
+		replace methods  = 2	if modality== "06" // Direct purchase (dispensa de licitação) 
+		replace methods  = 3	if modality== "07" // Unenforceable Bidding (inexigibilidade de licitacao) 
 		replace methods  = 4	if methods	==.
 
 		label define lab_method ///
-			1 "01-auction" 	  ///
-			2 "02-waiver" 	  ///
-			3 "03-unenforce"  ///
+			1 "01-Reverse Auction" 	  		///
+			2 "02-Direct purchase" 	  		///
+			3 "03-Unenforceable Bidding"  	///
 			4 "04-others" ,replace
 
 		label val methods lab_method

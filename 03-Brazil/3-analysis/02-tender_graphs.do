@@ -11,8 +11,8 @@
 		global style_2_waiver 		"connect(1)  lc(emerald) 	mcolor(emerald) ms(dh)  lp(dash)"
 		global style_3_unenforce  	"connect(1)  lc(brown) 		mcolor(brown )  ms(th)  lp(dash)"
 	 
-		global order_legend_g1  1 "Reverse Auction"  2 "Tender Waiver" 3 "Tender Unenforce"
-		
+		global order_legend_g1  1 "Reverse Auction"  2 "Direct purchase" 3 "Unenforceable Bidding"
+ 
 		* Covid shadow
 		global covid_shadow  /*
 		 */	xline(`=yq(2020,2)' , lwidth(4.5) lc(gs14)) /* 
@@ -22,8 +22,8 @@
 		 
 		 * graphs configuration
 		global graph_option graphregion(color(white)) xsize(10) ysize(5)  ///
-			xlabel(`=yq(2015,1)'(1)`=yq(2022,4)', angle(90))  ///
-			ytitle("") ylabel( , angle(0))  ${covid_shadow}  
+			xlabel(`=yq(2018,1)'(1)`=yq(2022,4)', angle(90))  ///
+			ylabel( , angle(0))  ${covid_shadow}  
 	}
 	
 	* Semestre
@@ -39,18 +39,17 @@
 		global graph_option_semester 							///
 			graphregion(color(white)) xsize(10) ysize(5)  		///
 			xlabel(`=yh(2015,1)'(1)`=yh(2022,2)', angle(90))  	///
-			ytitle("") ylabel( , angle(0))  ${covid_shadow_semmester}  
+			ylabel( , angle(0))  ${covid_shadow_semmester}  
 			
 	}
-	
-	
+	 
 }
 .
 
 * 1: Tenders  quarter
 {
 	* reading
-	use   "${path_project}/1_data/03-final/01-tender_data" if year_quarter >=`=yq(2015,1)',clear
+	use   "${path_project}/1_data/03-final/01-tender_data" if year_quarter >=`=yq(2018,1)',clear
  
 	* Dropping
 	drop if methods == 4
@@ -62,6 +61,8 @@
 
 	gcollapse (sum) N_tenders N_covid=D_covid volume_tender volume_covid, by(year_quarter methods )
 	
+	tabstat N_covid, by(year_quarter) stat(sum)
+	 
 	* Formating
 	format %tq year_quarter
 	
@@ -72,31 +73,33 @@
 	tw (scatter N_tenders  year_quarter if methods == 1 , ${style_1_auction}  ) ///
 	|| (scatter N_tenders  year_quarter if methods == 2 , ${style_2_waiver}   ) ///
 	|| (scatter N_tenders  year_quarter if methods == 3 , ${style_3_unenforce}) ///
- 	, ${graph_option}   legend(order(${order_legend_g1})  col(3))		///
-	 note("Other methods has less than 1% of tenders") title("Number of tenders process")
+ 	, ${graph_option}   legend(order(${order_legend_g1})  col(3) margin(small) )		///
+	 note("Other methods has less than 1% of tenders") ytitle("Number of tenders process") ///
+	  title("")
 		
 	* Graphing export
-	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-N_tenders-method.pdf", replace as(pdf)
+	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-N_tenders-method.png", replace as(png)
  	
 	* Graph All class
 	tw (scatter N_covid  year_quarter if methods == 1 , ${style_1_auction}  ) ///
 	|| (scatter N_covid  year_quarter if methods == 2 , ${style_2_waiver}   ) ///
 	|| (scatter N_covid  year_quarter if methods == 3 , ${style_3_unenforce}) ///
- 	, ${graph_option}  legend(order(${order_legend_g1})  col(3)) ///
-		note("Other methods has less than 1% of tenders") title("Number Covid tenders tenders")		 
+ 	, ${graph_option}  legend(order(${order_legend_g1})  col(3) margin(small)   ) ///
+		note("Other methods has less than 1% of tenders") title("")		  ///
+		ytitle("Number of Covid tenders")
 		
-	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-Covid_tender_n_tenders-method.pdf", replace as(pdf)
+	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-Covid_tender_n_tenders-method.png", replace as(png)
 	
 	* Graph All class
 	replace volume_tender =volume_tender / 1e6
 	tw (scatter volume_tender  year_quarter if methods == 1	, ${style_1_auction}  ) ///
 	|| (scatter volume_tender  year_quarter if methods == 2 , ${style_2_waiver}   ) ///
 	|| (scatter volume_tender  year_quarter if methods == 3 , ${style_3_unenforce}) ///
- 	, ${graph_option} ytitle("Millions reais (BRL)")  legend(order(${order_legend_g1})  col(3)) ///
+ 	, ${graph_option} ytitle("Millions reais (BRL)")  legend(order(${order_legend_g1})  col(3) margin(small) ) ///
 		note("Other methods has less than 1% of tenders") title("Total estimated volume by tenders")		
 		
 	* Graphing export
-	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-Covid_tender_Volume-method.pdf", replace as(pdf)
+	graph export "${path_project}/4_outputs/3-Figures/P2-quarter-Covid_tender_Volume-method.png", replace as(png)
 
 }
 .

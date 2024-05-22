@@ -17,6 +17,8 @@
 	if "`c(username)'" == "leand" {	
  		global path_project 		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\06-Covid_Brazil"
 		global path_code_analysis	"C:\Users\leand\Dropbox\3-Profissional\17-Github\04-WGB\01-procurement\3-emergency-response-procurement\03-Brazil\01-stata\3-analysis"
+		global path_firm_data		"C:\Users\leand\Dropbox\3-Profissional\07-World BANK\04-procurement\01-dados\03-Covid-br\01-data"
+		
  	}
 	.
 	

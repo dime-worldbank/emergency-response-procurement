@@ -278,8 +278,8 @@
 	(scatter log_covid_purchase log_covid_value  if Covid_item_level   ==0,       mc( pink)   msize(tiny)) 	///	
 	/// (function y=15+ -12/25*x                       ,range(5 25)  color("98 190 121")  )  || 		///
 	, legend(order( 4 "High Covid" 3 "Medium Covid" 2 "low Covid" 1 "No Covid")  col(4)) ///
-	graphregion(color(white)) xtitle("The proportion of expenses on covid tender") ///		
-	 ytitle("The proportion of covid lots on covid tender")   		
+	graphregion(color(white)) xtitle("Log of number of purchases on covid tender") ///		
+	 ytitle("Log of total expenses on covid tender")   		
 	
 	graph export "${path_project}/4_outputs/3-Figures/02-Covid_group_estimation-item.png", replace as(png)
 	
