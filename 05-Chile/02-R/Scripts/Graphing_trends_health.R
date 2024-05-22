@@ -245,7 +245,7 @@ data_offer_sub <- fread(file.path(fin_data, "data_offer_sub.csv" ), encoding = "
 
 data_po <- fread(file = file.path(fin_data, "purchase_orders.csv"), encoding = "Latin-1") 
 
-data_po = data_po[, SECTOR := substr(ID_ITEM_UNSPSC, 0, 2)] %>% 
+data_po = data_po[, SECTOR := substr(id_item_unspsc, 0, 2)] %>% 
   .[CAT_MEDICAL == 1, SECTOR := 42] %>% 
   .[SECTOR == 0, SECTOR := NA] %>% 
   .[,
@@ -1028,13 +1028,15 @@ data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 0,
                               CAT_DIRECT == "Si", 1, default = NA)]
 data_po_collapse <- data_po[DT_YEAR > 2015, 
                             list(
-                              CAT_DIRECT     = mean(CAT_DIRECT, na.rm = TRUE),
-                              CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
+                              CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
+                              CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
                             ), 
-                            by = list(DT_S, ID_PURCHASE_ORDER, MED_DUMMY)]
+                            by = list(DT_S, id_purchase_order, MED_DUMMY)]
 
 data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)
 
+data_po_collapse <- data_po_collapse %>% data_po_collapse <- data_po_collapse %>% 
+  
 data_po_collapse <- data_po_collapse %>% 
   group_by(DT_S) %>% 
   mutate(AMT_VALUE_SUM = sum(CAT_DIRECT_VAL, na.rm = TRUE)) %>% 
@@ -1059,9 +1061,9 @@ plot <- graph_trend(
   title = "Share of number of contracts (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra", 
   limit_lower = 0,
-  limit_upper = 80,
-  interval_limits_y = 10,
-  legend_upper = 58,
+  limit_upper = 40,
+  interval_limits_y = 5,
+  legend_upper = 38,
   percentage = TRUE,
   yearly = FALSE,
   adjust = 0.3
