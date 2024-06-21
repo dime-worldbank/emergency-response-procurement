@@ -151,36 +151,32 @@
 }	
 .
 
-* 03: Plotting average graph trend
+* 03: Tabulating average graph trend
 {
-	global outcome_selected N_participants SME share_SME log_unit_price_filter D_auction decision_time_trim D_new_winner
-		
+	global outcome_selected N_participants SME share_SME  ///
+							D_auction decision_time_auction decision_time_trim  ///
+							D_new_winner_12 D_new_winner  /// 
+							unit_price_filter_def log_unit_price_filter_def ///
+							unit_price_filter log_unit_price_filter  
+							
  	use "${path_project}/1_data/03-final/05-Regession_data-sample", clear
 	
 	gcollapse (mean) ${outcome_selected}, by(year_semester Covid_item_level) labelformat(#sourcelabel#) fast  
 	 
 	foreach y_dep of varlist $outcome_selected {
+		local lab_`y_dep': var label  `y_dep'
 		rename `y_dep' avg`y_dep'
 	}
 	
+ 
 	reshape long avg, i(year_semester	Covid_item_level) j(variables) s
 	
 		
 	gen label	= ""	
-	replace label = "number of bidders"													if variables =="N_participants"			
-	replace label = "E[Number of Participants SME]"                                     if variables =="N_SME_participants"		
-	replace label = "share of winners that are small/micro firms"                       if variables =="SME"					
-	replace label = "share of bidders that are small/micro firms"                       if variables =="share_SME"				
-	replace label = "Dummy if the firm didn't win a lot more than 24 months'"           if variables =="D_new_winner"			
-	replace label = "E[log(volume item)]"                                               if variables =="log_volume_item"		
-	replace label = "E[Unit Price]"                                                     if variables =="unit_price"		 		
-	replace label = "E[Unit Price - filter]"                                            if variables =="unit_price_filter" 		
-	replace label = "unit prices (log)"                                                 if variables =="log_unit_price_filter" 	
-	replace label = "E[HHI item index by year semester]"                                if variables =="HHI_5d"					
-	replace label = "Share of tenders using the reverse auction method"                 if variables =="D_auction"				
-	replace label = "E[var(log(Unit Price - filter))]"	                                if variables =="sd_log_unit_price"		
-	replace label = "time between starts of the process and contract award"	            if variables =="decision_time"			
-	replace label = "time between starts of the process and contract award"	            if variables =="decision_time_trim"		
+	foreach y_dep in $outcome_selected {
+ 		replace label = "`lab_`y_dep''" if variables =="`y_dep'"		
+	}
+	.
 	
 	order Covid_item_level 	variables label year_semester var
 	sort variables  year_semester Covid_item_level
@@ -258,7 +254,7 @@
 	 
 		tw (scatter N_lots  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter N_lots  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid") )		 
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		 
 		// title("Rate increase - same semester of the previous year")	
 		
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-n_lots_by_covid.png", replace as(png)
@@ -266,7 +262,7 @@
 		gen log_N_lots = log(N_lots)
 		tw (scatter log_N_lots  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter log_N_lots  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid") )		 
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		 
 		// title("Rate increase - same semester of the previous year")	
 		
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-log_n_lots_by_covid.png", replace as(png)	
@@ -275,14 +271,14 @@
 		
 		tw (scatter rate_lots_last_year  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter rate_lots_last_year  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid") )	yline(0, lp(dash) lc(gs2))	 
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 	yline(0, lp(dash) lc(gs2))	 
 		// title("Rate increase - same semester of the previous year") 	w
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-rate_lots_by_covid.png", replace as(png)
 
 	 
 		tw (scatter rate_2019_lots  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter rate_2019_lots  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid") )	yline(0, lp(dash) lc(gs2))	 
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 	yline(0, lp(dash) lc(gs2))	 
 		// title("Rate increase - same semester of the previous year") 	
 		
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-rate_2019_lots_by_covid.png", replace as(png)
@@ -299,7 +295,7 @@
 		replace volume =volume / 1e6
 		tw (scatter volume  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter volume  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )		///
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		 ///
 		 ytitle("Millions reais (BRL)")  
  
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-volume_by_covid.png", replace as(png)
@@ -309,7 +305,7 @@
 		gen log_volume = log(volume)
 		tw (scatter log_volume  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter log_volume  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )	 	 
+		, ${graph_option}   legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		  	 	 
 		 // title("Number of tenders process")
 		* Graphing export
 				graph export "${path_project}/4_outputs/3-Figures/P8-${time}-log_volume_by_covid.png", replace as(png)
@@ -318,7 +314,7 @@
 		* Rate volume increase
 		tw (scatter rate_2019_volume  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter rate_2019_volume  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )		 
+		, ${graph_option} legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		  	 
 		// title("Number of tenders process")
 		* Graphing export
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-rate_2019_volume_by_covid.png", replace as(png)			
@@ -326,7 +322,7 @@
 		* Rate volume increase
 		tw (scatter rate_volume_last_year  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter rate_volume_last_year  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )		 
+		, ${graph_option}legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		  		 
 		// title("Number of tenders process")
 		* Graphing export
 		graph export "${path_project}/4_outputs/3-Figures/P8-${time}-rate_volume_by_covid.png", replace as(png)
@@ -341,7 +337,7 @@
 		* Log volume	
  		tw (scatter avg_volume  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter avg_volume  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )		///
+		, ${graph_option} legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		 ///
 		 ytitle("Average item volume in BRL")
 			graph export "${path_project}/4_outputs/3-Figures/P8-${time}-avg_volume_by_covid.png", replace as(png)
  
@@ -349,13 +345,110 @@
 		gen log_avg_volume = log(avg_volume)
 		tw (scatter log_avg_volume  ${time} if Covid_item_level == 3 , ${High_covid_scatter_opt}  ) ///
 		|| (scatter log_avg_volume  ${time} if Covid_item_level == 0 , ${No_covid_scatter_opt}) ///
-		, ${graph_option}   legend(order(1 "High Covid"  2 "No Covid" ) )		///
+		, ${graph_option}  legend(order( 1 "Covid-related products" 2 "Non-Covid products")  col(2) margin(small) ) 		  
 		 // title("Number of tenders process")
 		* Graphing export
 			graph export "${path_project}/4_outputs/3-Figures/P8-${time}-log_avg_volume_by_covid.png", replace as(png)
 	}
 	.
 	
+	* sending results to a table
+ 	export excel "${path_project}/4_outputs/2-Tables/P8-extra_outputs.xlsx", ///
+	sheetmodify sheet("04-covid_volume") firstrow(variables)
+	
+}
+.
+
+* 05: Firm regressions
+{  	   
+	* 2: Defyining main groups
+	{
+		use  "${path_project}/4_outputs/1-data_temp/Data_pre_collapse" if year>=2017,clear
+		
+		keep bidder_id year rais_cnae20 rais_uf_estab F1_* *2021 log_N_emp   rais_N_workers level_catch_01 level_catch_02
+		
+		merge m:1 bidder_id year using "${path_project}/4_outputs/1-data_temp/P2_list_treats", ///
+			keep(1 3) nogen keepusing(bidder_id year bid_sample_dinamic N_item_wins  N_item_part)
+		replace bid_sample_dinamic = 3 if bid_sample_dinamic==.
+		
+		* Creating dummies
+		gen byte D_sample_win_try 	=  inlist(bid_sample_dinamic,1,2) 
+		gen byte D_sample_win 		=  bid_sample_dinamic ==1 
+		gen byte D_sample_try 		=  bid_sample_dinamic ==2
+		gen byte D_sample_never_try	=  bid_sample_dinamic ==3
+		
+		* Keeping only variables to regressions 
+		order bidder_id year D_sample* rais_cnae20 rais_uf_estab  *D_firm_exist*  *rais_avg_wage*  *rais_N_workers* *log_N_emp* level_catch_01 level_catch_02
+		keep bidder_id year  D_sample* rais_cnae20 rais_uf_estab  *D_firm_exist*  *rais_avg_wage*  *rais_N_workers* *log_N_emp* level_catch_01 level_catch_02
+		
+		compress
+		save "${path_project}/4_outputs/1-data_temp/P08_data_firm_regression",replace
+	}
+	.
+	
+	* Setting parameters
+	global dep_vars  D_firm_exist  rais_avg_wage  log_N_emp
+    *global dep_vars  log_N_emp
+	
+	* Set of variables left hand side of regression
+	global X1  "D_sample_win_try				 											,  vce(robust) noabsorb"
+	global X2  "D_sample_win	D_sample_try 										    	,  vce(robust) noabsorb"
+	global X3  "D_sample_win_try				 											,  vce(robust) absorb(rais_cnae20)"
+	global X4  "D_sample_win	D_sample_try 										    	,  vce(robust) absorb(rais_cnae20)"
+	global X5  "D_sample_win_try				 											,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X6  "D_sample_win	D_sample_try 										    	,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X7  "D_sample_win_try				log_N_emp 								,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X8  "D_sample_win	D_sample_try 	log_N_emp								,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X9  "D_sample_win_try				log_N_emp 		if level_catch_01==1	,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X10 "D_sample_win	D_sample_try 	log_N_emp		if level_catch_01==1	,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X11 "D_sample_win_try				log_N_emp 		if level_catch_02==1	,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+	global X12 "D_sample_win	D_sample_try 	log_N_emp		if level_catch_02==1	,  vce(robust) absorb(rais_cnae20 rais_uf_estab)"
+ 
+	* 
+	global adds_1 	   "addtext(Level catchment, 0, Sector controls, No , state controls, No ) e(all) label(insert)"
+	global adds_2 	   "addtext(Level catchment, 0, Sector controls, No , state controls, No ) e(all) label(insert)"
+	global adds_3 	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, No ) e(all) label(insert)"
+	global adds_4 	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, No ) e(all) label(insert)"
+	global adds_5 	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_6 	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_7	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_8 	   "addtext(Level catchment, 0, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_9 	   "addtext(Level catchment, 1, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_10 	   "addtext(Level catchment, 1, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_11 	   "addtext(Level catchment, 2, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+	global adds_12 	   "addtext(Level catchment, 2, Sector controls, Yes, state controls, Yes) e(all) label(insert)"
+
+	* Model 2020
+	local replace "replace"
+	foreach Y in $dep_vars {
+		foreach k in 1 2 3 4 5 6 7 8 9 10 11 12 {
+		*foreach k in 1 2 3 4 5 6 7 8 {	
+			
+			* Outcomes 2021, data 2020 
+			di as white "Running model 2020: Y =`Y'; `k'"
+			use  "${path_project}/4_outputs/1-data_temp/P08_data_firm_regression" if year ==2020,clear
+			reghdfe F1_`Y'  ${X`k'}
+			outreg2 using "${path_project}/4_outputs/2-Tables/P08-firm_models.xls", `replace'  ctitle(year:2020,robust, F1[`Y'] ) ${adds_`k'} 
+			local replace "append"
+
+			* Outcomes 2020, data 2019
+			use  "${path_project}/4_outputs/1-data_temp/P08_data_firm_regression" if year ==2019,clear
+			reghdfe F1_`Y'  ${X`k'}
+			outreg2 using "${path_project}/4_outputs/2-Tables/P08-firm_models.xls", append    	ctitle(year:2019,robust, F1[`Y']) ${adds_`k'} 				
+			
+			* Outcomes 2019, data 2018
+			use  "${path_project}/4_outputs/1-data_temp/P08_data_firm_regression" if year ==2018,clear
+			reghdfe F1_`Y'  ${X`k'}
+			outreg2 using "${path_project}/4_outputs/2-Tables/P08-firm_models.xls", append    	ctitle(year:2018,robust, F1[`Y']) ${adds_`k'} 
+			
+			* Outcomes 2021, data 2019
+			use  "${path_project}/4_outputs/1-data_temp/P08_data_firm_regression" if year ==2019,clear
+			reghdfe `Y'_2021  ${X`k'}
+			outreg2 using "${path_project}/4_outputs/2-Tables/P08-firm_models.xls", append    	ctitle(year:2019,robust,`Y'_2021) ${adds_`k'} 							
+
+		}
+	}
+	.	
 }
 .
  

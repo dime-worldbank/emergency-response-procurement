@@ -145,7 +145,7 @@
 		use bidder_id year N_item_part N_item_wins using  "${path_project}/4_outputs/1-data_temp/P2_N_participant_bidder",clear
 		
 		* Keep
-		keep if inrange(year, 1993, 2021)		
+		keep if inrange(year, 2013, 2021)		
 		
 		* Creating  panel variables 
 		gegen id_aux = group(bidder_id)
@@ -169,11 +169,17 @@
 	{ 
 		* Lag operation
 		sort id_aux year
+		
+		* Gap three years
+		gen D_win_group      = (N_item_wins +L1.N_item_wins ) >=1 & year>=2015
+		gen D_part_group     = (N_item_part +L1.N_item_part ) >=1 & year>=2015
+		gen D_never_try_group= (N_item_part +L1.N_item_part ) ==0 & year>=2015
 
-		gen D_win_group      = (N_item_wins +L1.N_item_wins + L2.N_item_wins) >=1 & year>=2015
-		gen D_part_group     = (N_item_part +L1.N_item_part + L2.N_item_part) >=1 & year>=2015
-		gen D_never_try_group= (N_item_part +L1.N_item_part + L2.N_item_part) ==0 & year>=2015
-
+		* gen D_win_group      = (N_item_wins +L1.N_item_wins + L2.N_item_wins) >=1 & year>=2015
+		* gen D_part_group     = (N_item_part +L1.N_item_part + L2.N_item_part) >=1 & year>=2015
+		* gen D_never_try_group= (N_item_part +L1.N_item_part + L2.N_item_part) ==0 & year>=2015
+		
+		
 		* Cummulated variables
 		by id_aux: gen cum_participation   = sum(N_item_part )
 		by id_aux: gen cum_wins            = sum(N_item_wins )
@@ -202,7 +208,8 @@
 		* list relevant order
 		local set_main_vars bidder_id year bid_sample_dinamic bid_sample_static ///
 							 rate_success total_win ///
-							 cum_participation cum_wins cum_year_part_group cum_year_win_group
+							 cum_participation cum_wins cum_year_part_group cum_year_win_group ///
+							 N_item_wins  N_item_part
 							 
 		* keep, order and sort data
 		keep   `set_main_vars'

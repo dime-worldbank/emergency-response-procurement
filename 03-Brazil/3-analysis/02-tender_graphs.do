@@ -3,6 +3,11 @@
 
 * 0: Scatter options
 {
+    * time reference
+	global year_quarter_start 	=yq(2019,4) // yq(2018,1)
+	global year_quarter_end 	=yq(2022,4) // yq(2018,1)
+ 
+	
 	* Quarter
 	{
 	global xlabel "xlabel(`=yq(2015,1)'(2)`=yq(2022,2)', angle(90) nogrid)"
@@ -22,7 +27,7 @@
 		 
 		 * graphs configuration
 		global graph_option graphregion(color(white)) xsize(10) ysize(5)  ///
-			xlabel(`=yq(2018,1)'(1)`=yq(2022,4)', angle(90))  ///
+			xlabel(${year_quarter_start}(1)${year_quarter_end}, angle(90))  ///
 			ylabel( , angle(0))  ${covid_shadow}  
 	}
 	
@@ -49,7 +54,7 @@
 * 1: Tenders  quarter
 {
 	* reading
-	use   "${path_project}/1_data/03-final/01-tender_data" if year_quarter >=`=yq(2018,1)',clear
+	use   "${path_project}/1_data/03-final/01-tender_data" if year_quarter >=`=yq(2019,4)',clear
  
 	* Dropping
 	drop if methods == 4

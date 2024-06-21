@@ -90,6 +90,14 @@
  
 	* Keeping data
 	keep bidder_id year_month months_since_last_win
+	
+	gen byte D_new_winner 		=  months_since_last_win>=24 
+		label var D_new_winner "Indicator for a New Winner (Has Not Won in the Last 24 Months)"
+	
+	* Dummy new winner 12 months
+	gen byte D_new_winner_12 	=  months_since_last_win>=12 
+		label var D_new_winner "Indicator for a New Winner (Has Not Won in the Last 12 Months)"
+ 
 	compress
 	save "${path_project}/4_outputs/1-data_temp/P05-New_winner",replace
 }
@@ -120,9 +128,7 @@
 	
 	* New winners
 	merge m:1 bidder_id year_month  using "${path_project}/4_outputs/1-data_temp/P05-New_winner", keep(3) nogen
-	gen byte D_new_winner =  months_since_last_win>=24 & D_winner==1
-		label var D_new_winner "Dummy if the firm didn't win a lot more than 24 months'"
-	
+
 	* Creating pre/post
 	gen byte D_post = year_quarter>=yq(2020,1)
 
@@ -247,7 +253,7 @@
 		gen unit_price_filter = unit_price if ///
 			inrange(log(unit_price),lower_level,upper_level) & ///
 			D_item_unit_price_sample==1
-		label var unit_price_filter "log(unit price filter)"
+		label var unit_price_filter 		"unit price filter"
 			
 		gen log_unit_price_filter = log(unit_price_filter)
 			label var log_unit_price_filter "log(unit price filter)"
@@ -256,7 +262,7 @@
 }
 .
 
-*
+* 7: Creating sampl for balanced items
 {  
 	tempfile data_to_merge
 	save `data_to_merge' 
@@ -284,7 +290,26 @@
 } 
 .
 
-* 7: Saving
+* 8: Including extra variables for review
+{
+
+	* Merging data
+	gen year  = year_id_tender
+	merge m:1 year using "${path_project}/1_data/01-import-data/ipca_deflator_year"
+	keep if _merge ==3
+	drop _merge year
+	
+	* Deflated price variables
+	gen unit_price_def 			  = unit_price 		* deflator_ipca
+	gen unit_price_filter_def	  = unit_price_filter * deflator_ipca
+	gen item_value_def			  = item_value		* deflator_ipca
+	gen log_unit_price_filter_def = log(unit_price_filter_def)
+	
+	gen decision_time_auction =decision_time if methods == 1 & inrange(decision_time, 0 , 1000)
+}
+.
+
+* 9: Saving
 {	
 	compress
 	save "${path_project}/1_data/03-final/05-Lot_item_data",replace
