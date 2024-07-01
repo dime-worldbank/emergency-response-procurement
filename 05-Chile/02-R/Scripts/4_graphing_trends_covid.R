@@ -48,7 +48,7 @@
     if (!require("pacman")) install.packages("pacman")
     
     # Load the packages 
-    pacman::p_load(packages, character.only = TRUE, install = TRUE)
+    pacman::p_load(packages, character.only = TRUE, install = FALSE)
     
   }
 }
@@ -256,7 +256,6 @@ ggsave(
   units    = "in"                                             ,
   device   = 'png'
 )
-
 
 # Task 1
 
@@ -929,14 +928,14 @@ ggsave(
 )
 data_po <- data_po %>% 
   mutate(
-    CAT_DIRECT      = ifelse(CAT_DIRECT      == "Si", 1, 0))
+    CAT_DIRECT      = ifelse(cat_direct      == "Si", 1, 0))
 
 data_po_collapse <- data_po[DT_YEAR > 2015, 
-                                 list(
-                                   CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
-                                   CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
-                                 ), 
-                                 by = list(DT_S, id_purchase_order, COVID_LABEL)]
+                            list(
+                              CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
+                              CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
+                            ), 
+                            by = list(DT_S, id_purchase_order, COVID_LABEL)]
 
 data_po_collapse <- data_po_collapse %>% filter(CAT_DIRECT == 0 | CAT_DIRECT == 1)
 
@@ -944,6 +943,7 @@ data_po_collapse <- data_po_collapse %>%
   group_by(DT_S) %>% 
   mutate(AMT_VALUE_SUM = sum(CAT_DIRECT_VAL, na.rm = TRUE)) %>% 
   ungroup() 
+
 
 data_po_collapse <- data_po_collapse %>% 
   mutate(
@@ -955,7 +955,20 @@ data_po_collapse <- data_po_collapse %>%
     CAT_DIRECT_VAL = sum(AMT_VALUE, na.rm = TRUE)
   )
 
-data_po_collapse <- data_po_collapse %>% mutate(CAT_DIRECT_VAL = CAT_DIRECT_VAL/AMT_VALUE_SUM*100) %>% select(- AMT_VALUE_SUM)
+# Compute the total volume by DT_S
+total_volume <- copy(data_po_collapse)[, .(
+  Total_Volume = sum(CAT_DIRECT_VAL)
+  ), 
+  by = .(DT_S, COVID_LABEL)]
+
+# Merge the total volume with the original data
+data_po_collapse <- merge(data_po_collapse, total_volume, by = c("DT_S", "COVID_LABEL"))
+
+# Compute the share of volumes by DT_S and CAT_DIRECT
+data_po_collapse[, 
+                 .(Share_Volume = CAT_DIRECT_VAL / Total_Volume,
+                   CAT_DIRECT_N = mean(CAT_DIRECT)), 
+                 by = .(DT_S, COVID_LABEL)]
 
 plot <- graph_trend(
   data = data_po_collapse, 
@@ -982,7 +995,7 @@ ggsave(
 
 plot <- graph_trend(
   data = data_po_collapse, 
-  variable = CAT_DIRECT_VAL, 
+  variable = Share_Volume, 
   treatment = COVID_LABEL, 
   title = "Share of volume of órdenes de compra (órdenes de compra) contracted through direct",
   caption = "Source: Chile Compra",

@@ -89,7 +89,7 @@ invisible(sapply(list.files(function_code, full.names = TRUE), source, .GlobalEn
 # Load cleaned tender data
 data_offer_sub <- fread(file.path(fin_data, "data_offer_sub.csv" ), encoding = "Latin-1")
 
-data_po <- fread(file = file.path(fin_data, "purchase_orders.csv"), encoding = "Latin-1") 
+data_pos <- fread(file = file.path(fin_data, "purchase_orders.csv"), encoding = "Latin-1") 
 
 data_offer_sub = data_offer_sub[CAT_PROBLEMATIC != "" | CAT_MEDICAL == 1, ] %>% 
   .[, CAT_PROBLEMATIC := fifelse(is.na(CAT_PROBLEMATIC), 2, CAT_PROBLEMATIC)]

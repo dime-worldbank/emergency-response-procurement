@@ -1,10 +1,10 @@
 library(data.table)
 library(tidyverse)
 
-data_payments <- fread("/Users/ruggerodoino/Library/CloudStorage/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Intermediate/Payments/payments.csv")
+data_payments <- fread("/Users/ruggerodoino/Library/CloudStorage/Dropbox/ChilePaymentProcurement/Reproducible-Package/Data/Intermediate/Payments/dt_tot_payments.csv")
 data_pos <- fread("/Users/ruggerodoino/Library/CloudStorage/Dropbox/COVID_19/CHILE/Reproducible-Package/Data/Final/purchase_orders.csv")
 
-data_payments_2 = data_payments[, .(mean = mean(AMT_PAY_ACK_DD, na.rm = TRUE)), by = .(ID_PURCHASE_ORDER)]
+data_payments_2 = data_payments[, .(mean = mean(amt_pay_ack_dd, na.rm = TRUE)), by = .(id_purchase_order)]
 data_pos_2 = data_pos[,.(
   COVID_LABEL = mean(COVID_LABEL, na.rm = TRUE), 
   CAT_PROBLEMATIC = mean(CAT_PROBLEMATIC, na.rm = TRUE), 
@@ -13,9 +13,10 @@ data_pos_2 = data_pos[,.(
   DT_YEAR = first(DT_YEAR),
   DT_S = first(DT_S)
 ),
-by = .(ID_PURCHASE_ORDER, ID_ITEM_UNSPSC)]
+by = .(ID_PURCHASE_ORDER, ID_ITEM_UNSPSC)][]
 
 data_pos_2 = data_pos_2[COVID_LABEL %in% c(0, 1, NaN) | CAT_PROBLEMATIC %in% c(0, 1, NaN) | CAT_MEDICAL %in% c(0, 1, NaN),]
+setnames(data_payments_2, "id_purchase_order", "ID_PURCHASE_ORDER")
 data = merge.data.table(data_pos_2, data_payments_2, by = "ID_PURCHASE_ORDER")
 
 graph_trend <- function(

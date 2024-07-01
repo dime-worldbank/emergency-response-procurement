@@ -286,6 +286,17 @@ graph_trend <- function(
 data_offer_sub <- fread(file.path(fin_data, "data_offer_sub.csv" ), encoding = "Latin-1")
 
 data_po <- fread(file = file.path(fin_data, "dt_pos_reg.csv"), encoding = "Latin-1") 
+
+data_po[, CAT_DIRECT := fcase(
+  CAT_DIRECT == "Si" & CAT_COMPRA_AGIL == "No", 1, 
+  CAT_DIRECT == "Si" & CAT_COMPRA_AGIL == "Si", 0, 
+  CAT_DIRECT == "No", 0, default = NA
+)]
+data_po[,
+   CAT_COMPRA_AGIL := fifelse(CAT_COMPRA_AGIL == "No", 0, 1)
+   ]
+
+
 data = data_po[DT_YEAR > 2015, 
                list(
                  N_CONTRACTS  = .N,
@@ -1089,12 +1100,23 @@ ggsave(
 data_po[, CAT_DIRECT := fcase(CAT_DIRECT == "No", 0,
                               CAT_DIRECT == "Si", 1, default = NA)]
 
-data_po_collapse <- data_po[DT_YEAR > 2015 & !is.na(CAT_MEDICAL), 
+data_po_collapse <- data_po[DT_YEAR > 2015 & !is.na(CAT_MEDICAL) & !is.na(CAT_DIRECT), 
                             list(
-                              CAT_DIRECT     = mean(cat_direct, na.rm = TRUE),
-                              CAT_DIRECT_VAL = sum(amt_tot_usd_oc_win, na.rm = TRUE)
+                              CAT_DIRECT      = mean(CAT_DIRECT, na.rm = TRUE),
+                              CAT_COMPRA_AGIL = mean(CAT_COMPRA_AGIL, na.rm = TRUE)
                             ), 
-                            by = list(DT_S, id_purchase_order, CAT_MEDICAL)]
+                            by = list(DT_S, ID_PURCHASE_ORDER, CAT_MEDICAL)][
+                              CAT_COMPRA_AGIL %in% c(0, 1) & CAT_DIRECT %in% c(0, 1)
+                            ]
+
+# Compute the total number of contracts per semester
+contracts_by_semester <- data_po_collapse[, .N, by = DT_S]
+
+contracts_by_type_semester <- data_po_collapse[, .(count = .N), by = .(DT_S, CAT_COMPRA_AGIL, CAT_DIRECT)]
+
+# Compute the count and share of contracts by tender type and semester
+contracts_by_type_semester <- contracts_by_type_semester[contracts_by_semester, on = .(DT_S)]
+contracts_by_type_semester[, share := count / N*100]
 
 data_po_collapse <- data_po_collapse %>% 
   group_by(DT_S) %>% 
@@ -1104,7 +1126,7 @@ data_po_collapse <- data_po_collapse %>%
 data_po_collapse <- data_po_collapse %>% 
   mutate(
     AMT_VALUE = CAT_DIRECT_VAL*CAT_DIRECT
-  )%>% 
+  ) %>% 
   group_by(DT_S, CAT_MEDICAL, AMT_VALUE_SUM) %>% 
   dplyr::summarise(
     CAT_DIRECT_N   = mean(CAT_DIRECT, na.rm = TRUE)*100,
